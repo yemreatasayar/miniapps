@@ -247,7 +247,6 @@ const enLocalizationReplacements = new Map([
       ['"Şeffaf Arka Plan"', '"Transparent Background"'],
       ['"Logoyu Kaldır"', '"Remove Logo"'],
       ['"Geçmiş Tasarımlar"', '"Saved Designs"'],
-      ['"Bu müşteriye ait kayıtları aç, düzenle veya sil"', '"Open, edit, or delete designs for this customer"'],
       ['"Geçmişi Temizle"', '"Clear History"'],
       ['"Bu müşteri için kayıt yok."', '"No saved designs for this customer."'],
       ['"Yeni QR oluşturup kaydettiğinde burada yalnızca bu müşteriye ait tasarımlar görünecek."', '"When you create and save a new QR, only this customer’s designs will appear here."'],

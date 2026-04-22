@@ -1036,7 +1036,6 @@ function App() {
           <div className="section-header">
             <div>
               <h2>Geçmiş Tasarımlar</h2>
-              <p>Bu müşteriye ait kayıtları aç, düzenle veya sil</p>
             </div>
             <button type="button" className="ghost-action danger-text" onClick={handleClearHistory}>
               Geçmişi Temizle
