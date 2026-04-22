@@ -11,6 +11,12 @@ distribution/github-pages/legacy-en-build/
 # Desktop distribution builds (not web-related)
 distribution/miniapps-en-mac/
 
+# Large local runtime binaries
+local-runtime/bin/
+
+# Python virtual environments
+**/.venv/
+
 # OS
 .DS_Store
 
