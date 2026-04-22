@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="36" fill="#F0F0F0"/>
+  <rect x="44" y="44" width="424" height="424" rx="28" fill="#1E1E1E"/>
+  <rect x="86" y="112" width="120" height="120" fill="#2E9CFF"/>
+  <rect x="222" y="112" width="120" height="120" fill="#FFFFFF"/>
+  <rect x="358" y="112" width="68" height="120" fill="#2E9CFF"/>
+  <rect x="86" y="252" width="272" height="28" fill="#FFFFFF"/>
+  <rect x="86" y="296" width="220" height="28" fill="#5A5A5A"/>
+  <rect x="86" y="360" width="176" height="40" fill="#2E9CFF"/>
+  <text x="86" y="84" fill="#FFFFFF" font-size="34" font-family="Arial, sans-serif" font-weight="700">Image Toolkit</text>
+</svg>

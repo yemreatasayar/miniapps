@@ -1,0 +1,11 @@
+<svg width="520" height="520" viewBox="0 0 520 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="520" height="520" rx="44" fill="#F8FBFF"/>
+  <rect x="36" y="36" width="448" height="448" rx="34" fill="white" stroke="#E4EEF9" stroke-width="8"/>
+  <rect x="78" y="92" width="120" height="120" rx="32" fill="#EAF4FF"/>
+  <path d="M113 167C113 142.147 133.147 122 158 122C168.776 122 178.666 125.767 186.435 132.047C175.933 159.215 154.451 180.892 127.072 191.163C118.321 183.114 113 174.505 113 167Z" fill="#2E9CFF"/>
+  <path d="M145 122C160.409 122 173.231 133.05 175.965 147.672C169.273 159.138 159.889 168.835 148.729 175.855C134.968 172.136 125 159.495 125 144.5C125 132.074 135.074 122 147.5 122H145Z" fill="#4F46E5"/>
+  <rect x="78" y="334" width="364" height="78" rx="22" fill="#F5F9FF"/>
+  <text x="78" y="276" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="64" font-weight="800">BG</text>
+  <text x="78" y="324" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="58" font-weight="300">remover</text>
+  <text x="108" y="382" fill="#4B5563" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="600">Background cleanup</text>
+</svg>

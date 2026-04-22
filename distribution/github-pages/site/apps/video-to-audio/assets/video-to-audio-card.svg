@@ -1,0 +1,9 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="36" fill="#F0F0F0"/>
+  <rect x="44" y="44" width="424" height="424" rx="28" fill="#1E1E1E"/>
+  <polygon points="128,140 128,296 250,218" fill="#2E9CFF"/>
+  <rect x="282" y="154" width="36" height="128" fill="#FFFFFF"/>
+  <rect x="334" y="170" width="36" height="96" fill="#FFFFFF"/>
+  <rect x="386" y="186" width="36" height="64" fill="#FFFFFF"/>
+  <text x="84" y="364" fill="#FFFFFF" font-size="40" font-family="Arial, sans-serif" font-weight="700">Video to Audio</text>
+</svg>

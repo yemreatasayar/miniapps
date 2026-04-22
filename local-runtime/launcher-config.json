@@ -1,0 +1,91 @@
+{
+  "targetUrl": "http://127.0.0.1:4310/",
+  "servers": [
+    {
+      "name": "miniapps-shell",
+      "port": 4310,
+      "dir": "../miniapps/dist-internal"
+    },
+    {
+      "name": "weekly-bulletin",
+      "port": 4311,
+      "dir": "../weekly-bulletin/dist"
+    },
+    {
+      "name": "qr-generator",
+      "port": 4312,
+      "dir": "../qr-generator/dist"
+    },
+    {
+      "name": "pdf-toolkit",
+      "port": 4313,
+      "dir": "../pdf-toolkit/dist"
+    },
+    {
+      "name": "image-toolkit",
+      "port": 4315,
+      "dir": "../image-toolkit/dist"
+    },
+    {
+      "name": "video-to-audio",
+      "port": 4316,
+      "dir": "../video-to-audio/dist",
+      "headers": {
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Embedder-Policy": "require-corp"
+      }
+    },
+    {
+      "name": "csv-toolkit",
+      "port": 4317,
+      "dir": "../csv-toolkit/dist"
+    },
+    {
+      "name": "bg-remover",
+      "port": 4318,
+      "dir": "../bg-remover/dist",
+      "headers": {
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Embedder-Policy": "credentialless"
+      }
+    },
+    {
+      "name": "stem-splitter",
+      "port": 4194,
+      "dir": "../stem-splitter/dist"
+    },
+    {
+      "name": "audio-editor",
+      "port": 4320,
+      "dir": "../audio-editor/dist",
+      "headers": {
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Embedder-Policy": "require-corp"
+      }
+    },
+    {
+      "name": "exif-cleaner",
+      "port": 4321,
+      "dir": "../exif-cleaner/dist"
+    },
+    {
+      "name": "image-format-converter",
+      "port": 4322,
+      "dir": "../image-format-converter/dist"
+    },
+    {
+      "name": "dev-toolkit",
+      "port": 4323,
+      "dir": "../dev-toolkit/dist"
+    }
+  ],
+  "helpers": [
+    {
+      "name": "pdf-compress-server",
+      "port": 4184,
+      "script": "../pdf-compress-server/server.mjs",
+      "cwd": "../pdf-compress-server",
+      "waitForPortTimeoutMs": 30000
+    }
+  ]
+}

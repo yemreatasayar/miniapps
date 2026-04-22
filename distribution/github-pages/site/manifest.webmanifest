@@ -1,0 +1,23 @@
+{
+  "name": "miniapps",
+  "short_name": "miniapps",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#060606",
+  "background_color": "#efefef",
+  "icons": [
+    {
+      "src": "./assets/miniapps-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/miniapps-icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# App build outputs (not the GitHub Pages site)
+dist/
+dist-internal/
+
+# Legacy English build source (large binary files, kept locally only)
+distribution/github-pages/legacy-en-build/
+
+# Desktop distribution builds (not web-related)
+distribution/miniapps-en-mac/
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Local env
+*.local
+.env
+.env.*
+!.env.example

@@ -1,0 +1,30 @@
+{
+  "packLabel": "miniapps pack",
+  "packVersion": "2026.1",
+  "authorLabel": "by y.e.a.",
+  "visibleAppIds": [
+    "pdf-toolkit",
+    "csv-toolkit",
+    "qr-generator",
+    "image-toolkit",
+    "exif-cleaner",
+    "image-format-converter",
+    "bg-remover",
+    "video-to-audio",
+    "audio-editor",
+    "dev-toolkit"
+  ],
+  "hiddenAppIds": ["weekly-bulletin", "stem-splitter"],
+  "launchUrlOverrides": {
+    "pdf-toolkit": "http://127.0.0.1:4313/",
+    "csv-toolkit": "http://127.0.0.1:4317/",
+    "qr-generator": "http://127.0.0.1:4312/",
+    "image-toolkit": "http://127.0.0.1:4315/",
+    "exif-cleaner": "http://127.0.0.1:4321/",
+    "image-format-converter": "http://127.0.0.1:4322/",
+    "bg-remover": "http://127.0.0.1:4318/",
+    "video-to-audio": "http://127.0.0.1:4316/",
+    "audio-editor": "http://127.0.0.1:4320/",
+    "dev-toolkit": "http://127.0.0.1:4323/"
+  }
+}
