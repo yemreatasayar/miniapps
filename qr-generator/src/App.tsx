@@ -1044,8 +1044,8 @@ function App() {
 
           {history.length === 0 ? (
             <div className="history-empty">
-              <strong>Bu müşteri için kayıt yok.</strong>
-              <p>Yeni QR oluşturup kaydettiğinde burada yalnızca bu müşteriye ait tasarımlar görünecek.</p>
+              <strong>Henüz kayıt yok.</strong>
+              <p>Eski tasarımlarını bu alandan görebilirsin.</p>
             </div>
           ) : (
             <div className="history-list">
