@@ -13,5 +13,5 @@ export function computeNormalizedScores(images: Array<{ bpp: number }>): number[
 }
 
 export function computeSmartQualities(normalizedScores: number[], slider: number): number[] {
-  return normalizedScores.map((score) => Math.max(0.1, 1 - slider * score));
+  return normalizedScores.map((score) => Math.max(0.1, 1 - slider * (0.15 + 0.85 * score)));
 }
