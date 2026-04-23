@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import {
   ApiError,
   cancelSplitJob,
@@ -141,6 +141,7 @@ export default function App() {
   const helperMacDownloadUrl = import.meta.env.VITE_STEM_SPLITTER_HELPER_MAC_URL || "";
   const helperWindowsDownloadUrl = import.meta.env.VITE_STEM_SPLITTER_HELPER_WINDOWS_URL || "";
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const workspaceRef = useRef<HTMLElement | null>(null);
   const [track, setTrack] = useState<LoadedTrack | null>(null);
   const [jobId, setJobId] = useState("");
   const [downloads, setDownloads] = useState<{ vocals: string; instrumental: string } | null>(null);
@@ -223,6 +224,19 @@ export default function App() {
   }, [jobId, status]);
 
   useEffect(() => {
+    if (!track) return;
+    workspaceRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [track]);
+
+  function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (file) {
+      void handleFile(file);
+    }
+    event.currentTarget.value = "";
+  }
+
+  useEffect(() => {
     if (!jobId || status !== "processing") return;
 
     const handlePageHide = () => {
@@ -296,143 +310,134 @@ export default function App() {
       <header className="app-header">
         <img className="brand-logo" src={logoUrl} alt="Stem Splitter" />
       </header>
+      <input ref={inputRef} type="file" accept={AUDIO_INPUT_ACCEPT} hidden onChange={handleInputChange} />
 
-      <section className="hero-panel">
-        <div className="hero-copy">
-          <h2>Vocals ve instrumental stem'lerini yerelde ayır.</h2>
-          <p>
-            Yerel worker gerçek model tabanlı `Demucs` akışını kullanır. İlk kurulumdan sonra model warm-up ile hazır
-            tutulur, split işlemi cihazında çalışır.
-          </p>
+      {!track ? (
+        <section className="hero-panel">
+          <div className="hero-copy">
+            <h2>Vocals ve instrumental stem'lerini yerelde ayır.</h2>
+            <p>
+              Yerel worker gerçek model tabanlı `Demucs` akışını kullanır. İlk kurulumdan sonra model warm-up ile hazır
+              tutulur, split işlemi cihazında çalışır.
+            </p>
 
-          <div className="helper-summary-card">
-            <span className={`helper-badge is-${helperViewState.kind}`}>{getBackendBadgeLabel(helperViewState)}</span>
-            <strong>{helperViewState.title}</strong>
-            <p>{helperViewState.description}</p>
-            <div className="helper-meta">
-              <span>{getInstallLabel(backendHealth)}</span>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className={`drop-zone ${isBusy ? "is-loading" : ""} ${canChooseFile ? "" : "is-disabled"}`}
-          role={canChooseFile ? "button" : undefined}
-          tabIndex={canChooseFile ? 0 : -1}
-          onClick={() => {
-            if (canChooseFile) inputRef.current?.click();
-          }}
-          onKeyDown={(event) => {
-            if ((event.key === "Enter" || event.key === " ") && canChooseFile) {
-              event.preventDefault();
-              inputRef.current?.click();
-            }
-          }}
-          onDragOver={(event) => {
-            if (!canChooseFile) return;
-            event.preventDefault();
-          }}
-          onDrop={(event) => {
-            if (!canChooseFile) return;
-            event.preventDefault();
-            const file = event.dataTransfer.files?.[0];
-            if (file) {
-              void handleFile(file);
-            }
-          }}
-        >
-          <input
-            ref={inputRef}
-            type="file"
-            accept={AUDIO_INPUT_ACCEPT}
-            hidden
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) {
-                void handleFile(file);
-              }
-              event.currentTarget.value = "";
-            }}
-          />
-
-          {helperViewState.kind === "ready" || helperViewState.kind === "warmup" ? (
-            <div className="drop-zone-inner">
-              <strong>
-                {status === "loading"
-                  ? "Track analiz ediliyor..."
-                  : status === "processing"
-                    ? "Stem separation çalışıyor..."
-                    : helperViewState.kind === "warmup"
-                      ? "Model hazırlanıyor, track seçebilirsin"
-                      : "Audio dosyasını bırak"}
-              </strong>
-              <p>
-                {helperViewState.kind === "warmup"
-                  ? helperViewState.detail ?? helperViewState.description
-                  : "MP3, WAV, M4A, AAC, OGG veya FLAC yükleyebilirsin."}
-              </p>
-              <div className="drop-zone-action">
-                <span className="primary-pill">Dosya Seç</span>
-                <span className="muted-copy">{helperViewState.kind === "warmup" ? "helper hazır olunca split başlayabilir" : "veya sürükle bırak"}</span>
-              </div>
-            </div>
-          ) : (
-            <div className="helper-state">
+            <div className="helper-summary-card">
               <span className={`helper-badge is-${helperViewState.kind}`}>{getBackendBadgeLabel(helperViewState)}</span>
               <strong>{helperViewState.title}</strong>
               <p>{helperViewState.description}</p>
-              {helperViewState.detail ? <p className="status-note">{helperViewState.detail}</p> : null}
-              <div className="helper-actions">
-                {helperMacDownloadUrl ? (
-                  <a
-                    className="primary-button helper-link-button"
-                    href={helperMacDownloadUrl}
-                    download
-                    onClick={(event) => {
-                      event.stopPropagation();
-                    }}
-                  >
-                    macOS için indir
-                  </a>
-                ) : (
-                  <button type="button" className="primary-button" disabled>
-                    macOS paketi hazırlanıyor
-                  </button>
-                )}
-                {helperWindowsDownloadUrl ? (
-                  <a
-                    className="ghost-button helper-link-button"
-                    href={helperWindowsDownloadUrl}
-                    download
-                    onClick={(event) => {
-                      event.stopPropagation();
-                    }}
-                  >
-                    Windows için indir
-                  </a>
-                ) : (
-                  <button type="button" className="ghost-button" disabled>
-                    Windows yakında
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className="primary-button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    void refreshBackendHealth();
-                  }}
-                >
-                  Tekrar Dene
-                </button>
+              <div className="helper-meta">
+                <span>{getInstallLabel(backendHealth)}</span>
               </div>
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+
+          <div
+            className={`drop-zone ${isBusy ? "is-loading" : ""} ${canChooseFile ? "" : "is-disabled"}`}
+            role={canChooseFile ? "button" : undefined}
+            tabIndex={canChooseFile ? 0 : -1}
+            onClick={() => {
+              if (canChooseFile) inputRef.current?.click();
+            }}
+            onKeyDown={(event) => {
+              if ((event.key === "Enter" || event.key === " ") && canChooseFile) {
+                event.preventDefault();
+                inputRef.current?.click();
+              }
+            }}
+            onDragOver={(event) => {
+              if (!canChooseFile) return;
+              event.preventDefault();
+            }}
+            onDrop={(event) => {
+              if (!canChooseFile) return;
+              event.preventDefault();
+              const file = event.dataTransfer.files?.[0];
+              if (file) {
+                void handleFile(file);
+              }
+            }}
+          >
+            {helperViewState.kind === "ready" || helperViewState.kind === "warmup" ? (
+              <div className="drop-zone-inner">
+                <strong>
+                  {status === "loading"
+                    ? "Track analiz ediliyor..."
+                    : status === "processing"
+                      ? "Stem separation çalışıyor..."
+                      : helperViewState.kind === "warmup"
+                        ? "Model hazırlanıyor, track seçebilirsin"
+                        : "Audio dosyasını bırak"}
+                </strong>
+                <p>
+                  {helperViewState.kind === "warmup"
+                    ? helperViewState.detail ?? helperViewState.description
+                    : "MP3, WAV, M4A, AAC, OGG veya FLAC yükleyebilirsin."}
+                </p>
+                <div className="drop-zone-action">
+                  <span className="primary-pill">Dosya Seç</span>
+                  <span className="muted-copy">
+                    {helperViewState.kind === "warmup" ? "helper hazır olunca split başlayabilir" : "veya sürükle bırak"}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="helper-state">
+                <span className={`helper-badge is-${helperViewState.kind}`}>{getBackendBadgeLabel(helperViewState)}</span>
+                <strong>{helperViewState.title}</strong>
+                <p>{helperViewState.description}</p>
+                {helperViewState.detail ? <p className="status-note">{helperViewState.detail}</p> : null}
+                <div className="helper-actions">
+                  {helperMacDownloadUrl ? (
+                    <a
+                      className="primary-button helper-link-button"
+                      href={helperMacDownloadUrl}
+                      download
+                      onClick={(event) => {
+                        event.stopPropagation();
+                      }}
+                    >
+                      macOS için indir
+                    </a>
+                  ) : (
+                    <button type="button" className="primary-button" disabled>
+                      macOS paketi hazırlanıyor
+                    </button>
+                  )}
+                  {helperWindowsDownloadUrl ? (
+                    <a
+                      className="ghost-button helper-link-button"
+                      href={helperWindowsDownloadUrl}
+                      download
+                      onClick={(event) => {
+                        event.stopPropagation();
+                      }}
+                    >
+                      Windows için indir
+                    </a>
+                  ) : (
+                    <button type="button" className="ghost-button" disabled>
+                      Windows yakında
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void refreshBackendHealth();
+                    }}
+                  >
+                    Tekrar Dene
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      ) : null}
 
       {track ? (
-        <section className="workspace-shell">
+        <section ref={workspaceRef} className="workspace-shell">
           <div className="workspace-toolbar">
             <div className="workspace-toolbar-copy">
               <h2>Track hazır, stem separation başlat.</h2>
