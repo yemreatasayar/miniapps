@@ -267,22 +267,24 @@ export default function DistributionApp() {
           <a className="distribution-link-button" href={manifestoUrl}>
             {copy.manifestoLabel}
           </a>
-          <button
-            type="button"
-            className={`language-switch-button ${shellLanguage === "tr" ? "is-active" : ""}`}
-            onClick={() => setShellLanguage("tr")}
-            aria-pressed={shellLanguage === "tr"}
-          >
-            TR
-          </button>
-          <button
-            type="button"
-            className={`language-switch-button ${shellLanguage === "en" ? "is-active" : ""}`}
-            onClick={() => setShellLanguage("en")}
-            aria-pressed={shellLanguage === "en"}
-          >
-            ENG
-          </button>
+          <div className="distribution-language-group">
+            <button
+              type="button"
+              className={`language-switch-button ${shellLanguage === "tr" ? "is-active" : ""}`}
+              onClick={() => setShellLanguage("tr")}
+              aria-pressed={shellLanguage === "tr"}
+            >
+              TR
+            </button>
+            <button
+              type="button"
+              className={`language-switch-button ${shellLanguage === "en" ? "is-active" : ""}`}
+              onClick={() => setShellLanguage("en")}
+              aria-pressed={shellLanguage === "en"}
+            >
+              ENG
+            </button>
+          </div>
         </div>
       </footer>
     </main>
