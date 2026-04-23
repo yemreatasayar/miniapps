@@ -1407,6 +1407,7 @@ function buildManifestoPageHtml(language) {
             "meta"
             "controls";
           padding: 18px 16px;
+          justify-items: center;
         }
 
         .manifesto-footer-meta {
@@ -1434,6 +1435,13 @@ function buildManifestoPageHtml(language) {
           display: flex;
           justify-content: center;
           align-items: center;
+          margin: 0 auto;
+          text-align: center;
+        }
+
+        .manifesto-footer-brand a {
+          margin: 0 auto;
+          width: fit-content;
         }
 
         .manifesto-language-group {
