@@ -61,19 +61,18 @@ const manifestoContent = {
     homeLabel: "Ana Sayfa",
     sections: [
       {
-        heading: "miniapps hakkında",
+        heading: "miniapps nedir?",
         paragraphs: [
-          "miniapps, küçük ama zaman kazandıran işleri hızlıca çözmek için oluşturulmuş tarayıcı tabanlı araçlar bütünüdür.",
-          "Bu araçlar mümkün olduğunca basit tutulur ve doğrudan ihtiyaca yönelik çalışır. Amaç, kullanıcıyı yeni bir platforma alıştırmak değil; ihtiyacı olan işi en kısa sürede halledebilmesini sağlamaktır.",
-          "Çoğu miniapp, herhangi bir kurulum gerektirmeden çalışır ve mümkün olan durumlarda işlemler doğrudan kullanıcının kendi cihazında gerçekleştirilir.",
+          "miniapps, küçük ama zaman kaybettiren işleri hızlıca çözmek için oluşturulmuş tarayıcı tabanlı mini uygulamalardır. Tek platformda birleşen bu uygulamalar, genel kullanım için gereken temel özelliklere sahiptir ve tamamen ücretsiz erişilebilir.",
+          "Çoğu miniapp, herhangi bir kurulum gerektirmeden çalışır ve mümkün olan durumlarda işlemler doğrudan kullanıcının kendi cihazında gerçekleştirilir. Belge ve verileriniz cihazınızda işlendiği için hem gizli kalır hem de işlem süresi kısalır.",
         ],
       },
       {
-        heading: "neden böyle bir yapı?",
+        heading: "neden var?",
         paragraphs: [
           "Bugün son derece basit işler için bile hesap açmak, veri yüklemek, farklı ekranlar arasında kaybolmak ve çoğu zaman ücret ödemek sıradan hale gelmiş durumda.",
-          "Oysa teknolojinin, hayatın birçok alanını daha erişilebilir kılması; verimliliği artırırken kullanıcıyı gereksiz yüklerden kurtarması beklenir.",
-          "miniapps tam da bu nedenle ortaya çıktı. Yalnızca ihtiyaca odaklanan, gereksiz katmanları ortadan kaldıran ve basit problemleri basit yöntemlerle çözen bir anlayış.",
+          "Oysa teknolojinin, hayatın birçok alanını daha erişilebilir kılması ve verimliliği artırırken kullanıcıyı gereksiz yüklerden kurtarması beklenir. Ancak internetteki pek çok uygulama bunun tam tersi çalışır; hem yavaştır hem de sizden ücret talep eder.",
+          "Yalnızca ihtiyaca odaklanan, yapılması artık çok kolay olan uygulamalara ücret istemeyen ve gizliliğinizi garanti altına almaya çalışan miniapps işte bu nedenle ortaya çıktı.",
         ],
       },
       {
@@ -81,23 +80,23 @@ const manifestoContent = {
         principles: [
           {
             title: "gizlilik",
-            body: "Kullanıcı verisi toplamamak ve mümkün olan durumlarda işlemleri cihaz üzerinde gerçekleştirmek önceliklidir.",
+            body: "Kullanıcı verisi toplamamak ve mümkün olan her durumda işlemleri cihaz üzerinde gerçekleştirmek önceliğimiz.",
           },
           {
             title: "hız",
-            body: "Uygulamalar hızlı açılmalı ve kullanıcıyı bekletmeden işi bitirmelidir.",
+            body: "Uygulamaların hızlı açılması ve kullanıcıyı bekletmeden işi bitirmesi asıl hedefimiz.",
           },
           {
             title: "açıklık",
-            body: "Her araç ne yaptığı açık olan, sade ve anlaşılır bir yapıya sahip olmalıdır.",
+            body: "miniapps'teki her uygulamanın sade ve anlaşılır olması en büyük arzumuz.",
           },
           {
             title: "küçük araçlar",
-            body: "Amaç büyük ve karmaşık bir platform kurmak değil, tek işi iyi yapan küçük araçlar üretmektir.",
+            body: "Büyük ve karmaşık bir platform kurmak yerine, tek bir işe odaklanan küçük uygulamalar üretmek felsefemiz.",
           },
           {
             title: "local-first yaklaşım",
-            body: "Mümkün olan her durumda işlem gücü olarak kullanıcının kendi cihazı tercih edilir.",
+            body: "Mümkün olan her durumda işlem gücü olarak kullanıcının kendi cihazını tercih etmek en büyük avantajımız.",
           },
         ],
       },
@@ -105,15 +104,16 @@ const manifestoContent = {
         heading: "ne değil?",
         listIntro: "miniapps:",
         listItems: [
-          "ücretli ve karmaşık bir platform değildir.",
-          "kullanıcı verisi üzerine kurulu bir sistem değildir.",
-          "gereksiz özelliklerle büyütülmüş bir ürün değildir.",
+          "ücretli ve karmaşık bir platform değil.",
+          "kullanıcı verisi üzerine kurulu bir sistem değil.",
+          "gereksiz özelliklerle büyütülmüş bir ürün değil.",
+          "onlarca özelliği bir uygulamaya eklediğimiz süslü araçlar değil.",
         ],
       },
       {
         heading: "gelecek",
         paragraphs: [
-          "miniapps zamanla yeni araçlarla genişleyecek ancak temel yaklaşım değişmeyecek: Basit işler, basit araçlarla çözülmeli.",
+          "miniapps zamanla yeni araçlarla genişleyecek ancak **küçük fakat zaman kaybettiren işleri çözen pratik bir yardımcı olmaya devam edecek.**",
         ],
       },
     ],
@@ -124,19 +124,19 @@ const manifestoContent = {
     homeLabel: "Home",
     sections: [
       {
-        heading: "about miniapps",
+        heading: "what is miniapps?",
         paragraphs: [
-          "miniapps is a collection of browser-based tools designed to quickly solve small but time-consuming tasks.",
-          "These tools are kept as simple as possible and built around direct needs. The goal is not to make users adapt to a new platform, but to help them complete what they need in the shortest possible time.",
-          "Most miniapps work without any installation, and whenever possible, all processes are handled directly on the user’s own device.",
+          "miniapps are browser-based mini applications designed to quickly solve small but time-consuming tasks.",
+          "These tools come together in a single place, offering the essential features needed for everyday use and they are completely free to access.",
+          "Most miniapps work without any installation, and whenever possible, all processes run directly on the user’s own device. Since your documents and data are handled locally, they remain private while also reducing processing time.",
         ],
       },
       {
-        heading: "why this approach?",
+        heading: "why does it exist?",
         paragraphs: [
           "Today, even the simplest tasks often require creating an account, uploading data, navigating through multiple screens, and in many cases, paying for access.",
-          "However, technology was expected to make everyday processes more accessible, increase efficiency, and eliminate unnecessary friction.",
-          "miniapps exists for this reason: to focus only on real needs, strip away unnecessary layers, and solve simple problems with simple solutions.",
+          "Yet technology is supposed to make things more accessible, improving efficiency while removing unnecessary friction. Instead, many tools on the internet do the opposite: they are slow and often come with a price tag.",
+          "miniapps was created for this reason to focus only on real needs, offer tools that are already simple to build and use without charging for them, and to protect your privacy whenever possible.",
         ],
       },
       {
@@ -144,23 +144,23 @@ const manifestoContent = {
         principles: [
           {
             title: "privacy",
-            body: "Not collecting user data and performing tasks on the user’s device whenever possible is a priority.",
+            body: "Not collecting user data and performing tasks on the user’s device whenever possible is our priority.",
           },
           {
             title: "speed",
-            body: "Applications should load quickly and allow users to complete their tasks without waiting.",
+            body: "Our goal is to make sure applications load quickly and allow users to complete their tasks without delay.",
           },
           {
             title: "clarity",
-            body: "Each tool should be simple, understandable, and clearly communicate what it does.",
+            body: "We aim for every miniapp to be simple, clear, and easy to understand.",
           },
           {
             title: "small tools",
-            body: "The goal is not to build a large and complex platform, but to create small tools that do one thing well.",
+            body: "Instead of building a large and complex platform, our philosophy is to create small tools that focus on doing one thing well.",
           },
           {
             title: "local-first approach",
-            body: "Whenever possible, processing is handled on the user’s own device.",
+            body: "Whenever possible, processing is handled on the user’s own device and this is one of our biggest advantages.",
           },
         ],
       },
@@ -170,18 +170,23 @@ const manifestoContent = {
         listItems: [
           "a paid and complex platform",
           "a system built on user data",
-          "a product inflated with unnecessary features",
+          "a product overloaded with unnecessary features",
+          "a collection of bloated tools trying to do everything at once",
         ],
       },
       {
         heading: "future",
         paragraphs: [
-          "miniapps will expand over time with new tools. However, its core approach will remain the same: Simple tasks should be solved with simple tools.",
+          "miniapps will continue to grow with new tools over time. However, **it will remain a simple, practical helper focused on solving small but time-consuming tasks.**",
         ],
       },
     ],
   },
 };
+
+function renderManifestoInline(text) {
+  return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
 
 const enLocalizationReplacements = new Map([
   [
@@ -1112,14 +1117,14 @@ function buildManifestoPageHtml(language) {
   const sectionsMarkup = copy.sections
     .map((section) => {
       const paragraphsMarkup = (section.paragraphs ?? [])
-        .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
+        .map((paragraph) => `<p>${renderManifestoInline(paragraph)}</p>`)
         .join("\n");
 
       const principlesMarkup = (section.principles ?? [])
         .map(
           (item) => `<div class="manifesto-principle">
                 <h3>${escapeHtml(item.title)}</h3>
-                <p>${escapeHtml(item.body)}</p>
+                <p>${renderManifestoInline(item.body)}</p>
               </div>`
         )
         .join("\n");
@@ -1127,9 +1132,9 @@ function buildManifestoPageHtml(language) {
       const listMarkup =
         section.listItems && section.listItems.length
           ? `<div class="manifesto-list-block">
-              ${section.listIntro ? `<p class="manifesto-list-intro">${escapeHtml(section.listIntro)}</p>` : ""}
+              ${section.listIntro ? `<p class="manifesto-list-intro">${renderManifestoInline(section.listIntro)}</p>` : ""}
               <ul class="manifesto-list">
-                ${section.listItems.map((item) => `<li>${escapeHtml(item)}</li>`).join("\n")}
+                ${section.listItems.map((item) => `<li>${renderManifestoInline(item)}</li>`).join("\n")}
               </ul>
             </div>`
           : "";
