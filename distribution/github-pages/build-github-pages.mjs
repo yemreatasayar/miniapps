@@ -1299,11 +1299,17 @@ function buildManifestoPageHtml(language) {
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .manifesto-language-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         padding: 6px;
         border-radius: 999px;
         background: #232323;
-        flex-wrap: wrap;
-        justify-content: center;
       }
 
       .manifesto-footer-link,
@@ -1322,6 +1328,7 @@ function buildManifestoPageHtml(language) {
       }
 
       .manifesto-footer-link {
+        background: #232323;
         color: rgba(255, 255, 255, 0.84);
       }
 
@@ -1333,7 +1340,7 @@ function buildManifestoPageHtml(language) {
       .manifesto-language-link:hover,
       .manifesto-footer-link:focus-visible,
       .manifesto-language-link:focus-visible {
-        background: rgba(255, 255, 255, 0.08);
+        background: #2f2f2f;
         color: #ffffff;
         transform: translateY(-1px);
       }
@@ -1397,20 +1404,34 @@ function buildManifestoPageHtml(language) {
         }
 
         .manifesto-footer-meta {
-          justify-items: start;
-          text-align: left;
+          justify-items: center;
+          text-align: center;
         }
 
         .manifesto-footer-controls {
-          justify-self: stretch;
+          justify-self: center;
+          width: auto;
+          max-width: 100%;
         }
 
         .manifesto-footer-link {
-          flex: 1 1 100%;
+          min-width: 132px;
         }
 
         .manifesto-language-link {
-          flex: 1 1 0;
+          min-width: 84px;
+        }
+
+        .manifesto-footer-brand {
+          justify-self: center;
+          width: 100%;
+          display: flex;
+          justify-content: center;
+        }
+
+        .manifesto-language-group {
+          width: auto;
+          max-width: 100%;
         }
       }
     </style>
@@ -1433,8 +1454,10 @@ function buildManifestoPageHtml(language) {
       </div>
       <div class="manifesto-footer-controls">
         <a class="manifesto-footer-link" href="./">${escapeHtml(copy.homeLabel)}</a>
-        <a class="manifesto-language-link ${language === "tr" ? "is-active" : ""}" href="${trHref}">TR</a>
-        <a class="manifesto-language-link ${language === "en" ? "is-active" : ""}" href="${enHref}">ENG</a>
+        <div class="manifesto-language-group">
+          <a class="manifesto-language-link ${language === "tr" ? "is-active" : ""}" href="${trHref}">TR</a>
+          <a class="manifesto-language-link ${language === "en" ? "is-active" : ""}" href="${enHref}">ENG</a>
+        </div>
       </div>
     </footer>
   </body>

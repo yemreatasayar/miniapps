@@ -877,6 +877,8 @@ button {
 
   .distribution-brand {
     justify-self: center;
+    justify-content: center;
+    width: 100%;
   }
 
   .distribution-version {
