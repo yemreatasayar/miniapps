@@ -1273,6 +1273,12 @@ function buildManifestoPageHtml(language) {
         display: block;
       }
 
+      .manifesto-footer-brand a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
       .manifesto-footer-meta {
         display: grid;
         justify-items: center;
@@ -1427,6 +1433,7 @@ function buildManifestoPageHtml(language) {
           width: 100%;
           display: flex;
           justify-content: center;
+          align-items: center;
         }
 
         .manifesto-language-group {
