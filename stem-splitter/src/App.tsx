@@ -385,12 +385,6 @@ export default function App() {
               <strong>{helperViewState.title}</strong>
               <p>{helperViewState.description}</p>
               {helperViewState.detail ? <p className="status-note">{helperViewState.detail}</p> : null}
-              {backendHealth?.install.allowedOrigins?.length ? (
-                <div className="helper-origin-list">
-                  <span>İzinli origin'ler</span>
-                  <strong>{backendHealth.install.allowedOrigins.join(" • ")}</strong>
-                </div>
-              ) : null}
               <div className="helper-actions">
                 {helperMacDownloadUrl ? (
                   <a
