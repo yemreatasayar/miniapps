@@ -132,6 +132,28 @@ button {
   background: #232323;
 }
 
+.distribution-link-button {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.84);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.distribution-link-button:hover,
+.distribution-link-button:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
 .language-switch-button {
   min-width: 68px;
   min-height: 40px;
@@ -722,6 +744,7 @@ button {
     justify-self: stretch;
     width: 100%;
     justify-content: center;
+    flex-wrap: wrap;
   }
 
   .distribution-workspace .app-grid {
@@ -857,10 +880,15 @@ button {
 
   .distribution-controls {
     justify-self: stretch;
+    flex-wrap: wrap;
   }
 
   .language-switch-button {
     flex: 1 1 0;
+  }
+
+  .distribution-link-button {
+    flex: 1 1 100%;
   }
 
   .distribution-workspace .app-grid {

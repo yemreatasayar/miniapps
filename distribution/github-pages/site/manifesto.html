@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#060606" />
+    <link rel="icon" type="image/svg+xml" href="./assets/miniapps-icon.svg" />
+    <title>miniapps manifesto</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W21Y6X5KBH"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-W21Y6X5KBH');
+    </script>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Montserrat", "Inter", system-ui, sans-serif;
+        color: #111111;
+        background: #efefef;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top, rgba(0, 0, 0, 0.06), transparent 28%),
+          linear-gradient(180deg, #f3f3f3 0%, #ececec 100%);
+        color: #111111;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .manifesto-shell {
+        min-height: 100vh;
+        padding: 30px 28px 140px;
+      }
+
+      .manifesto-card {
+        width: min(100%, 940px);
+        margin: 0 auto;
+        border-radius: 36px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(17, 17, 17, 0.06);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.08);
+        padding: 44px;
+      }
+
+      .manifesto-header {
+        display: grid;
+        justify-items: center;
+        gap: 22px;
+        text-align: center;
+        margin-bottom: 34px;
+      }
+
+      .manifesto-header h1 {
+        margin: 0;
+        font-size: clamp(40px, 9vw, 84px);
+        line-height: 0.92;
+        letter-spacing: -0.06em;
+        text-transform: lowercase;
+      }
+
+      .manifesto-logo {
+        width: min(100%, 260px);
+        height: auto;
+        display: block;
+      }
+
+      .manifesto-section + .manifesto-section {
+        margin-top: 34px;
+        padding-top: 34px;
+        border-top: 1px solid rgba(17, 17, 17, 0.08);
+      }
+
+      .manifesto-section h2 {
+        margin: 0 0 16px;
+        font-size: clamp(24px, 5vw, 34px);
+        line-height: 1;
+        letter-spacing: -0.05em;
+        text-transform: lowercase;
+      }
+
+      .manifesto-section p,
+      .manifesto-list li {
+        margin: 0;
+        color: #333333;
+        font-size: 18px;
+        line-height: 1.75;
+      }
+
+      .manifesto-section p + p {
+        margin-top: 14px;
+      }
+
+      .manifesto-principles {
+        display: grid;
+        gap: 18px;
+      }
+
+      .manifesto-principle h3 {
+        margin: 0 0 6px;
+        font-size: 20px;
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        text-transform: lowercase;
+      }
+
+      .manifesto-list-block {
+        display: grid;
+        gap: 12px;
+      }
+
+      .manifesto-list-intro {
+        font-weight: 700;
+        color: #111111;
+      }
+
+      .manifesto-list {
+        margin: 0;
+        padding-left: 24px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .manifesto-footer {
+        display: grid;
+        grid-template-columns: minmax(180px, 240px) 1fr auto;
+        align-items: center;
+        gap: 20px;
+        padding: 20px 28px;
+        background: #060606;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        min-height: 104px;
+      }
+
+      .manifesto-footer-brand img {
+        width: min(100%, 176px);
+        height: auto;
+        display: block;
+      }
+
+      .manifesto-footer-meta {
+        display: grid;
+        justify-items: center;
+        gap: 2px;
+        color: rgba(255, 255, 255, 0.72);
+        text-align: center;
+      }
+
+      .manifesto-footer-meta span {
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+
+      .manifesto-footer-meta a {
+        color: rgba(255, 255, 255, 0.56);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .manifesto-footer-controls {
+        justify-self: end;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px;
+        border-radius: 999px;
+        background: #232323;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .manifesto-footer-link,
+      .manifesto-language-link {
+        min-height: 40px;
+        padding: 0 16px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        text-decoration: none;
+        transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+      }
+
+      .manifesto-footer-link {
+        color: rgba(255, 255, 255, 0.84);
+      }
+
+      .manifesto-language-link {
+        color: rgba(255, 255, 255, 0.68);
+      }
+
+      .manifesto-footer-link:hover,
+      .manifesto-language-link:hover,
+      .manifesto-footer-link:focus-visible,
+      .manifesto-language-link:focus-visible {
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        transform: translateY(-1px);
+      }
+
+      .manifesto-language-link.is-active {
+        background: #f5f5f5;
+        color: #111111;
+      }
+
+      @media (max-width: 980px) {
+        .manifesto-footer {
+          grid-template-columns: 1fr auto;
+          grid-template-areas:
+            "brand meta"
+            "controls controls";
+          gap: 14px 18px;
+          padding: 18px 20px;
+        }
+
+        .manifesto-footer-brand {
+          grid-area: brand;
+        }
+
+        .manifesto-footer-meta {
+          grid-area: meta;
+          justify-items: end;
+          text-align: right;
+        }
+
+        .manifesto-footer-controls {
+          grid-area: controls;
+          justify-self: stretch;
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .manifesto-shell {
+          padding: 20px 16px 168px;
+        }
+
+        .manifesto-card {
+          padding: 30px 22px;
+          border-radius: 28px;
+        }
+
+        .manifesto-section p,
+        .manifesto-list li {
+          font-size: 16px;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .manifesto-footer {
+          grid-template-columns: 1fr;
+          grid-template-areas:
+            "brand"
+            "meta"
+            "controls";
+          padding: 18px 16px;
+        }
+
+        .manifesto-footer-meta {
+          justify-items: start;
+          text-align: left;
+        }
+
+        .manifesto-footer-controls {
+          justify-self: stretch;
+        }
+
+        .manifesto-footer-link {
+          flex: 1 1 100%;
+        }
+
+        .manifesto-language-link {
+          flex: 1 1 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="manifesto-shell">
+      <article class="manifesto-card">
+        <header class="manifesto-header">
+          <h1>manifesto</h1>
+          <img class="manifesto-logo" src="./assets/miniapps-logo.svg" alt="miniapps" />
+        </header>
+        <section class="manifesto-section">
+            <h2>miniapps hakkında</h2>
+            <p>miniapps, küçük ama zaman kazandıran işleri hızlıca çözmek için oluşturulmuş tarayıcı tabanlı araçlar bütünüdür.</p>
+<p>Bu araçlar mümkün olduğunca basit tutulur ve doğrudan ihtiyaca yönelik çalışır. Amaç, kullanıcıyı yeni bir platforma alıştırmak değil; ihtiyacı olan işi en kısa sürede halledebilmesini sağlamaktır.</p>
+<p>Çoğu miniapp, herhangi bir kurulum gerektirmeden çalışır ve mümkün olan durumlarda işlemler doğrudan kullanıcının kendi cihazında gerçekleştirilir.</p>
+            
+            
+          </section>
+<section class="manifesto-section">
+            <h2>neden böyle bir yapı?</h2>
+            <p>Bugün son derece basit işler için bile hesap açmak, veri yüklemek, farklı ekranlar arasında kaybolmak ve çoğu zaman ücret ödemek sıradan hale gelmiş durumda.</p>
+<p>Oysa teknolojinin, hayatın birçok alanını daha erişilebilir kılması; verimliliği artırırken kullanıcıyı gereksiz yüklerden kurtarması beklenir.</p>
+<p>miniapps tam da bu nedenle ortaya çıktı. Yalnızca ihtiyaca odaklanan, gereksiz katmanları ortadan kaldıran ve basit problemleri basit yöntemlerle çözen bir anlayış.</p>
+            
+            
+          </section>
+<section class="manifesto-section">
+            <h2>temel prensipler</h2>
+            
+            <div class="manifesto-principles"><div class="manifesto-principle">
+                <h3>gizlilik</h3>
+                <p>Kullanıcı verisi toplamamak ve mümkün olan durumlarda işlemleri cihaz üzerinde gerçekleştirmek önceliklidir.</p>
+              </div>
+<div class="manifesto-principle">
+                <h3>hız</h3>
+                <p>Uygulamalar hızlı açılmalı ve kullanıcıyı bekletmeden işi bitirmelidir.</p>
+              </div>
+<div class="manifesto-principle">
+                <h3>açıklık</h3>
+                <p>Her araç ne yaptığı açık olan, sade ve anlaşılır bir yapıya sahip olmalıdır.</p>
+              </div>
+<div class="manifesto-principle">
+                <h3>küçük araçlar</h3>
+                <p>Amaç büyük ve karmaşık bir platform kurmak değil, tek işi iyi yapan küçük araçlar üretmektir.</p>
+              </div>
+<div class="manifesto-principle">
+                <h3>local-first yaklaşım</h3>
+                <p>Mümkün olan her durumda işlem gücü olarak kullanıcının kendi cihazı tercih edilir.</p>
+              </div></div>
+            
+          </section>
+<section class="manifesto-section">
+            <h2>ne değil?</h2>
+            
+            
+            <div class="manifesto-list-block">
+              <p class="manifesto-list-intro">miniapps:</p>
+              <ul class="manifesto-list">
+                <li>ücretli ve karmaşık bir platform değildir.</li>
+<li>kullanıcı verisi üzerine kurulu bir sistem değildir.</li>
+<li>gereksiz özelliklerle büyütülmüş bir ürün değildir.</li>
+              </ul>
+            </div>
+          </section>
+<section class="manifesto-section">
+            <h2>gelecek</h2>
+            <p>miniapps zamanla yeni araçlarla genişleyecek ancak temel yaklaşım değişmeyecek: Basit işler, basit araçlarla çözülmeli.</p>
+            
+            
+          </section>
+      </article>
+    </main>
+    <footer class="manifesto-footer">
+      <div class="manifesto-footer-brand">
+        <a href="./">
+          <img src="./assets/miniapps-logo.svg" alt="miniapps" />
+        </a>
+      </div>
+      <div class="manifesto-footer-meta">
+        <span>miniapps pack 2026.1</span>
+        <a href="https://www.behance.net/yemreatasayar" target="_blank" rel="noreferrer">by y.e.a.</a>
+      </div>
+      <div class="manifesto-footer-controls">
+        <a class="manifesto-footer-link" href="./">Ana Sayfa</a>
+        <a class="manifesto-language-link is-active" href="./manifesto.html">TR</a>
+        <a class="manifesto-language-link " href="./manifesto-en.html">ENG</a>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -45,12 +45,14 @@ const shellCopy = {
   tr: {
     appOpenSuffix: "uygulamasını yeni sekmede aç",
     languageLabel: "Dil",
+    manifestoLabel: "Manifesto",
   },
   en: {
     appOpenSuffix: "app in a new tab",
     languageLabel: "Language",
+    manifestoLabel: "Manifesto",
   },
-} satisfies Record<ShellLanguage, { appOpenSuffix: string; languageLabel: string }>;
+} satisfies Record<ShellLanguage, { appOpenSuffix: string; languageLabel: string; manifestoLabel: string }>;
 
 function readStoredValue<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -156,6 +158,7 @@ export default function DistributionApp() {
     [distributionConfig]
   );
   const distributionAuthorLine = distributionConfig?.authorLabel ?? DEFAULT_AUTHOR_LABEL;
+  const manifestoUrl = shellLanguage === "en" ? "./manifesto-en.html" : "./manifesto.html";
 
   useEffect(() => {
     let cancelled = false;
@@ -261,6 +264,9 @@ export default function DistributionApp() {
           </a>
         </div>
         <div className="distribution-controls" aria-label={copy.languageLabel}>
+          <a className="distribution-link-button" href={manifestoUrl}>
+            {copy.manifestoLabel}
+          </a>
           <button
             type="button"
             className={`language-switch-button ${shellLanguage === "tr" ? "is-active" : ""}`}
