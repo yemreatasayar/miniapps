@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@jspawn/ghostscript-wasm": "^0.0.2",
     "docx": "^9.6.1",
     "fflate": "^0.8.2",
     "pdf-lib": "^1.17.1",

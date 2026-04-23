@@ -10,8 +10,6 @@ import WatermarkPanel from "./components/WatermarkPanel";
 import {
   checkCompressAvailable,
   compressPdf,
-  getPdfHelperDisabledMessage,
-  isPdfHelperDisabled,
   repairPdf,
 } from "./lib/compress-client";
 import {
@@ -124,15 +122,6 @@ export default function App() {
   const mergeInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (isPdfHelperDisabled()) {
-      setCompressAvailable(false);
-      setCompressStatus({
-        kind: "web-disabled",
-        message: getPdfHelperDisabledMessage(),
-      });
-      return;
-    }
-
     checkCompressAvailable().then((available) => {
       setCompressAvailable(available);
       if (!available) {

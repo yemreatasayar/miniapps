@@ -18,5 +18,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ["pdfjs-dist"],
+    exclude: ["@jspawn/ghostscript-wasm"],
   },
+  assetsInclude: ["**/*.wasm"],
 });

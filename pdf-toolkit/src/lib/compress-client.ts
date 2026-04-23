@@ -9,10 +9,6 @@ export function isPdfHelperDisabled(): boolean {
   return PDF_HELPER_DISABLED;
 }
 
-export function getPdfHelperDisabledMessage(): string {
-  return "Web surumunde Compress ve Acrobat Repair kapali. Bu arac su an desktop/local helper ile calisiyor.";
-}
-
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   const copy = new Uint8Array(bytes.byteLength);
   copy.set(bytes);
@@ -21,7 +17,7 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
 
 export async function checkCompressAvailable(): Promise<boolean> {
   if (PDF_HELPER_DISABLED) {
-    return false;
+    return true;
   }
 
   try {
@@ -41,7 +37,8 @@ export async function repairPdf(
   fileName: string
 ): Promise<{ ok: true; bytes: Uint8Array; fileName: string } | { ok: false; message: string }> {
   if (PDF_HELPER_DISABLED) {
-    return { ok: false, message: getPdfHelperDisabledMessage() };
+    const { repairWithWasm } = await import("./compress-wasm");
+    return repairWithWasm(fileBytes, fileName);
   }
 
   try {
@@ -69,10 +66,8 @@ export async function compressPdf(
   preset: CompressPreset
 ): Promise<CompressStatus> {
   if (PDF_HELPER_DISABLED) {
-    return {
-      kind: "web-disabled",
-      message: getPdfHelperDisabledMessage(),
-    };
+    const { compressWithWasm } = await import("./compress-wasm");
+    return compressWithWasm(fileBytes, fileName, preset);
   }
 
   try {
