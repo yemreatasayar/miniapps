@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  ApiError,
   cancelSplitJob,
   cancelSplitJobOnUnload,
   fetchBackendHealth,
@@ -7,6 +8,7 @@ import {
   resolveDownloadUrl,
   startSplitJob,
 } from "./lib/api";
+import type { BackendHealth } from "./lib/api";
 import {
   AUDIO_INPUT_ACCEPT,
   formatBytes,
@@ -14,9 +16,16 @@ import {
   loadTrack,
 } from "./lib/audio";
 import type { LoadedTrack } from "./lib/audio";
-import type { BackendHealth } from "./lib/api";
 
 type Status = "idle" | "loading" | "ready" | "processing" | "done" | "error";
+
+type HelperViewState =
+  | {
+      kind: "checking" | "offline" | "issue" | "warmup" | "ready";
+      title: string;
+      description: string;
+      detail?: string;
+    };
 
 function getProgressLabel(progress: number): string {
   if (progress < 12) return "Model hazırlanıyor...";
@@ -25,8 +34,112 @@ function getProgressLabel(progress: number): string {
   return "Çıktılar hazırlanıyor...";
 }
 
+function formatApiError(error: unknown): string {
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Beklenmeyen bir hata oluştu.";
+}
+
+function getHelperViewState(backendHealth: BackendHealth | null, backendError: string): HelperViewState {
+  if (!backendHealth) {
+    if (backendError) {
+      return {
+        kind: "offline",
+        title: "Vocal Remover hazır değil",
+        description: "Bu araç local helper ile çalışır. Ses dosyan cihazında işlenir; server'a yüklenmez.",
+        detail: backendError,
+      };
+    }
+
+    return {
+      kind: "checking",
+      title: "Local helper kontrol ediliyor",
+      description: "Cihazındaki stem engine aranıyor. Bu işlem birkaç saniye sürebilir.",
+    };
+  }
+
+  if (!backendHealth.pythonInstalled) {
+    return {
+      kind: "issue",
+      title: "Python runtime hazır değil",
+      description: "Helper çalışıyor ama paketlenmiş veya yapılandırılmış Python runtime bulunamadı.",
+      detail: backendHealth.pythonBin,
+    };
+  }
+
+  if (!backendHealth.ffmpegInstalled) {
+    return {
+      kind: "issue",
+      title: "FFmpeg runtime hazır değil",
+      description: "Helper çalışıyor ama ses işleme için gereken ffmpeg binary'si bulunamadı.",
+      detail: backendHealth.ffmpegBin,
+    };
+  }
+
+  if (backendHealth.warmup.status === "error") {
+    return {
+      kind: "issue",
+      title: "Local helper çalışıyor ama hazır değil",
+      description: "Model warm-up tamamlanamadı. Runtime path'leri veya model kurulumu kontrol edilmeli.",
+      detail: backendHealth.warmup.message,
+    };
+  }
+
+  if (backendHealth.warmup.status === "pending" || backendHealth.warmup.status === "running") {
+    return {
+      kind: "warmup",
+      title: "Model hazırlanıyor",
+      description: "İlk açılışta helper modeli ısıtıyor. Bu sırada track seçebilirsin; split hazır olduğunda başlayacak.",
+      detail: backendHealth.warmup.message,
+    };
+  }
+
+  return {
+    kind: "ready",
+    title: "Local helper hazır",
+    description: "Dosyan cihazında kalır, split işlemi local helper üzerinden yürür.",
+    detail: backendHealth.warmup.message,
+  };
+}
+
+function getBackendBadgeLabel(helperViewState: HelperViewState): string {
+  switch (helperViewState.kind) {
+    case "ready":
+      return "Hazır";
+    case "warmup":
+      return "Isınıyor";
+    case "checking":
+      return "Aranıyor";
+    case "offline":
+      return "Yok";
+    case "issue":
+      return "Hata";
+  }
+}
+
+function getInstallLabel(backendHealth: BackendHealth | null): string {
+  if (!backendHealth) {
+    return "Kurulum tanısı bekleniyor";
+  }
+
+  const segments = [backendHealth.install.platform];
+  if (backendHealth.install.helperVersion) {
+    segments.push(`v${backendHealth.install.helperVersion}`);
+  }
+
+  return segments.join(" • ");
+}
+
 export default function App() {
   const logoUrl = `${import.meta.env.BASE_URL}assets/stem-splitter-logo.svg`;
+  const helperMacDownloadUrl = import.meta.env.VITE_STEM_SPLITTER_HELPER_MAC_URL || "";
+  const helperWindowsDownloadUrl = import.meta.env.VITE_STEM_SPLITTER_HELPER_WINDOWS_URL || "";
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [track, setTrack] = useState<LoadedTrack | null>(null);
   const [jobId, setJobId] = useState("");
@@ -34,20 +147,40 @@ export default function App() {
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState("");
   const [status, setStatus] = useState<Status>("idle");
-  const [error, setError] = useState("");
+  const [backendError, setBackendError] = useState("");
+  const [operationError, setOperationError] = useState("");
   const [backendHealth, setBackendHealth] = useState<BackendHealth | null>(null);
   const isBusy = status === "loading" || status === "processing";
+  const helperViewState = getHelperViewState(backendHealth, backendError);
+  const canChooseFile = (helperViewState.kind === "ready" || helperViewState.kind === "warmup") && !isBusy;
+  const canStartSplit = helperViewState.kind === "ready" && !isBusy && !!track;
+  const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
+
+  async function refreshBackendHealth() {
+    try {
+      const health = await fetchBackendHealth();
+      setBackendHealth(health);
+      setBackendError("");
+    } catch (error) {
+      setBackendHealth(null);
+      setBackendError(formatApiError(error));
+    }
+  }
 
   useEffect(() => {
     let active = true;
+
     const poll = () => {
       void fetchBackendHealth()
         .then((health) => {
           if (!active) return;
           setBackendHealth(health);
+          setBackendError("");
         })
-        .catch((nextError) => {
-          if (active) setError(nextError instanceof Error ? nextError.message : "Backend erişilemedi.");
+        .catch((error) => {
+          if (!active) return;
+          setBackendHealth(null);
+          setBackendError(formatApiError(error));
         });
     };
 
@@ -78,12 +211,12 @@ export default function App() {
           }
 
           if (job.status === "error") {
-            setError(job.error ?? "Stem separation başarısız oldu.");
+            setOperationError(job.error ?? "Stem separation başarısız oldu.");
             setStatus("error");
           }
         })
-        .catch((nextError) => {
-          setError(nextError instanceof Error ? nextError.message : "Job durumu alınamadı.");
+        .catch((error) => {
+          setOperationError(formatApiError(error));
           setStatus("error");
         });
     }, 1500);
@@ -110,7 +243,7 @@ export default function App() {
   async function handleFile(file: File) {
     try {
       setStatus("loading");
-      setError("");
+      setOperationError("");
       setDownloads(null);
       setJobId("");
       setProgress(0);
@@ -118,27 +251,32 @@ export default function App() {
       const loaded = await loadTrack(file);
       setTrack(loaded);
       setStatus("ready");
-    } catch (nextError) {
+    } catch (error) {
       setTrack(null);
       setStatus("error");
-      setError(nextError instanceof Error ? nextError.message : "Dosya yüklenemedi.");
+      setOperationError(formatApiError(error));
     }
   }
 
   async function handleSplit() {
     if (!track) return;
 
+    if (helperViewState.kind !== "ready") {
+      setOperationError("Stem separation başlatmak için local helper'ın hazır olması gerekiyor.");
+      return;
+    }
+
     try {
       setStatus("processing");
-      setError("");
+      setOperationError("");
       setDownloads(null);
       setProgress(2);
       setProgressMessage("Stem separation başlatıldı.");
       const nextJob = await startSplitJob(track.file);
       setJobId(nextJob.jobId);
-    } catch (nextError) {
+    } catch (error) {
       setStatus("error");
-      setError(nextError instanceof Error ? nextError.message : "Stem separation başlatılamadı.");
+      setOperationError(formatApiError(error));
     }
   }
 
@@ -151,7 +289,7 @@ export default function App() {
     setJobId("");
     setProgress(0);
     setProgressMessage("");
-    setError("");
+    setOperationError("");
     setStatus("idle");
   }
 
@@ -168,23 +306,37 @@ export default function App() {
             Yerel worker gerçek model tabanlı `Demucs` akışını kullanır. İlk kurulumdan sonra model warm-up ile hazır
             tutulur, split işlemi cihazında çalışır.
           </p>
+
+          <div className="helper-summary-card">
+            <span className={`helper-badge is-${helperViewState.kind}`}>{getBackendBadgeLabel(helperViewState)}</span>
+            <strong>{helperViewState.title}</strong>
+            <p>{helperViewState.description}</p>
+            <div className="helper-meta">
+              <span>{getInstallLabel(backendHealth)}</span>
+              {currentOrigin ? <span>{currentOrigin}</span> : null}
+            </div>
+          </div>
         </div>
 
         <div
-          className={`drop-zone ${isBusy ? "is-loading" : ""}`}
-          role="button"
-          tabIndex={0}
+          className={`drop-zone ${isBusy ? "is-loading" : ""} ${canChooseFile ? "" : "is-disabled"}`}
+          role={canChooseFile ? "button" : undefined}
+          tabIndex={canChooseFile ? 0 : -1}
           onClick={() => {
-            if (!isBusy) inputRef.current?.click();
+            if (canChooseFile) inputRef.current?.click();
           }}
           onKeyDown={(event) => {
-            if ((event.key === "Enter" || event.key === " ") && !isBusy) {
+            if ((event.key === "Enter" || event.key === " ") && canChooseFile) {
               event.preventDefault();
               inputRef.current?.click();
             }
           }}
-          onDragOver={(event) => event.preventDefault()}
+          onDragOver={(event) => {
+            if (!canChooseFile) return;
+            event.preventDefault();
+          }}
           onDrop={(event) => {
+            if (!canChooseFile) return;
             event.preventDefault();
             const file = event.dataTransfer.files?.[0];
             if (file) {
@@ -206,20 +358,85 @@ export default function App() {
             }}
           />
 
-          <div className="drop-zone-inner">
-            <strong>
+          {helperViewState.kind === "ready" || helperViewState.kind === "warmup" ? (
+            <div className="drop-zone-inner">
+              <strong>
                 {status === "loading"
                   ? "Track analiz ediliyor..."
                   : status === "processing"
                     ? "Stem separation çalışıyor..."
-                    : "Audio dosyasını bırak"}
-            </strong>
-            <p>MP3, WAV, M4A, AAC, OGG veya FLAC yükleyebilirsin.</p>
-            <div className="drop-zone-action">
-              <span className="primary-pill">Dosya Seç</span>
-              <span className="muted-copy">veya sürükle bırak</span>
+                    : helperViewState.kind === "warmup"
+                      ? "Model hazırlanıyor, track seçebilirsin"
+                      : "Audio dosyasını bırak"}
+              </strong>
+              <p>
+                {helperViewState.kind === "warmup"
+                  ? helperViewState.detail ?? helperViewState.description
+                  : "MP3, WAV, M4A, AAC, OGG veya FLAC yükleyebilirsin."}
+              </p>
+              <div className="drop-zone-action">
+                <span className="primary-pill">Dosya Seç</span>
+                <span className="muted-copy">{helperViewState.kind === "warmup" ? "helper hazır olunca split başlayabilir" : "veya sürükle bırak"}</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="helper-state">
+              <span className={`helper-badge is-${helperViewState.kind}`}>{getBackendBadgeLabel(helperViewState)}</span>
+              <strong>{helperViewState.title}</strong>
+              <p>{helperViewState.description}</p>
+              {helperViewState.detail ? <p className="status-note">{helperViewState.detail}</p> : null}
+              {backendHealth?.install.allowedOrigins?.length ? (
+                <div className="helper-origin-list">
+                  <span>İzinli origin'ler</span>
+                  <strong>{backendHealth.install.allowedOrigins.join(" • ")}</strong>
+                </div>
+              ) : null}
+              <div className="helper-actions">
+                {helperMacDownloadUrl ? (
+                  <a
+                    className="primary-button helper-link-button"
+                    href={helperMacDownloadUrl}
+                    download
+                    onClick={(event) => {
+                      event.stopPropagation();
+                    }}
+                  >
+                    macOS için indir
+                  </a>
+                ) : (
+                  <button type="button" className="primary-button" disabled>
+                    macOS paketi hazırlanıyor
+                  </button>
+                )}
+                {helperWindowsDownloadUrl ? (
+                  <a
+                    className="ghost-button helper-link-button"
+                    href={helperWindowsDownloadUrl}
+                    download
+                    onClick={(event) => {
+                      event.stopPropagation();
+                    }}
+                  >
+                    Windows için indir
+                  </a>
+                ) : (
+                  <button type="button" className="ghost-button" disabled>
+                    Windows yakında
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void refreshBackendHealth();
+                  }}
+                >
+                  Tekrar Dene
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -247,7 +464,7 @@ export default function App() {
                   <span>kanal</span>
                 </span>
                 <span className="summary-pill">
-                  <strong>{backendHealth?.warmup.status === "ready" ? "Hazır" : "Bekliyor"}</strong>
+                  <strong>{getBackendBadgeLabel(helperViewState)}</strong>
                   <span>backend</span>
                 </span>
               </div>
@@ -261,9 +478,9 @@ export default function App() {
                 type="button"
                 className="primary-button"
                 onClick={() => void handleSplit()}
-                disabled={isBusy || !track}
+                disabled={!canStartSplit}
               >
-                {status === "processing" ? "Hazırlanıyor..." : "Stem Ayır"}
+                {status === "processing" ? "Hazırlanıyor..." : helperViewState.kind === "warmup" ? "Warm-up Bekleniyor" : "Stem Ayır"}
               </button>
             </div>
           </div>
@@ -275,7 +492,7 @@ export default function App() {
                   <span className="progress-kicker">İşleniyor</span>
                   <strong>{Math.round(progress)}% tamamlandı</strong>
                 </div>
-                <span className="progress-label">{getProgressLabel(progress)}</span>
+                <span className="progress-label">{progressMessage || getProgressLabel(progress)}</span>
               </div>
               <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}>
                 <span className="progress-fill" style={{ width: `${Math.max(6, Math.min(100, progress))}%` }} />
@@ -305,6 +522,14 @@ export default function App() {
                 <div>
                   <span>Engine</span>
                   <strong>{backendHealth?.model ?? "Demucs"}</strong>
+                </div>
+                <div>
+                  <span>Helper</span>
+                  <strong>{getInstallLabel(backendHealth)}</strong>
+                </div>
+                <div>
+                  <span>Warm-up</span>
+                  <strong>{backendHealth?.warmup.message ?? "Bekleniyor"}</strong>
                 </div>
               </div>
 
@@ -343,7 +568,7 @@ export default function App() {
                 </div>
               </div>
 
-              {error ? <p className="inline-note">{error}</p> : null}
+              {operationError ? <p className="inline-note">{operationError}</p> : null}
 
               <div className="action-row">
                 <button type="button" className="ghost-button" onClick={resetWorkspace}>

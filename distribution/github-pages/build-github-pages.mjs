@@ -38,9 +38,10 @@ const distributionConfig = {
     "bg-remover",
     "video-to-audio",
     "audio-editor",
+    "stem-splitter",
     "dev-toolkit",
   ],
-  hiddenAppIds: ["weekly-bulletin", "stem-splitter"],
+  hiddenAppIds: ["weekly-bulletin"],
   launchUrlOverrides: Object.fromEntries(apps.map((app) => [app.id, `./apps/${app.id}/`])),
 };
 
@@ -248,8 +249,8 @@ const enLocalizationReplacements = new Map([
       ['"Logoyu Kaldır"', '"Remove Logo"'],
       ['"Geçmiş Tasarımlar"', '"Saved Designs"'],
       ['"Geçmişi Temizle"', '"Clear History"'],
-      [‘"Henüz kayıt yok."’, ‘"No records yet."’],
-      [‘"Eski tasarımlarını bu alandan görebilirsin."’, ‘"You can view your past designs from this section."’],
+      ['"Henüz kayıt yok."', '"No records yet."'],
+      ['"Eski tasarımlarını bu alandan görebilirsin."', '"You can view your past designs from this section."'],
       ['"Aç"', '"Open"'],
       ['"Canlı Preview"', '"Live Preview"'],
       ['"İndir"', '"Download"'],
@@ -729,6 +730,12 @@ function runBuild(cwd, script, outDir) {
     VITE_MINIAPPS_DISABLE_PDF_HELPER: "true",
   };
 
+  if (path.basename(cwd) === "stem-splitter") {
+    env.VITE_STEM_SPLITTER_HELPER_MAC_URL =
+      process.env.VITE_STEM_SPLITTER_HELPER_MAC_URL ||
+      "https://github.com/yemreatasayar/miniapps/releases/latest/download/stem-helper-macos.zip";
+  }
+
   const result = spawnSync(npmCmd, ["run", script], {
     cwd,
     env,
@@ -892,6 +899,10 @@ function isAppRequest(url) {
   return APP_ENTRY_URLS.some((entryUrl) => url.pathname.startsWith(new URL(entryUrl, self.registration.scope).pathname));
 }
 
+function isExcludedRuntimeRequest(url) {
+  return url.pathname.includes("/downloads/");
+}
+
 async function cacheFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request, { ignoreSearch: false });
@@ -960,6 +971,10 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (!isSameOrigin(url) || url.pathname.endsWith("/service-worker.js")) {
+    return;
+  }
+
+  if (isExcludedRuntimeRequest(url)) {
     return;
   }
 
@@ -1121,6 +1136,7 @@ function buildEnglishAppCopies(siteRoot) {
   overlayLegacyEnglishBuilds(siteRoot);
 }
 
+
 rmSync(outputRoot, { recursive: true, force: true });
 mkdirSync(path.join(outputRoot, "apps"), { recursive: true });
 
@@ -1144,6 +1160,7 @@ const rootFiles = collectFiles(outputRoot)
   .filter(
     (relativePath) =>
       !relativePath.startsWith("apps/") &&
+      !relativePath.startsWith("downloads/") &&
       relativePath !== ".nojekyll" &&
       relativePath !== "manifest.webmanifest" &&
       relativePath !== "offline.html" &&

@@ -1,0 +1,10 @@
+{
+  "name": "stem-helper-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.22.1",
+    "multer": "^2.1.1"
+  }
+}

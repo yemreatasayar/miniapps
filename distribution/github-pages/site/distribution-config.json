@@ -12,11 +12,11 @@
     "bg-remover",
     "video-to-audio",
     "audio-editor",
+    "stem-splitter",
     "dev-toolkit"
   ],
   "hiddenAppIds": [
-    "weekly-bulletin",
-    "stem-splitter"
+    "weekly-bulletin"
   ],
   "launchUrlOverrides": {
     "pdf-toolkit": "./apps/pdf-toolkit/",

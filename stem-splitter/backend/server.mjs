@@ -1,18 +1,18 @@
 import { spawn, spawnSync } from "node:child_process";
 import crypto from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import express from "express";
 import multer from "multer";
 
 const app = express();
+const SERVER_DIR = path.dirname(fileURLToPath(import.meta.url));
 
-const PORT = 4195;
-const ROOT_DIR = path.resolve("/Users/yusufemreatasayar/miniapps/stem-splitter/backend");
-const TMP_DIR = path.join(ROOT_DIR, "tmp");
-const JOBS_DIR = path.join(TMP_DIR, "jobs");
-const MODEL_NAME = "htdemucs";
+const DEFAULT_HOST = "127.0.0.1";
+const DEFAULT_PORT = 4195;
+const DEFAULT_MODEL_NAME = "htdemucs";
 const MAX_FILE_BYTES = 200 * 1024 * 1024;
 const JOB_TTL_MS = 15 * 60 * 1000;
 const ALLOWED_MIME_TYPES = new Set([
@@ -30,7 +30,146 @@ const ALLOWED_MIME_TYPES = new Set([
   "audio/aiff",
 ]);
 const ALLOWED_EXTENSIONS = new Set([".mp3", ".wav", ".flac", ".aac", ".m4a", ".ogg", ".aif", ".aiff"]);
-const PYTHON_BIN = path.join(ROOT_DIR, ".venv", "bin", "python3");
+
+function getArgValue(name) {
+  const index = process.argv.indexOf(name);
+  if (index >= 0 && process.argv[index + 1]) {
+    return process.argv[index + 1];
+  }
+
+  const prefix = `${name}=`;
+  const match = process.argv.find((arg) => arg.startsWith(prefix));
+  return match ? match.slice(prefix.length) : null;
+}
+
+function resolveFrom(baseDir, value, { allowBareCommand = false } = {}) {
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  if (
+    allowBareCommand &&
+    !trimmed.startsWith(".") &&
+    !path.isAbsolute(trimmed) &&
+    !trimmed.includes("/") &&
+    !trimmed.includes("\\")
+  ) {
+    return trimmed;
+  }
+
+  return path.isAbsolute(trimmed) ? trimmed : path.resolve(baseDir, trimmed);
+}
+
+function parseInteger(value, fallback) {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function parseOriginList(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => parseOriginList(entry));
+  }
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  return value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function normalizeOrigin(origin) {
+  if (typeof origin !== "string" || !origin.trim()) {
+    return null;
+  }
+
+  try {
+    return new URL(origin).origin;
+  } catch {
+    return null;
+  }
+}
+
+function uniqueOrigins(origins) {
+  return [...new Set(origins.map((origin) => normalizeOrigin(origin)).filter(Boolean))];
+}
+
+function loadConfigFile(configPath) {
+  if (!existsSync(configPath)) {
+    return {};
+  }
+
+  const content = readFileSync(configPath, "utf8");
+  const parsed = JSON.parse(content);
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error(`Geçersiz helper config formatı: ${configPath}`);
+  }
+
+  return parsed;
+}
+
+function loadRuntimeConfig() {
+  const configOverride = getArgValue("--config") ?? process.env.MINIAPPS_STEM_HELPER_CONFIG;
+  const configPath = resolveFrom(process.cwd(), configOverride ?? path.join(SERVER_DIR, "helper-config.json")) ?? path.join(SERVER_DIR, "helper-config.json");
+  const fileConfig = loadConfigFile(configPath);
+  const configDir = path.dirname(configPath);
+  const baseDirSetting = process.env.MINIAPPS_STEM_HELPER_BASE_DIR ?? fileConfig.baseDir ?? ".";
+  const baseDir = resolveFrom(configDir, baseDirSetting) ?? configDir;
+
+  const allowedOrigins = uniqueOrigins([
+    ...parseOriginList(fileConfig.allowedOrigins),
+    ...parseOriginList(fileConfig.extraOrigins),
+    ...parseOriginList(process.env.MINIAPPS_STEM_HELPER_ALLOWED_ORIGINS),
+    ...parseOriginList(process.env.MINIAPPS_STEM_HELPER_EXTRA_ORIGINS),
+  ]);
+
+  const ffmpegBin =
+    resolveFrom(
+      baseDir,
+      process.env.MINIAPPS_STEM_HELPER_FFMPEG_BIN ?? fileConfig.ffmpegBin ?? "ffmpeg",
+      { allowBareCommand: true }
+    ) ?? "ffmpeg";
+  const ffprobeDefault =
+    typeof ffmpegBin === "string" && ffmpegBin.includes(path.sep)
+      ? path.join(path.dirname(ffmpegBin), process.platform === "win32" ? "ffprobe.exe" : "ffprobe")
+      : "ffprobe";
+
+  return {
+    configPath,
+    baseDir,
+    host: process.env.MINIAPPS_STEM_HELPER_HOST ?? fileConfig.host ?? DEFAULT_HOST,
+    port: parseInteger(process.env.MINIAPPS_STEM_HELPER_PORT ?? fileConfig.port, DEFAULT_PORT),
+    tmpDir:
+      resolveFrom(baseDir, process.env.MINIAPPS_STEM_HELPER_TMP_DIR ?? fileConfig.tmpDir ?? "./tmp") ??
+      path.join(baseDir, "tmp"),
+    pythonBin:
+      resolveFrom(baseDir, process.env.MINIAPPS_STEM_HELPER_PYTHON_BIN ?? fileConfig.pythonBin ?? "./.venv/bin/python3") ??
+      path.join(baseDir, ".venv", "bin", "python3"),
+    ffmpegBin,
+    ffprobeBin:
+      resolveFrom(baseDir, process.env.MINIAPPS_STEM_HELPER_FFPROBE_BIN ?? fileConfig.ffprobeBin ?? ffprobeDefault, {
+        allowBareCommand: true,
+      }) ?? ffprobeDefault,
+    modelName: process.env.MINIAPPS_STEM_HELPER_MODEL ?? fileConfig.modelName ?? DEFAULT_MODEL_NAME,
+    helperVersion: process.env.MINIAPPS_STEM_HELPER_VERSION ?? fileConfig.helperVersion ?? null,
+    helperPlatform: process.env.MINIAPPS_STEM_HELPER_PLATFORM ?? fileConfig.platform ?? `${process.platform}-${process.arch}`,
+    allowedOrigins,
+  };
+}
+
+const runtimeConfig = loadRuntimeConfig();
+const ROOT_DIR = runtimeConfig.baseDir;
+const TMP_DIR = runtimeConfig.tmpDir;
+const JOBS_DIR = path.join(TMP_DIR, "jobs");
+const MODEL_NAME = runtimeConfig.modelName;
+const PYTHON_BIN = runtimeConfig.pythonBin;
+const FFMPEG_BIN = runtimeConfig.ffmpegBin;
+const FFPROBE_BIN = runtimeConfig.ffprobeBin;
+const ALLOWED_ORIGINS = new Set(runtimeConfig.allowedOrigins);
 const DEMUCS_COMMAND = [
   "-m",
   "demucs",
@@ -43,6 +182,7 @@ const DEMUCS_COMMAND = [
   "-d",
   "cpu",
 ];
+const DEMUCS_ENV = createDemucsEnv();
 
 /** @type {Map<string, any>} */
 const jobs = new Map();
@@ -69,8 +209,20 @@ function hasActiveProcessingJob() {
   return Array.from(jobs.values()).some((job) => job.status === "processing");
 }
 
-function setCors(response) {
-  response.setHeader("Access-Control-Allow-Origin", "http://localhost:4194");
+function getAllowedOrigin(origin) {
+  const normalized = normalizeOrigin(origin);
+  if (!normalized) return null;
+  return ALLOWED_ORIGINS.has(normalized) ? normalized : null;
+}
+
+function setCors(response, origin) {
+  response.setHeader("Vary", "Origin");
+
+  if (!origin) {
+    return;
+  }
+
+  response.setHeader("Access-Control-Allow-Origin", origin);
   response.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
@@ -121,11 +273,48 @@ function scheduleCleanup(jobId, delay = JOB_TTL_MS) {
   }, delay);
 }
 
+function createDemucsEnv() {
+  const env = { ...process.env };
+  const ffmpegDir =
+    typeof FFMPEG_BIN === "string" && FFMPEG_BIN.includes(path.sep) ? path.dirname(FFMPEG_BIN) : null;
+
+  if (ffmpegDir) {
+    const currentPath = env.PATH ?? "";
+    const segments = currentPath.split(path.delimiter).filter(Boolean);
+
+    if (!segments.includes(ffmpegDir)) {
+      env.PATH = [ffmpegDir, ...segments].join(path.delimiter);
+    }
+  }
+
+  // Demucs probes ffmpeg from the child process environment, so keep the
+  // packaged binary visible even under LaunchAgent's minimal PATH.
+  env.FFMPEG_BINARY = FFMPEG_BIN;
+  env.FFPROBE_BINARY = FFPROBE_BIN;
+  return env;
+}
+
+function probeCommand(command, args) {
+  const result = spawnSync(command, args, {
+    encoding: "utf8",
+    shell: false,
+    timeout: 5_000,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  return {
+    ok: result.status === 0,
+    stdout: result.stdout ?? "",
+    stderr: result.stderr ?? "",
+  };
+}
+
 function startDemucs(args, options = {}) {
   const process = spawn(PYTHON_BIN, [...DEMUCS_COMMAND, ...args], {
     cwd: ROOT_DIR,
     stdio: ["ignore", "pipe", "pipe"],
     shell: false,
+    env: DEMUCS_ENV,
     ...options,
   });
 
@@ -188,15 +377,18 @@ function runDemucs(args, options = {}) {
   return promise;
 }
 
+function isPythonInstalled() {
+  return probeCommand(PYTHON_BIN, ["--version"]).ok;
+}
+
 function isFfmpegInstalled() {
-  const check = spawnSync("ffmpeg", ["-version"], { stdio: "ignore", shell: false });
-  return check.status === 0;
+  return probeCommand(FFMPEG_BIN, ["-version"]).ok && probeCommand(FFPROBE_BIN, ["-version"]).ok;
 }
 
 function generateWarmupTone(outputFile) {
   return new Promise((resolve, reject) => {
     const process = spawn(
-      "ffmpeg",
+      FFMPEG_BIN,
       [
         "-y",
         "-f",
@@ -253,8 +445,21 @@ async function warmupModel() {
 }
 
 app.use((request, response, next) => {
-  setCors(response);
+  const requestOrigin = Array.isArray(request.headers.origin) ? request.headers.origin[0] : request.headers.origin;
+  const allowedOrigin = getAllowedOrigin(requestOrigin);
+
   setSecurityHeaders(response);
+
+  if (requestOrigin && !allowedOrigin) {
+    response.status(403).json({
+      error: "Origin izinli değil.",
+      allowedOrigins: runtimeConfig.allowedOrigins,
+    });
+    return;
+  }
+
+  setCors(response, allowedOrigin);
+
   if (request.method === "OPTIONS") {
     response.status(204).end();
     return;
@@ -271,9 +476,19 @@ app.get("/api/health", async (_request, response) => {
   response.json({
     ok: true,
     ffmpegInstalled: isFfmpegInstalled(),
+    ffmpegBin: FFMPEG_BIN,
+    ffprobeBin: FFPROBE_BIN,
+    pythonInstalled: isPythonInstalled(),
     pythonBin: PYTHON_BIN,
     model: MODEL_NAME,
     warmup: warmupState,
+    install: {
+      helperVersion: runtimeConfig.helperVersion,
+      platform: runtimeConfig.helperPlatform,
+      configPath: runtimeConfig.configPath,
+      baseDir: ROOT_DIR,
+      allowedOrigins: runtimeConfig.allowedOrigins,
+    },
   });
 });
 
@@ -439,8 +654,13 @@ app.get("/api/download/:jobId/:stem", async (request, response) => {
   });
 });
 
-app.listen(PORT, "127.0.0.1", async () => {
+app.listen(runtimeConfig.port, runtimeConfig.host, async () => {
   await ensureDirs();
   void warmupModel();
-  console.log(`Stem Splitter backend listening on http://127.0.0.1:${PORT}`);
+  console.log(`Stem Splitter backend listening on http://${runtimeConfig.host}:${runtimeConfig.port}`);
+  console.log(`[config] ${runtimeConfig.configPath}`);
+  console.log(`[runtime] baseDir=${ROOT_DIR}`);
+  console.log(`[runtime] python=${PYTHON_BIN}`);
+  console.log(`[runtime] ffmpeg=${FFMPEG_BIN}`);
+  console.log(`[runtime] ffprobe=${FFPROBE_BIN}`);
 });

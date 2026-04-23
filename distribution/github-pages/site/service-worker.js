@@ -1,4 +1,4 @@
-const CACHE_VERSION = "20260422t154040996z";
+const CACHE_VERSION = "20260423t095356235z";
 const CACHE_PREFIX = "miniapps-github-pages";
 const SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;
 const APP_CACHE = `${CACHE_PREFIX}-apps-${CACHE_VERSION}`;
@@ -47,6 +47,8 @@ const APP_ENTRY_URLS = [
   "./apps-en/video-to-audio/",
   "./apps/audio-editor/",
   "./apps-en/audio-editor/",
+  "./apps/stem-splitter/",
+  "./apps-en/stem-splitter/",
   "./apps/dev-toolkit/",
   "./apps-en/dev-toolkit/"
 ];
@@ -61,6 +63,10 @@ function isNavigationRequest(request) {
 
 function isAppRequest(url) {
   return APP_ENTRY_URLS.some((entryUrl) => url.pathname.startsWith(new URL(entryUrl, self.registration.scope).pathname));
+}
+
+function isExcludedRuntimeRequest(url) {
+  return url.pathname.includes("/downloads/");
 }
 
 async function cacheFirst(request, cacheName) {
@@ -131,6 +137,10 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (!isSameOrigin(url) || url.pathname.endsWith("/service-worker.js")) {
+    return;
+  }
+
+  if (isExcludedRuntimeRequest(url)) {
     return;
   }
 

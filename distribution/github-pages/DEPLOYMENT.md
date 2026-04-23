@@ -33,19 +33,36 @@ git push
 
 Başka kaynak dosya değişikliği varsa onları da aynı commit'e ekle.
 
-### Önemli: EN bg-remover ayrıca senkronize edilmeli
+### Önemli: EN build tek tip değil, hibrit üretiliyor
 
-`legacy-en-build/bg-remover/` klasörü gitignore'da ve kaldırıldı.
-Yeni build sonrası `apps-en/bg-remover/` TR build'iyle hizalamak için:
+`apps-en/` çıktısı şu anda iki farklı kaynaktan oluşur:
 
-```bash
-node distribution/github-pages/sync-bg-remover-en.mjs
-git add distribution/github-pages/site/apps-en/bg-remover/
+- `distribution/github-pages/legacy-en-build/` içinde bulunan uygulamalar
+  build sonunda doğrudan buradan overlay edilir.
+- Bu klasörde bulunmayan uygulamalar TR/current build baz alınarak
+  `build-github-pages.mjs` içindeki dönüştürmelerle üretilir.
+
+Mevcut `legacy-en-build/` içeriği:
+
+```text
+audio-editor
+csv-toolkit
+dev-toolkit
+exif-cleaner
+image-format-converter
+miniapps-shell
+pdf-toolkit
+qr-generator
+video-to-audio
 ```
 
-Bu adım atlanırsa EN bg-remover TR build'iyle senkronize kalır (string replacement
-build script'i tarafından otomatik uygulandığı için sorun olmaz, ama sync-bg-remover-en.mjs
-çalıştırılmadan önce legacy-en-build/bg-remover yoksa zaten otomatik TR baz alınır).
+Önemli ayrım:
+
+- Canlı site çalışırken `legacy-en-build/` klasörüne ihtiyaç yoktur.
+- Ama başka bir makinede yeniden build almak istiyorsan bu klasör EN overlay
+  kaynağı olarak gereklidir.
+- `bg-remover` ve `image-toolkit` gibi burada bulunmayan uygulamalar EN tarafta
+  mevcut build script'i ile üretilir; ayrıca manuel sync adımı gerekmez.
 
 ---
 
@@ -53,7 +70,7 @@ build script'i tarafından otomatik uygulandığı için sorun olmaz, ama sync-b
 
 | Klasör | Neden |
 |---|---|
-| `distribution/github-pages/legacy-en-build/` | EN build kaynak dosyaları, büyük binary'ler |
+| `distribution/github-pages/legacy-en-build/` | EN overlay kaynakları; runtime bağımlılığı değil ama yeniden build için gereklidir |
 | `distribution/miniapps-en-mac/` | Desktop Mac build çıktısı, web'e ilgisi yok |
 | `local-runtime/bin/` | Node.js binary'leri, 100 MB+ |
 | `stem-splitter/backend/.venv/` | Python sanal ortamı, PyTorch dahil |
@@ -93,71 +110,100 @@ _"dosyalarını internetten indirir; ilk kurulum tamamlanmadan offline çalışm
 `main` branch'ına `distribution/github-pages/site/**` altında değişiklik geldiğinde
 veya `workflow_dispatch` ile manuel tetiklendiğinde `actions/deploy-pages` ile deploy eder.
 
-### 6. EN bg-remover Senkronizasyonu
-`apps-en/bg-remover/` eski bir legacy build'den geliyordu:
-- Farklı ONNX versiyonu (`ort.bundle.min-CmHfnmOO.js` vs `DcTrksc9.js`)
-- 23 MB ekstra ayrı WASM dosyası
+### 6. EN Kaynak Yapısı — `legacy-en-build/`
 
-`sync-bg-remover-en.mjs` yazıldı: TR build kopyalanır, EN string replacement'ları uygulanır.
-`legacy-en-build/bg-remover/` silindi — gelecek build'lerde otomatik TR baz alınır.
+İngilizce build artık dışarıdaki `miniapps-en-mac/` klasörüne bağlı değildir.
+Gerekli legacy EN kaynakları `distribution/github-pages/legacy-en-build/`
+altına alınmıştır.
 
----
+`build-github-pages.mjs` akışı:
 
-## Kalan Açık Görevler
+- önce `apps-en/` current build'den üretilir
+- sonra `legacy-en-build/` içindeki mevcut app'ler `apps-en/` üstüne overlay edilir
+- HTML path'leri `./assets/...` ve `./ffmpeg/...` formatına normalize edilir
+- `<html lang="en">` olacak şekilde düzeltilir
 
-### Görev 5 — Browser'da Offline + PWA Install Testi (Manuel)
+Bu sayede çalışma anında dış klasöre bağımlılık yoktur. Yalnızca yeniden build
+alırken `legacy-en-build/` klasörü yerelde bulunmalıdır.
 
-**Neden hâlâ açık:** Kod ve build doğru; ancak service worker lifecycle,
-install prompt ve gerçek offline davranışı hiç gerçek Chrome oturumunda doğrulanmadı.
+### 7. QR Generator — Metinler Güncellendi
 
-**Test adımları:**
+**Kaldırılan:** `Geçmiş Tasarımlar` bölüm başlığının altındaki
+_"Bu müşteriye ait kayıtları aç, düzenle veya sil"_ alt metni kaldırıldı.
 
+**Değiştirilen boş durum metinleri:**
+- `"Bu müşteri için kayıt yok."` → `"Henüz kayıt yok."`
+- `"Yeni QR oluşturup kaydettiğinde burada yalnızca bu müşteriye ait tasarımlar görünecek."` → `"Eski tasarımlarını bu alandan görebilirsin."`
+
+EN karşılıkları:
+- `"No records yet."`
+- `"You can view your past designs from this section."`
+
+`build-github-pages.mjs` ve `sync-qr-generator-en.mjs` güncellendi.
+TR ve EN site çıktıları yeniden build edildi.
+
+### 8. Image Toolkit — Smart Compress Düzeltmesi
+
+**Sorun:** `computeSmartQualities` fonksiyonunda en düşük BPP'li görsel her zaman
+`quality = 1.0` (sıkıştırma yok) üretiyordu. Slider maksimumda bile o görsel
+hiç küçülmüyordu.
+
+**Kök neden:** `normalizedScore = 0` olan görsel için `1 - slider × 0 = 1.0`.
+
+**Düzeltme:** `quality-estimator.ts`'de score remaplendi:
+```ts
+// Eski
+Math.max(0.1, 1 - slider * score)
+
+// Yeni
+Math.max(0.1, 1 - slider * (0.15 + 0.85 * score))
 ```
-1. node distribution/github-pages/preview-site.mjs
-   → http://127.0.0.1:4179 adresini Chrome'da aç
+Artık slider maksimumda en düşük BPP'li görsel `quality = 0.85` alıyor (~%15 sıkıştırma garantili).
 
-2. Lightweight bir uygulamayı aç (csv-toolkit veya qr-generator önerilir)
-
-3. DevTools → Application → Service Workers
-   → Status: "activated and running" görülmeli
-
-4. DevTools → Network → "Offline" checkbox'ını işaretle
-
-5. Sayfayı yenile
-   → csv-toolkit veya qr-generator çalışmaya devam etmeli (cache'den servis)
-   → Hiç açılmamış bir uygulamayı dene → offline.html görünmeli
-
-6. Chrome adres çubuğunda install ikonu (⊕) belirir mi kontrol et
-   → Tıkla → "Add to Home Screen / Install" akışını tamamla
-   → Standalone pencerede açılmalı
-```
-
-**Beklenen sorunlar / dikkat noktaları:**
-- bg-remover: ONNX model verisi CDN'den geliyor, offline'da model yüklenmez.
-  Bu beklenen davranış; uygulama içinde uyarı zaten mevcut.
-- audio-editor / video-to-audio: FFmpeg WASM ilk açılışta indirilir ve cache'lenir.
-  Offline test için önce online açıp yüklenmeyi beklemek gerekir.
-- stem-splitter: hidden, test edilmez.
+`legacy-en-build/image-toolkit/` bilinçli olarak tutulmuyor; EN build bu app için
+TR/current build baz alınarak üretiliyor.
 
 ---
 
-### Görev D — Shell'den İngilizce Uygulama Erişimi (Ertelenmiş)
+### 9. bg-remover — EN Üretim Akışı
 
-**Mevcut durum:** `apps-en/<id>/` klasörleri mevcut ve SW tarafından cache'leniyor.
-Ancak shell (`index.html`) yalnızca Türkçe; `distribution-config.json`'daki
-`launchUrlOverrides` yalnızca `./apps/<id>/` gösteriyor.
-İngilizce kullanıcılar `/apps-en/csv-toolkit/` gibi URL'lere doğrudan gitmek zorunda.
+`legacy-en-build/bg-remover/` tutulmuyor.
+Bu app için EN çıktı current/TR build'den üretilir.
 
-**Teknik çözüm yolu:**
-`distribution-config.json`'a `locales` veya `enLaunchUrlOverrides` alanı eklenmeli.
-Shell kodunun (`miniapps/src/`) tarayıcı diline (`navigator.language`) göre
-doğru `launchUrl`'i seçmesi sağlanmalı.
-Alternatif: dil seçici UI bileşeni eklenmeli.
-Bu değişiklik shell kaynak kodunu gerektiriyor — ayrı bir oturumda ele alınmalı.
+Sebep:
+- eski legacy build farklı ONNX bundle sürümü taşıyordu
+- gereksiz büyük ek WASM dosyası üretiyordu
+- current build ile hizalı kalmak daha güvenli
+
+Bu nedenle bg-remover için ayrıca manuel senkronizasyon gerekmez; normal build akışı yeterlidir.
 
 ---
 
-### Görev E — FFmpeg WASM Duplikasyonu (Ertelenmiş, Düşük Öncelik)
+## Kalan / Opsiyonel Kontroller
+
+### 1. PWA Install Akışı — Kapatıldı (2026-04-23)
+
+Kapatma gerekçesi: offline davranış ve service worker logic yerelde doğrulandı,
+canlı deploy çalışıyor. Hedef cihaz testi ertelendi; stem-splitter Faz 2-4
+tamamlandıktan sonra shell yeniden rebuild edileceği için o noktada bütünleşik
+bir PWA testi daha anlamlı olacak.
+
+---
+
+### 2. EN/TR Shell Geçişi — Tamamlandı
+
+Shell içinde `TR / ENG` seçici vardır.
+`DistributionApp.tsx` içindeki `getLocalizedLaunchUrl()` fonksiyonu
+uygulama linklerini `./apps/<id>/` ve `./apps-en/<id>/` arasında değiştirir.
+
+Not:
+- dil tercihi `localStorage` içinde tutulur
+- shell chrome'u bu tercihe göre değişir
+- EN app içeriği hibrit build mantığıyla `apps-en/` altından servis edilir
+
+---
+
+### 3. FFmpeg WASM Duplikasyonu (Ertelenmiş, Düşük Öncelik)
 
 **Mevcut durum:** `ffmpeg-core.wasm` (31 MB) dört kez mevcut:
 - `apps/audio-editor/ffmpeg/`

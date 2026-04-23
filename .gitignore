@@ -17,6 +17,11 @@ local-runtime/bin/
 # Python virtual environments
 **/.venv/
 
+# Stem helper build outputs (binaries, zip artifacts — distributed via GitHub Releases)
+distribution/stem-helper-mac/
+distribution/stem-helper/*.zip
+distribution/github-pages/site/downloads/
+
 # OS
 .DS_Store
 
