@@ -1194,29 +1194,7 @@ function buildManifestoPageHtml(language) {
         background: rgba(255, 255, 255, 0.92);
         border: 1px solid rgba(17, 17, 17, 0.06);
         box-shadow: 0 24px 80px rgba(0, 0, 0, 0.08);
-        padding: 44px;
-      }
-
-      .manifesto-header {
-        display: grid;
-        justify-items: center;
-        gap: 22px;
-        text-align: center;
-        margin-bottom: 34px;
-      }
-
-      .manifesto-header h1 {
-        margin: 0;
-        font-size: clamp(40px, 9vw, 84px);
-        line-height: 0.92;
-        letter-spacing: -0.06em;
-        text-transform: lowercase;
-      }
-
-      .manifesto-logo {
-        width: min(100%, 260px);
-        height: auto;
-        display: block;
+        padding: 40px 44px 44px;
       }
 
       .manifesto-section + .manifesto-section {
@@ -1398,7 +1376,7 @@ function buildManifestoPageHtml(language) {
         }
 
         .manifesto-card {
-          padding: 30px 22px;
+          padding: 28px 22px 30px;
           border-radius: 28px;
         }
 
@@ -1440,10 +1418,6 @@ function buildManifestoPageHtml(language) {
   <body>
     <main class="manifesto-shell">
       <article class="manifesto-card">
-        <header class="manifesto-header">
-          <h1>${escapeHtml(copy.title)}</h1>
-          <img class="manifesto-logo" src="./assets/miniapps-logo.svg" alt="miniapps" />
-        </header>
         ${sectionsMarkup}
       </article>
     </main>
