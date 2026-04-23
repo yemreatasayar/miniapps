@@ -154,8 +154,6 @@ export default function App() {
   const helperViewState = getHelperViewState(backendHealth, backendError);
   const canChooseFile = (helperViewState.kind === "ready" || helperViewState.kind === "warmup") && !isBusy;
   const canStartSplit = helperViewState.kind === "ready" && !isBusy && !!track;
-  const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
-
   async function refreshBackendHealth() {
     try {
       const health = await fetchBackendHealth();
@@ -313,7 +311,6 @@ export default function App() {
             <p>{helperViewState.description}</p>
             <div className="helper-meta">
               <span>{getInstallLabel(backendHealth)}</span>
-              {currentOrigin ? <span>{currentOrigin}</span> : null}
             </div>
           </div>
         </div>
