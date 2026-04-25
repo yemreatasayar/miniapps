@@ -45,6 +45,154 @@ const distributionConfig = {
   launchUrlOverrides: Object.fromEntries(apps.map((app) => [app.id, `./apps/${app.id}/`])),
 };
 
+const SITE_BASE_URL = "https://yemreatasayar.github.io/miniapps";
+
+const seoMeta = new Map([
+  [
+    "pdf-toolkit",
+    {
+      tr: {
+        title: "PDF Toolkit — Ücretsiz PDF Sıkıştırıcı, Düzenleyici ve Dönüştürücü",
+        description: "PDF dosyalarını tarayıcınızda sıkıştırın, bölün, birleştirin, döndürün ve filigran ekleyin. Hiçbir dosya sunucuya gönderilmez. Ücretsiz ve kayıt gerektirmez.",
+      },
+      en: {
+        title: "PDF Toolkit — Free PDF Compressor, Editor & Converter",
+        description: "Compress, split, merge, rotate, watermark and extract text from PDFs in your browser. No file uploads. Free, no account required.",
+      },
+    },
+  ],
+  [
+    "csv-toolkit",
+    {
+      tr: {
+        title: "CSV Toolkit — Ücretsiz Online CSV Düzenleyici ve Temizleyici",
+        description: "CSV dosyalarınızı tarayıcınızda filtreleyin, temizleyin, tekilleştirin ve düzenleyin. Sunucuya dosya gönderilmez.",
+      },
+      en: {
+        title: "CSV Toolkit — Free Online CSV Editor & Cleaner",
+        description: "Filter, clean, deduplicate and edit CSV files directly in your browser. No file uploads, no account needed.",
+      },
+    },
+  ],
+  [
+    "qr-generator",
+    {
+      tr: {
+        title: "QR Generator — Ücretsiz QR Kod Oluşturucu",
+        description: "URL, metin, e-posta ve Wi-Fi için QR kod oluşturun. PNG veya PDF olarak indirin. Ücretsiz ve kayıt gerektirmez.",
+      },
+      en: {
+        title: "QR Generator — Free QR Code Creator",
+        description: "Generate QR codes for URLs, text, email and Wi-Fi. Download as PNG or PDF. Free, no account needed.",
+      },
+    },
+  ],
+  [
+    "image-toolkit",
+    {
+      tr: {
+        title: "Image Toolkit — Ücretsiz Online Görsel Düzenleyici",
+        description: "Görselleri tarayıcınızda yeniden boyutlandırın, kırpın, sıkıştırın ve düzenleyin. Sunucuya yükleme yok, hesap gerekmez.",
+      },
+      en: {
+        title: "Image Toolkit — Free Online Image Editor",
+        description: "Resize, crop, compress and edit images in your browser. No server upload, no account required.",
+      },
+    },
+  ],
+  [
+    "exif-cleaner",
+    {
+      tr: {
+        title: "EXIF Temizleyici — Görsel Metaverisini Ücretsiz Sil",
+        description: "JPG, PNG ve HEIC fotoğraflarından EXIF metaverisini tarayıcınızda temizleyin. Gizliliğinizi koruyun, dosya yüklemeyin.",
+      },
+      en: {
+        title: "EXIF Cleaner — Remove Image Metadata Online Free",
+        description: "Strip EXIF metadata from JPG, PNG and HEIC photos directly in your browser. Protect your privacy without uploading files.",
+      },
+    },
+  ],
+  [
+    "image-format-converter",
+    {
+      tr: {
+        title: "Görsel Dönüştürücü — JPG, PNG, WebP, HEIC Ücretsiz Çevir",
+        description: "JPG, PNG, WebP, GIF, BMP ve HEIC/HEIF formatları arasında toplu dönüştürme. Tarayıcıda çalışır, sunucuya dosya gönderilmez.",
+      },
+      en: {
+        title: "Image Converter — Free JPG PNG WebP HEIC Converter",
+        description: "Convert between JPG, PNG, WebP, GIF, BMP and HEIC/HEIF formats in your browser. Batch conversion, no server upload.",
+      },
+    },
+  ],
+  [
+    "bg-remover",
+    {
+      tr: {
+        title: "Arka Plan Kaldırıcı — Ücretsiz AI ile Arka Plan Silme",
+        description: "Görsellerden arka planı yapay zeka ile tarayıcıda kaldırın. Hiçbir dosya sunucuya gönderilmez. İlk yüklemeden sonra çevrimdışı çalışır.",
+      },
+      en: {
+        title: "Background Remover — Free AI Background Removal",
+        description: "Remove image backgrounds using AI, directly in your browser. No file is sent to any server. Works offline after first load.",
+      },
+    },
+  ],
+  [
+    "video-to-audio",
+    {
+      tr: {
+        title: "Video to Audio — Ücretsiz MP3 ve WAV Çıkarıcı",
+        description: "MP4, MKV, AVI, MOV ve diğer video formatlarından ses çıkarın. MP3, WAV veya orijinal ses akışına dönüştürün. Tarayıcıda çalışır.",
+      },
+      en: {
+        title: "Video to Audio — Free MP3 & WAV Extractor",
+        description: "Extract audio from MP4, MKV, AVI, MOV and other video files. Convert to MP3, WAV or the original audio stream. All processing in-browser.",
+      },
+    },
+  ],
+  [
+    "audio-editor",
+    {
+      tr: {
+        title: "Ses Editörü — Ücretsiz Online Ses Kesici ve Düzenleyici",
+        description: "MP3, WAV, FLAC ve diğer ses dosyalarını tarayıcınızda kesin ve düzenleyin. FFmpeg WASM ile çalışır, sunucuya yükleme yok.",
+      },
+      en: {
+        title: "Audio Editor — Free Online Audio Cutter & Trimmer",
+        description: "Trim, cut and edit MP3, WAV, FLAC and other audio files in your browser. Powered by FFmpeg WASM, no server upload.",
+      },
+    },
+  ],
+  [
+    "stem-splitter",
+    {
+      tr: {
+        title: "Stem Splitter — Ücretsiz Vokal ve Enstrüman Ayırıcı",
+        description: "Müziği vokal, davul, bas ve diğer parçalara AI ile ayırın. Ücretsiz online stem ayrıştırıcı.",
+      },
+      en: {
+        title: "Stem Splitter — Free Vocal & Instrument Separator",
+        description: "Separate music into vocals, drums, bass and other stems using AI. Free online stem splitter.",
+      },
+    },
+  ],
+  [
+    "dev-toolkit",
+    {
+      tr: {
+        title: "Dev Toolkit — Ücretsiz Online Geliştirici Araçları",
+        description: "JSON formatlama, Base64, JWT decoder, kod minimize etme ve daha fazlası. Tüm araçlar tarayıcınızda çalışır.",
+      },
+      en: {
+        title: "Dev Toolkit — Free Online Developer Tools",
+        description: "JSON formatter, Base64 encoder/decoder, JWT decoder, code minifier and more. All developer tools run in your browser.",
+      },
+    },
+  ],
+]);
+
 const analyticsSnippet = `<!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-W21Y6X5KBH"></script>
     <script>
@@ -1108,6 +1256,45 @@ function buildManifest() {
   };
 }
 
+function injectSeoMeta(htmlPath, { title, description, lang }) {
+  if (!existsSync(htmlPath)) return;
+  let html = readFileSync(htmlPath, "utf8");
+
+  const t = escapeHtml(title);
+  const d = escapeHtml(description);
+
+  html = html.replace(/(<html\b[^>]*\blang=")[^"]*(")/i, `$1${lang}$2`);
+  html = html.replace(/<title>[^<]*<\/title>/, `<title>${t}</title>`);
+
+  if (html.includes('name="description"')) {
+    html = html.replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${d}">`);
+  } else {
+    const metaBlock = [
+      `<meta name="description" content="${d}">`,
+      `<meta property="og:title" content="${t}">`,
+      `<meta property="og:description" content="${d}">`,
+      `<meta property="og:type" content="website">`,
+      `<meta name="robots" content="index, follow">`,
+    ].join("\n    ");
+    html = html.replace("</head>", `    ${metaBlock}\n  </head>`);
+  }
+
+  if (html.includes('property="og:title"')) {
+    html = html.replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${t}">`);
+  }
+  if (html.includes('property="og:description"')) {
+    html = html.replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${d}">`);
+  }
+
+  if (html.includes("<noscript>")) {
+    html = html.replace(/<noscript>[\s\S]*?<\/noscript>/, `<noscript><h1>${t}</h1><p>${d}</p></noscript>`);
+  } else {
+    html = html.replace("</body>", `  <noscript><h1>${t}</h1><p>${d}</p></noscript>\n  </body>`);
+  }
+
+  writeFileSync(htmlPath, html);
+}
+
 function escapeHtml(value) {
   return value
     .replaceAll("&", "&amp;")
@@ -1787,6 +1974,11 @@ function buildEnglishAppCopies(siteRoot) {
   }
 
   overlayLegacyEnglishBuilds(siteRoot);
+
+  for (const [appId, meta] of seoMeta) {
+    const htmlPath = path.join(enAppsRoot, appId, "index.html");
+    injectSeoMeta(htmlPath, { ...meta.en, lang: "en" });
+  }
 }
 
 
@@ -1802,6 +1994,10 @@ if (existsSync(shellHtmlPath)) {
 
 for (const app of apps) {
   runBuild(path.join(repoRoot, app.dir), app.script, path.join(outputRoot, "apps", app.id));
+  const meta = seoMeta.get(app.id);
+  if (meta) {
+    injectSeoMeta(path.join(outputRoot, "apps", app.id, "index.html"), { ...meta.tr, lang: "tr" });
+  }
 }
 
 writeFileSync(path.join(outputRoot, "distribution-config.json"), `${JSON.stringify(distributionConfig, null, 2)}\n`);
@@ -1845,5 +2041,28 @@ writeFileSync(
 hardenFfmpegWorkerFallbacks(outputRoot);
 writeFileSync(path.join(outputRoot, ".nojekyll"), "");
 removeMacMetadata(outputRoot);
+
+const sitemapUrls = [
+  `${SITE_BASE_URL}/`,
+  ...distributionConfig.visibleAppIds.flatMap((id) => [
+    `${SITE_BASE_URL}/apps/${id}/`,
+    `${SITE_BASE_URL}/apps-en/${id}/`,
+  ]),
+];
+const today = new Date().toISOString().slice(0, 10);
+const sitemapXml = [
+  '<?xml version="1.0" encoding="UTF-8"?>',
+  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+  ...sitemapUrls.map(
+    (url) => `  <url>\n    <loc>${url}</loc>\n    <lastmod>${today}</lastmod>\n  </url>`
+  ),
+  "</urlset>",
+].join("\n");
+writeFileSync(path.join(outputRoot, "sitemap.xml"), sitemapXml + "\n");
+
+writeFileSync(
+  path.join(outputRoot, "robots.txt"),
+  `User-agent: *\nAllow: /\nSitemap: ${SITE_BASE_URL}/sitemap.xml\n`
+);
 
 console.log(`\nGitHub Pages bundle ready at ${outputRoot}`);
