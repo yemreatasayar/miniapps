@@ -45,7 +45,7 @@ const distributionConfig = {
   launchUrlOverrides: Object.fromEntries(apps.map((app) => [app.id, `./apps/${app.id}/`])),
 };
 
-const SITE_BASE_URL = "https://yemreatasayar.github.io/miniapps";
+const SITE_BASE_URL = "https://miniapps.tr";
 
 const seoMeta = new Map([
   [
