@@ -1,4 +1,4 @@
-const CACHE_VERSION = "20260423t163605530z";
+const CACHE_VERSION = "20260425t131403946z";
 const CACHE_PREFIX = "miniapps-github-pages";
 const SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;
 const APP_CACHE = `${CACHE_PREFIX}-apps-${CACHE_VERSION}`;
@@ -56,6 +56,12 @@ const APP_ENTRY_URLS = [
   "./apps/dev-toolkit/",
   "./apps-en/dev-toolkit/"
 ];
+const CROSS_ORIGIN_ISOLATED_ENTRY_URLS = [
+  "./apps/audio-editor/",
+  "./apps-en/audio-editor/",
+  "./apps/video-to-audio/",
+  "./apps-en/video-to-audio/"
+];
 
 function isSameOrigin(url) {
   return url.origin === self.location.origin;
@@ -69,8 +75,25 @@ function isAppRequest(url) {
   return APP_ENTRY_URLS.some((entryUrl) => url.pathname.startsWith(new URL(entryUrl, self.registration.scope).pathname));
 }
 
+function isCrossOriginIsolatedApp(url) {
+  return CROSS_ORIGIN_ISOLATED_ENTRY_URLS.some(
+    (entryUrl) => url.pathname.startsWith(new URL(entryUrl, self.registration.scope).pathname)
+  );
+}
+
 function isExcludedRuntimeRequest(url) {
   return url.pathname.includes("/downloads/");
+}
+
+function addCrossOriginIsolationHeaders(response) {
+  const headers = new Headers(response.headers);
+  headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  headers.set("Cross-Origin-Embedder-Policy", "require-corp");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 async function cacheFirst(request, cacheName) {
@@ -87,18 +110,18 @@ async function cacheFirst(request, cacheName) {
   return response;
 }
 
-async function navigationNetworkFirst(request, cacheName) {
+async function navigationNetworkFirst(request, cacheName, isolate) {
   const cache = await caches.open(cacheName);
   try {
     const response = await fetch(request);
     if (response.ok) {
       await cache.put(request, response.clone());
     }
-    return response;
+    return isolate ? addCrossOriginIsolationHeaders(response) : response;
   } catch (error) {
     const cached = await cache.match(request, { ignoreSearch: true });
     if (cached) {
-      return cached;
+      return isolate ? addCrossOriginIsolationHeaders(cached) : cached;
     }
 
     const fallback = await caches.match(OFFLINE_FALLBACK_URL, { ignoreSearch: true });
@@ -129,6 +152,12 @@ self.addEventListener("activate", (event) => {
           .map((key) => caches.delete(key))
       );
       await self.clients.claim();
+      // SW just activated — notify open windows so they can reload to pick up
+      // COOP/COEP headers (needed for FFmpeg WASM on audio-editor/video-to-audio).
+      const clients = await self.clients.matchAll({ type: "window" });
+      for (const client of clients) {
+        client.postMessage({ type: "SW_ACTIVATED" });
+      }
     })()
   );
 });
@@ -149,7 +178,8 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (isNavigationRequest(request)) {
-    event.respondWith(navigationNetworkFirst(request, isAppRequest(url) ? APP_CACHE : SHELL_CACHE));
+    const isolate = isCrossOriginIsolatedApp(url);
+    event.respondWith(navigationNetworkFirst(request, isAppRequest(url) ? APP_CACHE : SHELL_CACHE, isolate));
     return;
   }
 

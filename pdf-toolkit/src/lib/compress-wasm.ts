@@ -1,7 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — no types shipped with this package
-import initGs from "@jspawn/ghostscript-wasm";
-import gsWasmUrl from "@jspawn/ghostscript-wasm/gs.wasm?url";
 import type { CompressPreset, CompressStatus } from "./types";
 
 type GsModule = {
@@ -13,15 +9,33 @@ type GsModule = {
   callMain(args: string[]): number;
 };
 
+const GS_BASE = `${import.meta.env.BASE_URL}ghostscript/`;
+
 let gsPromise: Promise<GsModule> | null = null;
 let jobCounter = 0;
 
 async function loadGs(): Promise<GsModule> {
   if (!gsPromise) {
     gsPromise = (async () => {
-      const wasmBinary = await fetch(gsWasmUrl).then((r) => r.arrayBuffer());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      return (initGs as (opts: { wasmBinary: ArrayBuffer }) => Promise<GsModule>)({ wasmBinary });
+      // gs.js is loaded as a classic script (not ESM) so `var Module` becomes
+      // a global — avoids the broken globalThis.exports trick in the ESM wrapper.
+      if (!(window as { __gsLoaded?: boolean }).__gsLoaded) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = `${GS_BASE}gs.js`;
+          script.onload = () => {
+            (window as { __gsLoaded?: boolean }).__gsLoaded = true;
+            resolve();
+          };
+          script.onerror = () => reject(new Error("gs.js yüklenemedi"));
+          document.head.appendChild(script);
+        });
+      }
+      const wasmBinary = await fetch(`${GS_BASE}gs.wasm`).then((r) => r.arrayBuffer());
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const factory = (window as any).Module as (opts: { wasmBinary: ArrayBuffer }) => Promise<GsModule>;
+      if (typeof factory !== "function") throw new Error("Ghostscript modülü başlatılamadı");
+      return factory({ wasmBinary });
     })();
   }
   return gsPromise;
