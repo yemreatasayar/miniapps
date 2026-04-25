@@ -1059,4 +1059,29 @@ input[type="range"] {
   .page-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
+
+  .tab-row {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tab-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-row button {
+    min-width: fit-content;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .preset-group {
+    flex-direction: column;
+  }
+
+  .preset-group button {
+    min-width: 0;
+    width: 100%;
+  }
 }
