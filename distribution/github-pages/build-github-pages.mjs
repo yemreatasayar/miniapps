@@ -1256,7 +1256,7 @@ function buildManifest() {
   };
 }
 
-function injectSeoMeta(htmlPath, { title, description, lang }) {
+function injectSeoMeta(htmlPath, { title, description, lang, canonicalUrl }) {
   if (!existsSync(htmlPath)) return;
   let html = readFileSync(htmlPath, "utf8");
 
@@ -1266,6 +1266,19 @@ function injectSeoMeta(htmlPath, { title, description, lang }) {
   html = html.replace(/(<html\b[^>]*\blang=")[^"]*(")/i, `$1${lang}$2`);
   html = html.replace(/<title>[^<]*<\/title>/, `<title>${t}</title>`);
 
+  const canonical = canonicalUrl ?? "";
+  const jsonLd = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": title.replace(/ —.*/, ""),
+    "url": canonical,
+    "description": description,
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Web Browser",
+    "inLanguage": lang,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock" },
+  });
+
   if (html.includes('name="description"')) {
     html = html.replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${d}">`);
   } else {
@@ -1274,9 +1287,21 @@ function injectSeoMeta(htmlPath, { title, description, lang }) {
       `<meta property="og:title" content="${t}">`,
       `<meta property="og:description" content="${d}">`,
       `<meta property="og:type" content="website">`,
+      ...(canonical ? [`<meta property="og:url" content="${canonical}">`, `<link rel="canonical" href="${canonical}">`] : []),
       `<meta name="robots" content="index, follow">`,
+      `<script type="application/ld+json">${jsonLd}</script>`,
     ].join("\n    ");
     html = html.replace("</head>", `    ${metaBlock}\n  </head>`);
+  }
+
+  if (canonical && !html.includes('rel="canonical"')) {
+    html = html.replace("</head>", `    <link rel="canonical" href="${canonical}">\n  </head>`);
+  }
+  if (canonical && !html.includes('"og:url"')) {
+    html = html.replace("</head>", `    <meta property="og:url" content="${canonical}">\n  </head>`);
+  }
+  if (!html.includes('ld+json')) {
+    html = html.replace("</head>", `    <script type="application/ld+json">${jsonLd}</script>\n  </head>`);
   }
 
   if (html.includes('property="og:title"')) {
@@ -1977,7 +2002,7 @@ function buildEnglishAppCopies(siteRoot) {
 
   for (const [appId, meta] of seoMeta) {
     const htmlPath = path.join(enAppsRoot, appId, "index.html");
-    injectSeoMeta(htmlPath, { ...meta.en, lang: "en" });
+    injectSeoMeta(htmlPath, { ...meta.en, lang: "en", canonicalUrl: `${SITE_BASE_URL}/apps-en/${appId}/` });
   }
 }
 
@@ -1996,7 +2021,7 @@ for (const app of apps) {
   runBuild(path.join(repoRoot, app.dir), app.script, path.join(outputRoot, "apps", app.id));
   const meta = seoMeta.get(app.id);
   if (meta) {
-    injectSeoMeta(path.join(outputRoot, "apps", app.id, "index.html"), { ...meta.tr, lang: "tr" });
+    injectSeoMeta(path.join(outputRoot, "apps", app.id, "index.html"), { ...meta.tr, lang: "tr", canonicalUrl: `${SITE_BASE_URL}/apps/${app.id}/` });
   }
 }
 
