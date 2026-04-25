@@ -1189,42 +1189,31 @@ function build404Html() {
       body {
         margin: 0;
         min-height: 100vh;
-        display: grid;
-        place-items: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         padding: 24px;
+        text-align: center;
         background:
           radial-gradient(circle at top, rgba(0,0,0,0.06), transparent 35%),
           linear-gradient(180deg, #f3f3f3 0%, #e9e9e9 100%);
       }
 
-      main {
-        width: min(100%, 520px);
-        padding: 28px;
-        border-radius: 28px;
-        background: rgba(255,255,255,0.92);
-        box-shadow: 0 24px 70px rgba(0,0,0,0.08);
-      }
-
-      .kicker {
-        font-size: 12px;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #999;
-        margin: 0 0 10px;
-      }
-
       h1 {
-        margin: 0 0 10px;
-        font-size: 30px;
+        font-size: 30vh;
+        font-weight: 800;
         line-height: 1;
+        color: #111;
+        margin: 0;
+        letter-spacing: -0.04em;
       }
 
       p {
-        margin: 0 0 20px;
-        color: #4d4d4d;
-        line-height: 1.6;
-        font-size: 15px;
+        margin: 16px 0 28px;
+        font-size: clamp(16px, 2vw, 22px);
+        font-weight: 600;
+        color: #111;
       }
 
       a {
@@ -1242,12 +1231,9 @@ function build404Html() {
     </style>
   </head>
   <body>
-    <main>
-      <p class="kicker">404</p>
-      <h1>Page not found</h1>
-      <p>The page you're looking for doesn't exist or has been moved.</p>
-      <a href="/">Go to miniapps</a>
-    </main>
+    <h1>404</h1>
+    <p>Page not found</p>
+    <a href="/">Go to miniapps</a>
   </body>
 </html>
 `;
