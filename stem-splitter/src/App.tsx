@@ -488,7 +488,7 @@ export default function App() {
                   <span className="progress-kicker">İşleniyor</span>
                   <strong>{Math.round(progress)}% tamamlandı</strong>
                 </div>
-                <span className="progress-label">{progressMessage || getProgressLabel(progress)}</span>
+                <span className="progress-label">{getProgressLabel(progress)}</span>
               </div>
               <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}>
                 <span className="progress-fill" style={{ width: `${Math.max(6, Math.min(100, progress))}%` }} />
