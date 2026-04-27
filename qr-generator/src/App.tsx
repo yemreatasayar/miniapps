@@ -16,6 +16,7 @@ const PDF_POINTS_PER_INCH = 72;
 const MIN_LOGO_DPI = 300;
 const PREVIEW_SIZE = 320;
 const logoUrl = `${import.meta.env.BASE_URL}assets/qr-generator-logo.svg`;
+const isDistribution = window.location.hostname === "miniapps.tr";
 const EXPORT_SIZE_OPTIONS = [
   { value: 520, label: "520 × 520 px" },
   { value: 1080, label: "1080 × 1080 px" },
@@ -1133,6 +1134,17 @@ function App() {
           </div>
         </section>
       </aside>
+      {isDistribution && (
+        <footer className="miniapps-footer">
+          <a href="https://miniapps.tr" target="_blank" rel="noopener noreferrer" aria-label="miniapps.tr">
+            <img
+              src={`${import.meta.env.BASE_URL}assets/miniapps-logo-dark.svg`}
+              alt="miniapps.tr"
+              className="miniapps-footer-logo"
+            />
+          </a>
+        </footer>
+      )}
     </main>
   );
 }

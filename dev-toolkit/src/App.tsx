@@ -73,6 +73,8 @@ function PanelFrame(props: { title: string; description: string; children: React
   );
 }
 
+const isDistribution = window.location.hostname === "miniapps.tr";
+
 export default function App() {
   const logoUrl = `${import.meta.env.BASE_URL}assets/dev-toolkit-logo.svg`;
   const [activeTool, setActiveTool] = useState<ToolId>("json-ts");
@@ -484,6 +486,17 @@ export default function App() {
       </section>
 
       {toast ? <div className="toast">{toast}</div> : null}
+      {isDistribution && (
+        <footer className="miniapps-footer">
+          <a href="https://miniapps.tr" target="_blank" rel="noopener noreferrer" aria-label="miniapps.tr">
+            <img
+              src={`${import.meta.env.BASE_URL}assets/miniapps-logo-dark.svg`}
+              alt="miniapps.tr"
+              className="miniapps-footer-logo"
+            />
+          </a>
+        </footer>
+      )}
     </main>
   );
 }

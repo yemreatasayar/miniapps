@@ -685,3 +685,21 @@ select {
     min-width: 136px;
   }
 }
+
+.miniapps-footer {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+
+.miniapps-footer:hover {
+  opacity: 0.7;
+}
+
+.miniapps-footer-logo {
+  height: 36px;
+  width: auto;
+  display: block;
+}

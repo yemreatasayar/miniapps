@@ -136,6 +136,8 @@ function getInstallLabel(backendHealth: BackendHealth | null): string {
   return segments.join(" • ");
 }
 
+const isDistribution = window.location.hostname === "miniapps.tr";
+
 export default function App() {
   const logoUrl = `${import.meta.env.BASE_URL}assets/stem-splitter-logo.svg`;
   const helperMacDownloadUrl = import.meta.env.VITE_STEM_SPLITTER_HELPER_MAC_URL || "";
@@ -575,6 +577,17 @@ export default function App() {
           </div>
         </section>
       ) : null}
+      {isDistribution && (
+        <footer className="miniapps-footer">
+          <a href="https://miniapps.tr" target="_blank" rel="noopener noreferrer" aria-label="miniapps.tr">
+            <img
+              src={`${import.meta.env.BASE_URL}assets/miniapps-logo-dark.svg`}
+              alt="miniapps.tr"
+              className="miniapps-footer-logo"
+            />
+          </a>
+        </footer>
+      )}
     </main>
   );
 }

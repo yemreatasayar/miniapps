@@ -6,6 +6,8 @@ import TabNav from "./components/TabNav";
 import Toast from "./components/Toast";
 import type { Tab } from "./lib/types";
 
+const isDistribution = window.location.hostname === "miniapps.tr";
+
 export default function App() {
   const logoUrl = `${import.meta.env.BASE_URL}assets/audio-editor-logo.svg`;
   const [activeTab, setActiveTab] = useState<Tab>("cutter");
@@ -26,6 +28,17 @@ export default function App() {
       </div>
 
       <Toast message={toast} onClose={() => setToast(null)} />
+      {isDistribution && (
+        <footer className="miniapps-footer">
+          <a href="https://miniapps.tr" target="_blank" rel="noopener noreferrer" aria-label="miniapps.tr">
+            <img
+              src={`${import.meta.env.BASE_URL}assets/miniapps-logo-dark.svg`}
+              alt="miniapps.tr"
+              className="miniapps-footer-logo"
+            />
+          </a>
+        </footer>
+      )}
     </main>
   );
 }

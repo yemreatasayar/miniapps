@@ -55,7 +55,7 @@ button {
 .bg-remover-shell {
   max-width: 1380px;
   margin: 0 auto;
-  padding: 30px 40px 84px;
+  padding: 30px 40px 0;
   display: grid;
   gap: 24px;
 }
@@ -601,7 +601,7 @@ button {
 
 @media (max-width: 640px) {
   .bg-remover-shell {
-    padding: 18px 16px 64px;
+    padding: 18px 16px 0;
   }
 
   .saas-header {
@@ -644,4 +644,22 @@ button {
     justify-content: center;
     text-align: center;
   }
+}
+
+.miniapps-footer {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+
+.miniapps-footer:hover {
+  opacity: 0.7;
+}
+
+.miniapps-footer-logo {
+  height: 36px;
+  width: auto;
+  display: block;
 }

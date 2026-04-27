@@ -17,6 +17,8 @@ function formatCountLabel(count: number, singular: string, plural: string): stri
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
+const isDistribution = window.location.hostname === "miniapps.tr";
+
 export default function App() {
   const logoUrl = `${import.meta.env.BASE_URL}assets/exif-cleaner-logo.svg`;
   const [images, setImages] = useState<SanitizableImage[]>([]);
@@ -174,6 +176,17 @@ export default function App() {
       )}
 
       <Toast message={toast} onClose={() => setToast(null)} />
+      {isDistribution && (
+        <footer className="miniapps-footer">
+          <a href="https://miniapps.tr" target="_blank" rel="noopener noreferrer" aria-label="miniapps.tr">
+            <img
+              src={`${import.meta.env.BASE_URL}assets/miniapps-logo-dark.svg`}
+              alt="miniapps.tr"
+              className="miniapps-footer-logo"
+            />
+          </a>
+        </footer>
+      )}
     </main>
   );
 }

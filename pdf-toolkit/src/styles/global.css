@@ -57,7 +57,7 @@ button {
 .pdf-toolkit-shell {
   max-width: 1500px;
   margin: 0 auto;
-  padding: 42px 30px 96px;
+  padding: 42px 30px 0;
   display: grid;
   gap: 26px;
 }
@@ -1049,7 +1049,7 @@ input[type="range"] {
 
 @media (max-width: 760px) {
   .pdf-toolkit-shell {
-    padding: 20px 16px 72px;
+    padding: 20px 16px 0;
   }
 
   .brand-block {
@@ -1084,4 +1084,22 @@ input[type="range"] {
     min-width: 0;
     width: 100%;
   }
+}
+
+.miniapps-footer {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+
+.miniapps-footer:hover {
+  opacity: 0.7;
+}
+
+.miniapps-footer-logo {
+  height: 36px;
+  width: auto;
+  display: block;
 }
