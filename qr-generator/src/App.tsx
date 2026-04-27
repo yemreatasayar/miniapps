@@ -1136,7 +1136,7 @@ function App() {
       </aside>
       {isDistribution && (
         <footer className="miniapps-footer">
-          <a href="https://miniapps.tr" target="_blank" rel="noopener noreferrer" aria-label="miniapps.tr">
+          <a href="https://miniapps.tr" aria-label="miniapps.tr">
             <img
               src={`${import.meta.env.BASE_URL}assets/miniapps-logo-dark.svg`}
               alt="miniapps.tr"

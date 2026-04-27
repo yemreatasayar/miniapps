@@ -2030,6 +2030,65 @@ function overlayLegacyEnglishBuilds(siteRoot) {
   }
 }
 
+const MINIAPPS_FOOTER_STYLE = `.miniapps-footer{display:flex;justify-content:center;padding:24px 0;opacity:.35;transition:opacity .2s}.miniapps-footer:hover{opacity:.7}.miniapps-footer-logo{height:36px;width:auto;display:block}`;
+const LIGHT_LOGO_APPS = new Set(["pdf-toolkit"]);
+
+function addMiniappsLogoToLegacyEnApps(trAppsRoot, enAppsRoot) {
+  for (const appId of distributionConfig.visibleAppIds) {
+    const logoVariant = LIGHT_LOGO_APPS.has(appId) ? "light" : "dark";
+    const logoFileName = `miniapps-logo-${logoVariant}.svg`;
+    const enLogoPath = path.join(enAppsRoot, appId, "assets", logoFileName);
+
+    if (existsSync(enLogoPath)) {
+      continue; // Non-legacy app — React footer already handles the logo
+    }
+
+    const trLogoPath = path.join(trAppsRoot, appId, "assets", logoFileName);
+    if (existsSync(trLogoPath)) {
+      cpSync(trLogoPath, enLogoPath);
+    }
+
+    const htmlPath = path.join(enAppsRoot, appId, "index.html");
+    if (!existsSync(htmlPath)) continue;
+
+    let html = readFileSync(htmlPath, "utf8");
+    if (html.includes("miniapps-footer")) continue;
+
+    const footerHtml = `<style>${MINIAPPS_FOOTER_STYLE}</style><div class="miniapps-footer"><a href="https://miniapps.tr" aria-label="miniapps.tr"><img src="./assets/${logoFileName}" alt="miniapps.tr" class="miniapps-footer-logo"/></a></div>`;
+    html = html.replace("</body>", `${footerHtml}</body>`);
+    writeFileSync(htmlPath, html);
+  }
+}
+
+const postOverlayTextFixes = new Map([
+  [
+    "pdf-toolkit",
+    [
+      ["PDF'ini buraya sürükle veya tıkla", "Drop your PDF here or click"],
+    ],
+  ],
+]);
+
+function applyPostOverlayTextFixes(enAppsRoot) {
+  for (const [appId, fixes] of postOverlayTextFixes) {
+    const appRoot = path.join(enAppsRoot, appId);
+    if (!existsSync(appRoot)) continue;
+
+    for (const filePath of collectFiles(appRoot)) {
+      if (!filePath.endsWith(".js")) continue;
+
+      const original = readFileSync(filePath, "utf8");
+      let updated = original;
+      for (const [from, to] of fixes) {
+        updated = updated.split(from).join(to);
+      }
+      if (updated !== original) {
+        writeFileSync(filePath, updated);
+      }
+    }
+  }
+}
+
 function buildEnglishAppCopies(siteRoot) {
   const trAppsRoot = path.join(siteRoot, "apps");
   const enAppsRoot = path.join(siteRoot, "apps-en");
@@ -2071,6 +2130,8 @@ function buildEnglishAppCopies(siteRoot) {
   }
 
   overlayLegacyEnglishBuilds(siteRoot);
+  addMiniappsLogoToLegacyEnApps(trAppsRoot, enAppsRoot);
+  applyPostOverlayTextFixes(enAppsRoot);
 
   for (const [appId, meta] of seoMeta) {
     const htmlPath = path.join(enAppsRoot, appId, "index.html");
