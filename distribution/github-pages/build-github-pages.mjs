@@ -1576,11 +1576,6 @@ function buildManifestoPageHtml(language) {
         justify-content: flex-start;
       }
 
-      .distribution-brand a {
-        display: flex;
-        align-items: center;
-      }
-
       .distribution-brand .brand-logo {
         width: min(100%, 176px);
         height: auto;
@@ -1796,11 +1791,9 @@ function buildManifestoPageHtml(language) {
       </article>
     </main>
     <footer class="distribution-header">
-      <div class="distribution-brand">
-        <a href="./">
-          <img class="brand-logo" src="./assets/miniapps-logo.svg" alt="miniapps" />
-        </a>
-      </div>
+      <a class="distribution-brand" href="./">
+        <img class="brand-logo" src="./assets/miniapps-logo.svg" alt="miniapps" />
+      </a>
       <div class="distribution-version">
         <span>${escapeHtml(packLine)}</span>
         <a class="distribution-author-link" href="https://www.behance.net/yemreatasayar" target="_blank" rel="noreferrer">${escapeHtml(authorLine)}</a>

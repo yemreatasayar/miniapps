@@ -1,4 +1,4 @@
-const CACHE_VERSION = "20260428t095707295z";
+const CACHE_VERSION = "20260428t102034200z";
 const CACHE_PREFIX = "miniapps-github-pages";
 const SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;
 const APP_CACHE = `${CACHE_PREFIX}-apps-${CACHE_VERSION}`;
