@@ -1554,7 +1554,7 @@ function buildManifestoPageHtml(language) {
 
       .manifesto-footer {
         display: grid;
-        grid-template-columns: minmax(180px, 240px) 1fr auto;
+        grid-template-columns: 1fr auto 1fr;
         align-items: center;
         gap: 20px;
         padding: 20px 28px;
@@ -1660,32 +1660,51 @@ function buildManifestoPageHtml(language) {
 
       @media (max-width: 980px) {
         .manifesto-footer {
-          grid-template-columns: 1fr auto;
+          grid-template-columns: 1fr;
           grid-template-areas:
-            "brand meta"
-            "controls controls";
-          gap: 14px 18px;
+            "brand"
+            "meta"
+            "controls";
+          gap: 14px;
           padding: 18px 20px;
+          justify-items: center;
         }
 
         .manifesto-footer-brand {
           grid-area: brand;
-          justify-self: start;
+          justify-self: center;
+          justify-content: center;
+          width: 100%;
         }
 
         .manifesto-footer-meta {
           grid-area: meta;
-          justify-self: end;
-          justify-items: end;
-          text-align: right;
+          justify-self: center;
+          justify-items: center;
+          text-align: center;
         }
 
         .manifesto-footer-controls {
           grid-area: controls;
-          justify-self: stretch;
-          width: 100%;
+          justify-self: center;
+          width: auto;
+          max-width: 100%;
           justify-content: center;
           flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .manifesto-footer-link {
+          min-width: 148px;
+        }
+
+        .manifesto-language-link {
+          min-width: 84px;
+        }
+
+        .manifesto-language-group {
+          width: auto;
+          max-width: 100%;
         }
       }
 
@@ -1702,57 +1721,6 @@ function buildManifestoPageHtml(language) {
         .manifesto-section p,
         .manifesto-list li {
           font-size: 16px;
-        }
-      }
-
-      @media (max-width: 560px) {
-        .manifesto-footer {
-          grid-template-columns: 1fr;
-          grid-template-areas:
-            "brand"
-            "meta"
-            "controls";
-          padding: 18px 16px;
-          justify-items: center;
-        }
-
-        .manifesto-footer-meta {
-          justify-items: center;
-          text-align: center;
-        }
-
-        .manifesto-footer-controls {
-          justify-self: center;
-          width: auto;
-          max-width: 100%;
-        }
-
-        .manifesto-footer-link {
-          min-width: 148px;
-        }
-
-        .manifesto-language-link {
-          min-width: 84px;
-        }
-
-        .manifesto-footer-brand {
-          justify-self: center;
-          width: 100%;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          margin: 0 auto;
-          text-align: center;
-        }
-
-        .manifesto-footer-brand a {
-          margin: 0 auto;
-          width: fit-content;
-        }
-
-        .manifesto-language-group {
-          width: auto;
-          max-width: 100%;
         }
       }
     </style>
