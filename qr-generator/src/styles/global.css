@@ -57,6 +57,7 @@ button {
 .preview-column {
   position: sticky;
   top: 24px;
+  align-self: start;
 }
 
 .hero-card,

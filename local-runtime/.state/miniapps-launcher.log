@@ -257,3 +257,153 @@ Ghostscript: /opt/homebrew/bin/gs (GPL Ghostscript 10.07.0 (2026-03-16))
 2026-04-24T07:41:25.616Z helper pdf-compress-server: pdf-compress-server listening on http://127.0.0.1:4184
 Ghostscript: /Users/yusufemreatasayar/miniapps/pdf-compress-server/bin/gs-macos-arm64 (GPL Ghostscript 10.07.0 (2026-03-16))
 2026-04-24T07:41:25.663Z helper pdf-compress-server reachable on http://127.0.0.1:4184/
+2026-04-25T21:29:02.862Z launcher shutting down
+2026-04-25T21:29:04.027Z launcher starting for http://127.0.0.1:4310/
+2026-04-25T21:29:04.031Z helper pdf-compress-server starting via /opt/homebrew/Cellar/node/25.6.1/bin/node /Users/yusufemreatasayar/miniapps/pdf-compress-server/server.mjs
+2026-04-25T21:29:04.034Z launcher ready
+2026-04-25T21:29:04.043Z miniapps-shell listening on http://127.0.0.1:4310/ from /Users/yusufemreatasayar/miniapps/miniapps/dist-internal
+2026-04-25T21:29:04.043Z weekly-bulletin listening on http://127.0.0.1:4311/ from /Users/yusufemreatasayar/miniapps/weekly-bulletin/dist
+2026-04-25T21:29:04.043Z qr-generator listening on http://127.0.0.1:4312/ from /Users/yusufemreatasayar/miniapps/qr-generator/dist
+2026-04-25T21:29:04.043Z pdf-toolkit listening on http://127.0.0.1:4313/ from /Users/yusufemreatasayar/miniapps/pdf-toolkit/dist
+2026-04-25T21:29:04.043Z image-toolkit listening on http://127.0.0.1:4315/ from /Users/yusufemreatasayar/miniapps/image-toolkit/dist
+2026-04-25T21:29:04.043Z video-to-audio listening on http://127.0.0.1:4316/ from /Users/yusufemreatasayar/miniapps/video-to-audio/dist
+2026-04-25T21:29:04.043Z csv-toolkit listening on http://127.0.0.1:4317/ from /Users/yusufemreatasayar/miniapps/csv-toolkit/dist
+2026-04-25T21:29:04.043Z bg-remover listening on http://127.0.0.1:4318/ from /Users/yusufemreatasayar/miniapps/bg-remover/dist
+2026-04-25T21:29:04.043Z stem-splitter listening on http://127.0.0.1:4194/ from /Users/yusufemreatasayar/miniapps/stem-splitter/dist
+2026-04-25T21:29:04.043Z audio-editor listening on http://127.0.0.1:4320/ from /Users/yusufemreatasayar/miniapps/audio-editor/dist
+2026-04-25T21:29:04.043Z exif-cleaner listening on http://127.0.0.1:4321/ from /Users/yusufemreatasayar/miniapps/exif-cleaner/dist
+2026-04-25T21:29:04.044Z image-format-converter listening on http://127.0.0.1:4322/ from /Users/yusufemreatasayar/miniapps/image-format-converter/dist
+2026-04-25T21:29:04.044Z dev-toolkit listening on http://127.0.0.1:4323/ from /Users/yusufemreatasayar/miniapps/dev-toolkit/dist
+2026-04-25T21:29:04.044Z uncaught exception: Error: listen EADDRINUSE: address already in use 127.0.0.1:4195
+    at Server.setupListenHandle [as _listen2] (node:net:2016:16)
+    at listenInCluster (node:net:2073:12)
+    at node:net:2282:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2026-04-25T21:29:04.044Z launcher shutting down
+2026-04-25T21:29:38.685Z launcher starting for http://127.0.0.1:4310/
+2026-04-25T21:29:38.690Z helper pdf-compress-server starting via /opt/homebrew/Cellar/node/25.6.1/bin/node /Users/yusufemreatasayar/miniapps/pdf-compress-server/server.mjs
+2026-04-25T21:29:38.693Z launcher ready
+2026-04-25T21:29:38.703Z miniapps-shell listening on http://127.0.0.1:4310/ from /Users/yusufemreatasayar/miniapps/miniapps/dist-internal
+2026-04-25T21:29:38.703Z weekly-bulletin listening on http://127.0.0.1:4311/ from /Users/yusufemreatasayar/miniapps/weekly-bulletin/dist
+2026-04-25T21:29:38.703Z qr-generator listening on http://127.0.0.1:4312/ from /Users/yusufemreatasayar/miniapps/qr-generator/dist
+2026-04-25T21:29:38.703Z pdf-toolkit listening on http://127.0.0.1:4313/ from /Users/yusufemreatasayar/miniapps/pdf-toolkit/dist
+2026-04-25T21:29:38.704Z image-toolkit listening on http://127.0.0.1:4315/ from /Users/yusufemreatasayar/miniapps/image-toolkit/dist
+2026-04-25T21:29:38.704Z video-to-audio listening on http://127.0.0.1:4316/ from /Users/yusufemreatasayar/miniapps/video-to-audio/dist
+2026-04-25T21:29:38.704Z csv-toolkit listening on http://127.0.0.1:4317/ from /Users/yusufemreatasayar/miniapps/csv-toolkit/dist
+2026-04-25T21:29:38.704Z bg-remover listening on http://127.0.0.1:4318/ from /Users/yusufemreatasayar/miniapps/bg-remover/dist
+2026-04-25T21:29:38.704Z stem-splitter listening on http://127.0.0.1:4194/ from /Users/yusufemreatasayar/miniapps/stem-splitter/dist
+2026-04-25T21:29:38.704Z audio-editor listening on http://127.0.0.1:4320/ from /Users/yusufemreatasayar/miniapps/audio-editor/dist
+2026-04-25T21:29:38.704Z exif-cleaner listening on http://127.0.0.1:4321/ from /Users/yusufemreatasayar/miniapps/exif-cleaner/dist
+2026-04-25T21:29:38.704Z image-format-converter listening on http://127.0.0.1:4322/ from /Users/yusufemreatasayar/miniapps/image-format-converter/dist
+2026-04-25T21:29:38.704Z dev-toolkit listening on http://127.0.0.1:4323/ from /Users/yusufemreatasayar/miniapps/dev-toolkit/dist
+2026-04-25T21:29:38.705Z uncaught exception: Error: listen EADDRINUSE: address already in use 127.0.0.1:4195
+    at Server.setupListenHandle [as _listen2] (node:net:2016:16)
+    at listenInCluster (node:net:2073:12)
+    at node:net:2282:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2026-04-25T21:29:38.705Z launcher shutting down
+2026-04-25T21:30:08.446Z launcher starting for http://127.0.0.1:4310/
+2026-04-25T21:30:08.456Z helper pdf-compress-server starting via /opt/homebrew/Cellar/node/25.6.1/bin/node /Users/yusufemreatasayar/miniapps/pdf-compress-server/server.mjs
+2026-04-25T21:30:08.468Z launcher ready
+2026-04-25T21:30:08.486Z miniapps-shell listening on http://127.0.0.1:4310/ from /Users/yusufemreatasayar/miniapps/miniapps/dist-internal
+2026-04-25T21:30:08.486Z weekly-bulletin listening on http://127.0.0.1:4311/ from /Users/yusufemreatasayar/miniapps/weekly-bulletin/dist
+2026-04-25T21:30:08.487Z qr-generator listening on http://127.0.0.1:4312/ from /Users/yusufemreatasayar/miniapps/qr-generator/dist
+2026-04-25T21:30:08.487Z pdf-toolkit listening on http://127.0.0.1:4313/ from /Users/yusufemreatasayar/miniapps/pdf-toolkit/dist
+2026-04-25T21:30:08.487Z image-toolkit listening on http://127.0.0.1:4315/ from /Users/yusufemreatasayar/miniapps/image-toolkit/dist
+2026-04-25T21:30:08.487Z video-to-audio listening on http://127.0.0.1:4316/ from /Users/yusufemreatasayar/miniapps/video-to-audio/dist
+2026-04-25T21:30:08.487Z csv-toolkit listening on http://127.0.0.1:4317/ from /Users/yusufemreatasayar/miniapps/csv-toolkit/dist
+2026-04-25T21:30:08.487Z bg-remover listening on http://127.0.0.1:4318/ from /Users/yusufemreatasayar/miniapps/bg-remover/dist
+2026-04-25T21:30:08.487Z stem-splitter listening on http://127.0.0.1:4194/ from /Users/yusufemreatasayar/miniapps/stem-splitter/dist
+2026-04-25T21:30:08.488Z audio-editor listening on http://127.0.0.1:4320/ from /Users/yusufemreatasayar/miniapps/audio-editor/dist
+2026-04-25T21:30:08.488Z exif-cleaner listening on http://127.0.0.1:4321/ from /Users/yusufemreatasayar/miniapps/exif-cleaner/dist
+2026-04-25T21:30:08.488Z image-format-converter listening on http://127.0.0.1:4322/ from /Users/yusufemreatasayar/miniapps/image-format-converter/dist
+2026-04-25T21:30:08.488Z dev-toolkit listening on http://127.0.0.1:4323/ from /Users/yusufemreatasayar/miniapps/dev-toolkit/dist
+2026-04-25T21:30:08.489Z uncaught exception: Error: listen EADDRINUSE: address already in use 127.0.0.1:4195
+    at Server.setupListenHandle [as _listen2] (node:net:2016:16)
+    at listenInCluster (node:net:2073:12)
+    at node:net:2282:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2026-04-25T21:30:08.489Z launcher shutting down
+2026-04-25T21:30:47.119Z launcher starting for http://127.0.0.1:4310/
+2026-04-25T21:30:47.129Z helper pdf-compress-server starting via /opt/homebrew/Cellar/node/25.6.1/bin/node /Users/yusufemreatasayar/miniapps/pdf-compress-server/server.mjs
+2026-04-25T21:30:47.137Z launcher ready
+2026-04-25T21:30:47.152Z miniapps-shell listening on http://127.0.0.1:4310/ from /Users/yusufemreatasayar/miniapps/miniapps/dist-internal
+2026-04-25T21:30:47.153Z weekly-bulletin listening on http://127.0.0.1:4311/ from /Users/yusufemreatasayar/miniapps/weekly-bulletin/dist
+2026-04-25T21:30:47.153Z qr-generator listening on http://127.0.0.1:4312/ from /Users/yusufemreatasayar/miniapps/qr-generator/dist
+2026-04-25T21:30:47.156Z pdf-toolkit listening on http://127.0.0.1:4313/ from /Users/yusufemreatasayar/miniapps/pdf-toolkit/dist
+2026-04-25T21:30:47.157Z image-toolkit listening on http://127.0.0.1:4315/ from /Users/yusufemreatasayar/miniapps/image-toolkit/dist
+2026-04-25T21:30:47.157Z video-to-audio listening on http://127.0.0.1:4316/ from /Users/yusufemreatasayar/miniapps/video-to-audio/dist
+2026-04-25T21:30:47.157Z csv-toolkit listening on http://127.0.0.1:4317/ from /Users/yusufemreatasayar/miniapps/csv-toolkit/dist
+2026-04-25T21:30:47.158Z bg-remover listening on http://127.0.0.1:4318/ from /Users/yusufemreatasayar/miniapps/bg-remover/dist
+2026-04-25T21:30:47.158Z stem-splitter listening on http://127.0.0.1:4194/ from /Users/yusufemreatasayar/miniapps/stem-splitter/dist
+2026-04-25T21:30:47.158Z audio-editor listening on http://127.0.0.1:4320/ from /Users/yusufemreatasayar/miniapps/audio-editor/dist
+2026-04-25T21:30:47.158Z exif-cleaner listening on http://127.0.0.1:4321/ from /Users/yusufemreatasayar/miniapps/exif-cleaner/dist
+2026-04-25T21:30:47.158Z image-format-converter listening on http://127.0.0.1:4322/ from /Users/yusufemreatasayar/miniapps/image-format-converter/dist
+2026-04-25T21:30:47.158Z dev-toolkit listening on http://127.0.0.1:4323/ from /Users/yusufemreatasayar/miniapps/dev-toolkit/dist
+2026-04-25T21:30:47.158Z image-upscaler listening on http://127.0.0.1:4196/ from /Users/yusufemreatasayar/miniapps/image-upscaler/dist
+2026-04-25T21:30:47.499Z helper pdf-compress-server: pdf-compress-server listening on http://127.0.0.1:4184
+2026-04-25T21:30:47.500Z helper pdf-compress-server: Ghostscript: /Users/yusufemreatasayar/miniapps/pdf-compress-server/bin/gs-macos-arm64 (GPL Ghostscript 10.07.0 (2026-03-16))
+2026-04-25T21:30:47.665Z helper pdf-compress-server reachable on http://127.0.0.1:4184/
+2026-04-25T22:06:14.951Z launcher shutting down
+2026-04-26T08:16:33.080Z launcher starting for http://127.0.0.1:4310/
+2026-04-26T08:16:33.108Z helper pdf-compress-server starting via /Users/yusufemreatasayar/miniapps/local-runtime/bin/node-macos-arm64 /Users/yusufemreatasayar/miniapps/pdf-compress-server/server.mjs
+2026-04-26T08:16:33.119Z launcher ready
+2026-04-26T08:16:33.136Z miniapps-shell listening on http://127.0.0.1:4310/ from /Users/yusufemreatasayar/miniapps/miniapps/dist-internal
+2026-04-26T08:16:33.137Z weekly-bulletin listening on http://127.0.0.1:4311/ from /Users/yusufemreatasayar/miniapps/weekly-bulletin/dist
+2026-04-26T08:16:33.137Z qr-generator listening on http://127.0.0.1:4312/ from /Users/yusufemreatasayar/miniapps/qr-generator/dist
+2026-04-26T08:16:33.138Z pdf-toolkit listening on http://127.0.0.1:4313/ from /Users/yusufemreatasayar/miniapps/pdf-toolkit/dist
+2026-04-26T08:16:33.138Z image-toolkit listening on http://127.0.0.1:4315/ from /Users/yusufemreatasayar/miniapps/image-toolkit/dist
+2026-04-26T08:16:33.138Z video-to-audio listening on http://127.0.0.1:4316/ from /Users/yusufemreatasayar/miniapps/video-to-audio/dist
+2026-04-26T08:16:33.139Z csv-toolkit listening on http://127.0.0.1:4317/ from /Users/yusufemreatasayar/miniapps/csv-toolkit/dist
+2026-04-26T08:16:33.139Z bg-remover listening on http://127.0.0.1:4318/ from /Users/yusufemreatasayar/miniapps/bg-remover/dist
+2026-04-26T08:16:33.140Z stem-splitter listening on http://127.0.0.1:4194/ from /Users/yusufemreatasayar/miniapps/stem-splitter/dist
+2026-04-26T08:16:33.140Z audio-editor listening on http://127.0.0.1:4320/ from /Users/yusufemreatasayar/miniapps/audio-editor/dist
+2026-04-26T08:16:33.140Z exif-cleaner listening on http://127.0.0.1:4321/ from /Users/yusufemreatasayar/miniapps/exif-cleaner/dist
+2026-04-26T08:16:33.140Z image-format-converter listening on http://127.0.0.1:4322/ from /Users/yusufemreatasayar/miniapps/image-format-converter/dist
+2026-04-26T08:16:33.141Z dev-toolkit listening on http://127.0.0.1:4323/ from /Users/yusufemreatasayar/miniapps/dev-toolkit/dist
+2026-04-26T08:16:33.141Z image-upscaler listening on http://127.0.0.1:4196/ from /Users/yusufemreatasayar/miniapps/image-upscaler/dist
+2026-04-26T08:16:33.464Z helper pdf-compress-server: pdf-compress-server listening on http://127.0.0.1:4184
+2026-04-26T08:16:33.465Z helper pdf-compress-server: Ghostscript: /Users/yusufemreatasayar/miniapps/pdf-compress-server/bin/gs-macos-arm64 (GPL Ghostscript 10.07.0 (2026-03-16))
+2026-04-26T08:16:33.651Z helper pdf-compress-server reachable on http://127.0.0.1:4184/
+2026-04-26T09:25:11.873Z launcher shutting down
+2026-04-26T09:25:12.221Z launcher starting for http://127.0.0.1:4310/
+2026-04-26T09:25:12.234Z helper pdf-compress-server starting via /Users/yusufemreatasayar/miniapps/local-runtime/bin/node-macos-arm64 /Users/yusufemreatasayar/miniapps/pdf-compress-server/server.mjs
+2026-04-26T09:25:12.238Z launcher ready
+2026-04-26T09:25:12.247Z miniapps-shell listening on http://127.0.0.1:4310/ from /Users/yusufemreatasayar/miniapps/miniapps/dist-internal
+2026-04-26T09:25:12.247Z weekly-bulletin listening on http://127.0.0.1:4311/ from /Users/yusufemreatasayar/miniapps/weekly-bulletin/dist
+2026-04-26T09:25:12.247Z qr-generator listening on http://127.0.0.1:4312/ from /Users/yusufemreatasayar/miniapps/qr-generator/dist
+2026-04-26T09:25:12.247Z pdf-toolkit listening on http://127.0.0.1:4313/ from /Users/yusufemreatasayar/miniapps/pdf-toolkit/dist
+2026-04-26T09:25:12.248Z image-toolkit listening on http://127.0.0.1:4315/ from /Users/yusufemreatasayar/miniapps/image-toolkit/dist
+2026-04-26T09:25:12.248Z video-to-audio listening on http://127.0.0.1:4316/ from /Users/yusufemreatasayar/miniapps/video-to-audio/dist
+2026-04-26T09:25:12.248Z csv-toolkit listening on http://127.0.0.1:4317/ from /Users/yusufemreatasayar/miniapps/csv-toolkit/dist
+2026-04-26T09:25:12.248Z bg-remover listening on http://127.0.0.1:4318/ from /Users/yusufemreatasayar/miniapps/bg-remover/dist
+2026-04-26T09:25:12.248Z stem-splitter listening on http://127.0.0.1:4194/ from /Users/yusufemreatasayar/miniapps/stem-splitter/dist
+2026-04-26T09:25:12.248Z audio-editor listening on http://127.0.0.1:4320/ from /Users/yusufemreatasayar/miniapps/audio-editor/dist
+2026-04-26T09:25:12.249Z exif-cleaner listening on http://127.0.0.1:4321/ from /Users/yusufemreatasayar/miniapps/exif-cleaner/dist
+2026-04-26T09:25:12.249Z image-format-converter listening on http://127.0.0.1:4322/ from /Users/yusufemreatasayar/miniapps/image-format-converter/dist
+2026-04-26T09:25:12.249Z dev-toolkit listening on http://127.0.0.1:4323/ from /Users/yusufemreatasayar/miniapps/dev-toolkit/dist
+2026-04-26T09:25:12.249Z image-upscaler listening on http://127.0.0.1:4196/ from /Users/yusufemreatasayar/miniapps/image-upscaler/dist
+2026-04-26T09:25:12.404Z helper pdf-compress-server: pdf-compress-server listening on http://127.0.0.1:4184
+2026-04-26T09:25:12.404Z helper pdf-compress-server: Ghostscript: /Users/yusufemreatasayar/miniapps/pdf-compress-server/bin/gs-macos-arm64 (GPL Ghostscript 10.07.0 (2026-03-16))
+2026-04-26T09:25:12.502Z helper pdf-compress-server reachable on http://127.0.0.1:4184/
+2026-04-26T09:29:46.143Z launcher shutting down
+2026-04-26T09:29:46.553Z launcher starting for http://127.0.0.1:4310/
+2026-04-26T09:29:46.560Z helper pdf-compress-server starting via /Users/yusufemreatasayar/miniapps/local-runtime/bin/node-macos-arm64 /Users/yusufemreatasayar/miniapps/pdf-compress-server/server.mjs
+2026-04-26T09:29:46.563Z launcher ready
+2026-04-26T09:29:46.570Z miniapps-shell listening on http://127.0.0.1:4310/ from /Users/yusufemreatasayar/miniapps/miniapps/dist-internal
+2026-04-26T09:29:46.570Z weekly-bulletin listening on http://127.0.0.1:4311/ from /Users/yusufemreatasayar/miniapps/weekly-bulletin/dist
+2026-04-26T09:29:46.570Z qr-generator listening on http://127.0.0.1:4312/ from /Users/yusufemreatasayar/miniapps/qr-generator/dist
+2026-04-26T09:29:46.570Z pdf-toolkit listening on http://127.0.0.1:4313/ from /Users/yusufemreatasayar/miniapps/pdf-toolkit/dist
+2026-04-26T09:29:46.570Z image-toolkit listening on http://127.0.0.1:4315/ from /Users/yusufemreatasayar/miniapps/image-toolkit/dist
+2026-04-26T09:29:46.570Z video-to-audio listening on http://127.0.0.1:4316/ from /Users/yusufemreatasayar/miniapps/video-to-audio/dist
+2026-04-26T09:29:46.570Z csv-toolkit listening on http://127.0.0.1:4317/ from /Users/yusufemreatasayar/miniapps/csv-toolkit/dist
+2026-04-26T09:29:46.570Z bg-remover listening on http://127.0.0.1:4318/ from /Users/yusufemreatasayar/miniapps/bg-remover/dist
+2026-04-26T09:29:46.570Z stem-splitter listening on http://127.0.0.1:4194/ from /Users/yusufemreatasayar/miniapps/stem-splitter/dist
+2026-04-26T09:29:46.571Z audio-editor listening on http://127.0.0.1:4320/ from /Users/yusufemreatasayar/miniapps/audio-editor/dist
+2026-04-26T09:29:46.571Z exif-cleaner listening on http://127.0.0.1:4321/ from /Users/yusufemreatasayar/miniapps/exif-cleaner/dist
+2026-04-26T09:29:46.571Z image-format-converter listening on http://127.0.0.1:4322/ from /Users/yusufemreatasayar/miniapps/image-format-converter/dist
+2026-04-26T09:29:46.571Z dev-toolkit listening on http://127.0.0.1:4323/ from /Users/yusufemreatasayar/miniapps/dev-toolkit/dist
+2026-04-26T09:29:46.571Z image-upscaler listening on http://127.0.0.1:4196/ from /Users/yusufemreatasayar/miniapps/image-upscaler/dist
+2026-04-26T09:29:46.695Z helper pdf-compress-server: pdf-compress-server listening on http://127.0.0.1:4184
+2026-04-26T09:29:46.695Z helper pdf-compress-server: Ghostscript: /Users/yusufemreatasayar/miniapps/pdf-compress-server/bin/gs-macos-arm64 (GPL Ghostscript 10.07.0 (2026-03-16))
+2026-04-26T09:29:46.823Z helper pdf-compress-server reachable on http://127.0.0.1:4184/
