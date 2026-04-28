@@ -55,7 +55,8 @@ button {
 }
 
 .preview-column {
-  position: static;
+  position: sticky;
+  top: 24px;
 }
 
 .hero-card,
@@ -536,7 +537,6 @@ button {
   padding: 24px 0;
   opacity: 0.35;
   transition: opacity 0.2s;
-  grid-column: 1 / -1;
 }
 
 .miniapps-footer:hover {

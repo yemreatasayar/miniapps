@@ -871,6 +871,7 @@ function App() {
   }
 
   return (
+    <>
     <main className="qr-shell">
       <section className="editor-column">
         <header className="hero-card">
@@ -1134,18 +1135,19 @@ function App() {
           </div>
         </section>
       </aside>
-      {isDistribution && (
-        <footer className="miniapps-footer">
-          <a href="https://miniapps.tr" aria-label="miniapps.tr">
-            <img
-              src={`${import.meta.env.BASE_URL}assets/miniapps-logo-dark.svg`}
-              alt="miniapps.tr"
-              className="miniapps-footer-logo"
-            />
-          </a>
-        </footer>
-      )}
     </main>
+    {isDistribution && (
+      <footer className="miniapps-footer">
+        <a href="https://miniapps.tr" aria-label="miniapps.tr">
+          <img
+            src={`${import.meta.env.BASE_URL}assets/miniapps-logo-dark.svg`}
+            alt="miniapps.tr"
+            className="miniapps-footer-logo"
+          />
+        </a>
+      </footer>
+    )}
+    </>
   );
 }
 
