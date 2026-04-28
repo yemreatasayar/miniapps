@@ -1552,7 +1552,11 @@ function buildManifestoPageHtml(language) {
         gap: 10px;
       }
 
-      .manifesto-footer {
+      :root {
+        --distribution-footer-height: 104px;
+      }
+
+      .distribution-header {
         display: grid;
         grid-template-columns: 1fr auto 1fr;
         align-items: center;
@@ -1563,27 +1567,27 @@ function buildManifestoPageHtml(language) {
         left: 0;
         right: 0;
         bottom: 0;
-        min-height: 104px;
+        min-height: var(--distribution-footer-height);
       }
 
-      .manifesto-footer-brand {
+      .distribution-brand {
         display: flex;
         align-items: center;
         justify-content: flex-start;
       }
 
-      .manifesto-footer-brand a {
+      .distribution-brand a {
         display: flex;
         align-items: center;
       }
 
-      .manifesto-footer-brand img {
+      .distribution-brand .brand-logo {
         width: min(100%, 176px);
         height: auto;
         display: block;
       }
 
-      .manifesto-footer-meta {
+      .distribution-version {
         display: grid;
         justify-items: center;
         gap: 2px;
@@ -1591,27 +1595,31 @@ function buildManifestoPageHtml(language) {
         text-align: center;
       }
 
-      .manifesto-footer-meta span {
+      .distribution-version span:first-child {
         font-size: 14px;
         font-weight: 600;
         letter-spacing: 0.01em;
       }
 
-      .manifesto-footer-meta a {
+      .distribution-author-link {
         color: rgba(255, 255, 255, 0.56);
         text-decoration: none;
         font-size: 12px;
         font-weight: 500;
       }
 
-      .manifesto-footer-controls {
+      .distribution-author-link:hover {
+        color: rgba(255, 255, 255, 0.56);
+      }
+
+      .distribution-controls {
         justify-self: end;
         display: inline-flex;
         align-items: center;
         gap: 6px;
       }
 
-      .manifesto-language-group {
+      .distribution-language-group {
         display: inline-flex;
         align-items: center;
         gap: 6px;
@@ -1620,97 +1628,98 @@ function buildManifestoPageHtml(language) {
         background: #232323;
       }
 
-      .manifesto-footer-link,
-      .manifesto-language-link {
+      .distribution-link-button {
         min-height: 40px;
         padding: 0 16px;
         border-radius: 999px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+        background: #232323;
+        color: rgba(255, 255, 255, 0.84);
+        text-decoration: none;
         font-size: 15px;
         font-weight: 700;
         letter-spacing: 0.01em;
-        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         transition: background 140ms ease, color 140ms ease, transform 140ms ease;
       }
 
-      .manifesto-footer-link {
-        background: #232323;
-        color: rgba(255, 255, 255, 0.84);
-      }
-
-      .manifesto-language-link {
-        color: rgba(255, 255, 255, 0.68);
-      }
-
-      .manifesto-footer-link:hover,
-      .manifesto-language-link:hover,
-      .manifesto-footer-link:focus-visible,
-      .manifesto-language-link:focus-visible {
+      .distribution-link-button:hover,
+      .distribution-link-button:focus-visible {
         background: #2f2f2f;
         color: #ffffff;
         transform: translateY(-1px);
       }
 
-      .manifesto-language-link.is-active {
+      .language-switch-button {
+        min-width: 68px;
+        min-height: 40px;
+        padding: 0 16px;
+        border-radius: 999px;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.68);
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+      }
+
+      .language-switch-button:hover {
+        transform: translateY(-1px);
+      }
+
+      .language-switch-button.is-active {
         background: #f5f5f5;
         color: #111111;
       }
 
       @media (max-width: 980px) {
-        .manifesto-footer {
-          grid-template-columns: 1fr;
+        :root {
+          --distribution-footer-height: 148px;
+        }
+
+        .distribution-header {
+          grid-template-columns: 1fr auto;
+          align-items: center;
           grid-template-areas:
-            "brand"
-            "meta"
-            "controls";
-          gap: 14px;
+            "brand version"
+            "controls controls";
+          gap: 14px 18px;
           padding: 18px 20px;
-          justify-items: center;
         }
 
-        .manifesto-footer-brand {
+        .distribution-brand {
           grid-area: brand;
-          justify-self: center;
-          justify-content: center;
-          width: 100%;
+          justify-self: start;
         }
 
-        .manifesto-footer-meta {
-          grid-area: meta;
-          justify-self: center;
-          justify-items: center;
-          text-align: center;
+        .distribution-version {
+          grid-area: version;
+          justify-self: end;
+          justify-items: end;
+          text-align: right;
         }
 
-        .manifesto-footer-controls {
+        .distribution-controls {
           grid-area: controls;
-          justify-self: center;
-          width: auto;
-          max-width: 100%;
+          justify-self: stretch;
+          width: 100%;
           justify-content: center;
           flex-wrap: wrap;
-          gap: 10px;
-        }
-
-        .manifesto-footer-link {
-          min-width: 148px;
-        }
-
-        .manifesto-language-link {
-          min-width: 84px;
-        }
-
-        .manifesto-language-group {
-          width: auto;
-          max-width: 100%;
         }
       }
 
       @media (max-width: 760px) {
+        :root {
+          --distribution-footer-height: 138px;
+        }
+
         .manifesto-shell {
-          padding: 20px 16px 168px;
+          padding: 20px 16px 174px;
         }
 
         .manifesto-card {
@@ -1723,6 +1732,61 @@ function buildManifestoPageHtml(language) {
           font-size: 16px;
         }
       }
+
+      @media (max-width: 560px) {
+        :root {
+          --distribution-footer-height: 176px;
+        }
+
+        .manifesto-shell {
+          padding: 20px 16px 212px;
+        }
+
+        .distribution-header {
+          grid-template-columns: 1fr;
+          grid-template-areas:
+            "brand"
+            "version"
+            "controls";
+          justify-items: stretch;
+          text-align: left;
+          padding: 18px 16px;
+        }
+
+        .distribution-brand {
+          justify-self: center;
+          justify-content: center;
+          width: 100%;
+        }
+
+        .distribution-version {
+          justify-self: center;
+          justify-items: center;
+          text-align: center;
+        }
+
+        .distribution-controls {
+          justify-self: center;
+          flex-wrap: wrap;
+          justify-content: center;
+          width: auto;
+          max-width: 100%;
+          gap: 10px;
+        }
+
+        .language-switch-button {
+          min-width: 84px;
+        }
+
+        .distribution-link-button {
+          min-width: 148px;
+        }
+
+        .distribution-language-group {
+          width: auto;
+          max-width: 100%;
+        }
+      }
     </style>
   </head>
   <body>
@@ -1731,21 +1795,21 @@ function buildManifestoPageHtml(language) {
         ${sectionsMarkup}
       </article>
     </main>
-    <footer class="manifesto-footer">
-      <div class="manifesto-footer-brand">
+    <footer class="distribution-header">
+      <div class="distribution-brand">
         <a href="./">
-          <img src="./assets/miniapps-logo.svg" alt="miniapps" />
+          <img class="brand-logo" src="./assets/miniapps-logo.svg" alt="miniapps" />
         </a>
       </div>
-      <div class="manifesto-footer-meta">
+      <div class="distribution-version">
         <span>${escapeHtml(packLine)}</span>
-        <a href="https://www.behance.net/yemreatasayar" target="_blank" rel="noreferrer">${escapeHtml(authorLine)}</a>
+        <a class="distribution-author-link" href="https://www.behance.net/yemreatasayar" target="_blank" rel="noreferrer">${escapeHtml(authorLine)}</a>
       </div>
-      <div class="manifesto-footer-controls">
-        <a class="manifesto-footer-link" href="./">${escapeHtml(copy.homeLabel)}</a>
-        <div class="manifesto-language-group">
-          <a class="manifesto-language-link ${language === "tr" ? "is-active" : ""}" href="${trHref}">TR</a>
-          <a class="manifesto-language-link ${language === "en" ? "is-active" : ""}" href="${enHref}">ENG</a>
+      <div class="distribution-controls">
+        <a class="distribution-link-button" href="./">${escapeHtml(copy.homeLabel)}</a>
+        <div class="distribution-language-group">
+          <a class="language-switch-button ${language === "tr" ? "is-active" : ""}" href="${trHref}">TR</a>
+          <a class="language-switch-button ${language === "en" ? "is-active" : ""}" href="${enHref}">ENG</a>
         </div>
       </div>
     </footer>
