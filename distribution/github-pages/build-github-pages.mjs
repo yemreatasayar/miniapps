@@ -1566,16 +1566,21 @@ function buildManifestoPageHtml(language) {
         min-height: 104px;
       }
 
+      .manifesto-footer-brand {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+      }
+
+      .manifesto-footer-brand a {
+        display: flex;
+        align-items: center;
+      }
+
       .manifesto-footer-brand img {
         width: min(100%, 176px);
         height: auto;
         display: block;
-      }
-
-      .manifesto-footer-brand a {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
       }
 
       .manifesto-footer-meta {
@@ -1604,8 +1609,6 @@ function buildManifestoPageHtml(language) {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        flex-wrap: wrap;
-        justify-content: center;
       }
 
       .manifesto-language-group {
@@ -1667,10 +1670,12 @@ function buildManifestoPageHtml(language) {
 
         .manifesto-footer-brand {
           grid-area: brand;
+          justify-self: start;
         }
 
         .manifesto-footer-meta {
           grid-area: meta;
+          justify-self: end;
           justify-items: end;
           text-align: right;
         }
@@ -1679,6 +1684,8 @@ function buildManifestoPageHtml(language) {
           grid-area: controls;
           justify-self: stretch;
           width: 100%;
+          justify-content: center;
+          flex-wrap: wrap;
         }
       }
 
@@ -1721,7 +1728,7 @@ function buildManifestoPageHtml(language) {
         }
 
         .manifesto-footer-link {
-          min-width: 132px;
+          min-width: 148px;
         }
 
         .manifesto-language-link {
