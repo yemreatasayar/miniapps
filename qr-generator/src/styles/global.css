@@ -55,9 +55,7 @@ button {
 }
 
 .preview-column {
-  position: sticky;
-  top: 24px;
-  align-self: start;
+  position: static;
 }
 
 .hero-card,
@@ -476,10 +474,6 @@ button {
 @media (max-width: 1180px) {
   .qr-shell {
     grid-template-columns: 1fr;
-  }
-
-  .preview-column {
-    position: static;
   }
 
   .type-grid,
