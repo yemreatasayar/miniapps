@@ -129,6 +129,22 @@ export default function AudioCutter({ onToast }: AudioCutterProps) {
     [audio]
   );
 
+  const handlePlayheadChange = useCallback(
+    (nextSec: number) => {
+      if (!audio) return;
+
+      const clampedSec = Math.max(0, Math.min(nextSec, audio.duration));
+      const audioElement = audioElementRef.current;
+
+      if (audioElement) {
+        audioElement.currentTime = clampedSec;
+      }
+
+      setPlayheadSec(clampedSec);
+    },
+    [audio]
+  );
+
   function handlePlay(): void {
     const audioElement = audioElementRef.current;
     if (!audioElement) return;
@@ -289,6 +305,7 @@ export default function AudioCutter({ onToast }: AudioCutterProps) {
               endSec={selection.endSec}
               playheadSec={playheadSec}
               onSelectionChange={handleSelectionChange}
+              onPlayheadChange={handlePlayheadChange}
               onTogglePlayback={handleTogglePlayback}
             />
 

@@ -9,11 +9,12 @@ type WaveformProps = {
   endSec: number;
   playheadSec: number;
   onSelectionChange: (start: number, end: number) => void;
+  onPlayheadChange?: (sec: number) => void;
   readOnly?: boolean;
   onTogglePlayback?: () => void;
 };
 
-type DragTarget = "start" | "end" | "none";
+type DragTarget = "start" | "end" | "playhead" | "none";
 
 export default function Waveform({
   data,
@@ -22,6 +23,7 @@ export default function Waveform({
   endSec,
   playheadSec,
   onSelectionChange,
+  onPlayheadChange,
   readOnly = false,
   onTogglePlayback,
 }: WaveformProps) {
@@ -65,17 +67,20 @@ export default function Waveform({
       const ratio = getRatioFromEvent(event);
       const distanceToStart = Math.abs(ratio - startRatio);
       const distanceToEnd = Math.abs(ratio - endRatio);
+      const distanceToPlayhead = playheadRatio >= 0 ? Math.abs(ratio - playheadRatio) : Number.POSITIVE_INFINITY;
 
       if (distanceToStart < 0.03) {
         draggingRef.current = "start";
       } else if (distanceToEnd < 0.03) {
         draggingRef.current = "end";
+      } else if (distanceToPlayhead < 0.03) {
+        draggingRef.current = "playhead";
       } else {
-        draggingRef.current = "start";
-        onSelectionChange(ratio * safeDuration, endSec);
+        draggingRef.current = "playhead";
+        onPlayheadChange?.(ratio * safeDuration);
       }
     },
-    [endRatio, endSec, getRatioFromEvent, onSelectionChange, readOnly, safeDuration, startRatio]
+    [endRatio, getRatioFromEvent, onPlayheadChange, playheadRatio, readOnly, safeDuration, startRatio]
   );
 
   useEffect(() => {
@@ -87,6 +92,8 @@ export default function Waveform({
 
       if (draggingRef.current === "start") {
         onSelectionChange(Math.min(sec, endSec - 0.1), endSec);
+      } else if (draggingRef.current === "playhead") {
+        onPlayheadChange?.(sec);
       } else {
         onSelectionChange(startSec, Math.max(sec, startSec + 0.1));
       }
@@ -103,7 +110,7 @@ export default function Waveform({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [endSec, getRatioFromEvent, onSelectionChange, safeDuration, startSec]);
+  }, [endSec, getRatioFromEvent, onPlayheadChange, onSelectionChange, safeDuration, startSec]);
 
   return (
     <canvas
