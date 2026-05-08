@@ -46,13 +46,13 @@ export default function Toolbar({
           Yeni PDF Yükle
         </button>
         <button type="button" onClick={onSplit} disabled={!hasPdf || busy}>
-          Split
+          Böl
         </button>
         <button type="button" onClick={onMerge} disabled={!hasPdf || busy}>
-          Merge
+          Birleştir
         </button>
         <button type="button" onClick={onExtract} disabled={!hasSelection || busy}>
-          Extract
+          Çıkar
         </button>
         <button type="button" onClick={onDeleteSelected} disabled={!hasSelection || busy}>
           Sil
@@ -85,7 +85,7 @@ export default function Toolbar({
             disabled={!hasPdf || busy}
             title="Acrobat uyumluluğu için Ghostscript ile PDF yapısını onar"
           >
-            Acrobat Repair
+            Acrobat Onar
           </button>
         ) : null}
       </div>

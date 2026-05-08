@@ -347,9 +347,9 @@ export default function App() {
       }
 
       await queueDownloads(downloads);
-      setToast("Split tamamlandı.");
+      setToast("Bölme tamamlandı.");
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "Split işlemi başarısız.");
+      setToast(error instanceof Error ? error.message : "Bölme işlemi başarısız.");
     } finally {
       setBusy(false);
     }
@@ -369,7 +369,7 @@ export default function App() {
       }
       await replaceLoadedPdf(loadedPdf.fileName, mergedBytes, "PDF'ler birleştirildi.");
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "Merge işlemi başarısız.");
+      setToast(error instanceof Error ? error.message : "Birleştirme işlemi başarısız.");
     } finally {
       setBusy(false);
     }
@@ -385,7 +385,7 @@ export default function App() {
       downloadBytes(extractedBytes, normalizeFileName(loadedPdf.fileName, "-extract"));
       setToast("Seçili sayfalar indirildi.");
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "Extract işlemi başarısız.");
+      setToast(error instanceof Error ? error.message : "Çıkarma işlemi başarısız.");
     } finally {
       setBusy(false);
     }
@@ -485,12 +485,12 @@ export default function App() {
       const result = await repairPdf(loadedPdf.fileBytes, loadedPdf.fileName);
       if (result.ok) {
         downloadBytes(result.bytes, result.fileName);
-        setToast("Repair tamamlandı — Acrobat uyumlu PDF indirildi.");
+        setToast("Onarım tamamlandı — Acrobat uyumlu PDF indirildi.");
       } else {
         setToast(result.message);
       }
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "Repair başarısız.");
+      setToast(error instanceof Error ? error.message : "Onarım başarısız.");
     } finally {
       setBusy(false);
     }
@@ -565,7 +565,7 @@ export default function App() {
       setTextExtractStatus(textExtractMode === "ocr" ? "OCR tamamlandı." : "Metin çıkarma tamamlandı.");
       setToast(textExtractMode === "ocr" ? "OCR ile DOCX hazırlandı ve indirildi." : "DOCX hazırlandı ve indirildi.");
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "Text extraction başarısız.");
+      setToast(error instanceof Error ? error.message : "Metin çıkarma başarısız.");
       setTextExtractStatus(null);
     } finally {
       setBusy(false);
@@ -597,7 +597,7 @@ export default function App() {
       }
       return extracted;
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "Table extraction başarısız.");
+      setToast(error instanceof Error ? error.message : "Tablo çıkarma başarısız.");
       setTableExtractStatus(null);
       return null;
     } finally {
