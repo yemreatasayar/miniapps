@@ -9,6 +9,10 @@ type ToolbarProps = {
   onMerge: () => void;
   onDeleteSelected: () => void;
   onApplyRotations: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
   onRepair: () => void;
   onLoadNew: () => void;
   imageExportFormat: ImageExportFormat;
@@ -26,6 +30,10 @@ export default function Toolbar({
   onMerge,
   onDeleteSelected,
   onApplyRotations,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
   onRepair,
   onLoadNew,
   imageExportFormat,
@@ -54,6 +62,12 @@ export default function Toolbar({
         </button>
         <button type="button" onClick={onApplyRotations} disabled={!hasRotations || busy}>
           Rotasyonu Uygula
+        </button>
+        <button type="button" onClick={onUndo} disabled={!canUndo || busy}>
+          Geri Al
+        </button>
+        <button type="button" onClick={onRedo} disabled={!canRedo || busy}>
+          İleri Al
         </button>
       </div>
 

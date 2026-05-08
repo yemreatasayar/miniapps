@@ -120,6 +120,8 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [isReplacingPdf, setIsReplacingPdf] = useState(false);
+  const [undoStack, setUndoStack] = useState<Array<{ fileName: string; fileBytes: Uint8Array }>>([]);
+  const [redoStack, setRedoStack] = useState<Array<{ fileName: string; fileBytes: Uint8Array }>>([]);
   const loadInputRef = useRef<HTMLInputElement | null>(null);
   const mergeInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -187,6 +189,47 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleSelectAllShortcut);
   }, [activeTab, loadedPdf, pages, selectedPages]);
 
+  useEffect(() => {
+    function handleEditShortcuts(event: KeyboardEvent) {
+      if (!loadedPdf || activeTab !== "edit" || busy) return;
+
+      const target = event.target as HTMLElement | null;
+      const isTypingTarget =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target?.isContentEditable;
+      if (isTypingTarget) return;
+
+      if (event.key === "Delete" || event.key === "Backspace") {
+        if (selectedPages.size > 0) {
+          event.preventDefault();
+          void handleDeleteSelected();
+        }
+        return;
+      }
+
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === "z") {
+        if (undoStack.length > 0) {
+          event.preventDefault();
+          void handleUndo();
+        }
+        return;
+      }
+
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "y") {
+        if (redoStack.length > 0) {
+          event.preventDefault();
+          void handleRedo();
+        }
+        return;
+      }
+    }
+
+    window.addEventListener("keydown", handleEditShortcuts);
+    return () => window.removeEventListener("keydown", handleEditShortcuts);
+  }, [loadedPdf, activeTab, busy, selectedPages, undoStack, redoStack]);
+
   async function handleFileSelected(file: File) {
     if (!file.name.toLowerCase().endsWith(".pdf")) {
       setToast("Lütfen bir PDF dosyası seç.");
@@ -199,6 +242,8 @@ export default function App() {
       setLoadedPdf(nextLoadedPdf);
       setPages(nextLoadedPdf.pages);
       setSelectedPages(new Set());
+      setUndoStack([]);
+      setRedoStack([]);
       setExtractedText(null);
       setExtractedTables(null);
       setTableExtractionContextKey(null);
@@ -256,6 +301,36 @@ export default function App() {
     if (message) setToast(message);
   }
 
+  async function replaceLoadedPdfWithHistory(fileName: string, fileBytes: Uint8Array, message?: string) {
+    if (loadedPdf) {
+      setUndoStack((prev) => [...prev.slice(-9), { fileName: loadedPdf.fileName, fileBytes: loadedPdf.fileBytes }]);
+      setRedoStack([]);
+    }
+    await replaceLoadedPdf(fileName, fileBytes, message);
+  }
+
+  async function handleUndo() {
+    if (undoStack.length === 0 || busy) return;
+    const prev = undoStack[undoStack.length - 1];
+    if (!prev) return;
+    if (loadedPdf) {
+      setRedoStack((r) => [...r.slice(-9), { fileName: loadedPdf.fileName, fileBytes: loadedPdf.fileBytes }]);
+    }
+    setUndoStack((s) => s.slice(0, -1));
+    await replaceLoadedPdf(prev.fileName, prev.fileBytes, "Geri alındı.");
+  }
+
+  async function handleRedo() {
+    if (redoStack.length === 0 || busy) return;
+    const next = redoStack[redoStack.length - 1];
+    if (!next) return;
+    if (loadedPdf) {
+      setUndoStack((s) => [...s.slice(-9), { fileName: loadedPdf.fileName, fileBytes: loadedPdf.fileBytes }]);
+    }
+    setRedoStack((r) => r.slice(0, -1));
+    await replaceLoadedPdf(next.fileName, next.fileBytes, "Yeniden yapıldı.");
+  }
+
   async function handleRotate(index: number, direction: "cw" | "ccw") {
     const currentPage = pages.find((p) => p.pageIndex === index);
     if (!currentPage || !loadedPdf) return;
@@ -285,7 +360,7 @@ export default function App() {
     try {
       setBusy(true);
       const reorderedBytes = await reorderPages(loadedPdf.fileBytes, newOrder);
-      await replaceLoadedPdf(loadedPdf.fileName, reorderedBytes, "Sayfa sırası güncellendi.");
+      await replaceLoadedPdfWithHistory(loadedPdf.fileName, reorderedBytes, "Sayfa sırası güncellendi.");
     } catch (error) {
       setToast(error instanceof Error ? error.message : "Sayfa sırası güncellenemedi.");
     } finally {
@@ -367,7 +442,7 @@ export default function App() {
       if (options?.downloadResult !== false) {
         downloadBytes(mergedBytes, normalizeFileName(loadedPdf.fileName, "-merged"));
       }
-      await replaceLoadedPdf(loadedPdf.fileName, mergedBytes, "PDF'ler birleştirildi.");
+      await replaceLoadedPdfWithHistory(loadedPdf.fileName, mergedBytes, "PDF'ler birleştirildi.");
     } catch (error) {
       setToast(error instanceof Error ? error.message : "Birleştirme işlemi başarısız.");
     } finally {
@@ -396,6 +471,8 @@ export default function App() {
 
     const remaining = pages.map((page) => page.pageIndex).filter((pageIndex) => !selectedPages.has(pageIndex));
     if (remaining.length === 0) {
+      setUndoStack((prev) => [...prev.slice(-9), { fileName: loadedPdf.fileName, fileBytes: loadedPdf.fileBytes }]);
+      setRedoStack([]);
       setLoadedPdf(null);
       setPages([]);
       setSelectedPages(new Set());
@@ -408,7 +485,7 @@ export default function App() {
     try {
       setBusy(true);
       const nextBytes = await extractPages(loadedPdf.fileBytes, remaining);
-      await replaceLoadedPdf(loadedPdf.fileName, nextBytes, "Seçili sayfalar kaldırıldı.");
+      await replaceLoadedPdfWithHistory(loadedPdf.fileName, nextBytes, "Seçili sayfalar kaldırıldı.");
     } catch (error) {
       setToast(error instanceof Error ? error.message : "Silme işlemi başarısız.");
     } finally {
@@ -477,7 +554,7 @@ export default function App() {
       setBusy(true);
       const rotatedBytes = await rotatePages(loadedPdf.fileBytes, rotations);
       downloadBytes(rotatedBytes, normalizeFileName(loadedPdf.fileName, "-rotated"));
-      await replaceLoadedPdf(loadedPdf.fileName, rotatedBytes, "Rotasyon PDF'e yazıldı.");
+      await replaceLoadedPdfWithHistory(loadedPdf.fileName, rotatedBytes, "Rotasyon PDF'e yazıldı.");
     } catch (error) {
       setToast(error instanceof Error ? error.message : "Rotasyon uygulanamadı.");
     } finally {
@@ -671,6 +748,8 @@ export default function App() {
     setLoadedPdf(null);
     setPages([]);
     setSelectedPages(new Set());
+    setUndoStack([]);
+    setRedoStack([]);
     setExtractedText(null);
     setExtractedTables(null);
     setTableExtractionContextKey(null);
@@ -841,6 +920,10 @@ export default function App() {
                 imageExportFormat={imageExportFormat}
                 onImageExportFormatChange={setImageExportFormat}
                 onExportImages={() => void handleExportImages()}
+                onUndo={() => void handleUndo()}
+                onRedo={() => void handleRedo()}
+                canUndo={undoStack.length > 0}
+                canRedo={redoStack.length > 0}
                 busy={busy}
               />
 
