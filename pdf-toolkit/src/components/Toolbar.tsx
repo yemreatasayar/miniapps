@@ -7,7 +7,6 @@ type ToolbarProps = {
   compressAvailable: boolean | null;
   onSplit: () => void;
   onMerge: () => void;
-  onExtract: () => void;
   onDeleteSelected: () => void;
   onApplyRotations: () => void;
   onRepair: () => void;
@@ -25,7 +24,6 @@ export default function Toolbar({
   compressAvailable,
   onSplit,
   onMerge,
-  onExtract,
   onDeleteSelected,
   onApplyRotations,
   onRepair,
@@ -51,9 +49,6 @@ export default function Toolbar({
         <button type="button" onClick={onMerge} disabled={!hasPdf || busy}>
           Birleştir
         </button>
-        <button type="button" onClick={onExtract} disabled={!hasSelection || busy}>
-          Çıkar
-        </button>
         <button type="button" onClick={onDeleteSelected} disabled={!hasSelection || busy}>
           Sil
         </button>
@@ -68,13 +63,14 @@ export default function Toolbar({
             value={imageExportFormat}
             onChange={(event) => onImageExportFormatChange(event.target.value as ImageExportFormat)}
             disabled={!hasPdf || busy}
-            aria-label="Görsel formatı"
+            aria-label="Dışa aktarma formatı"
           >
             <option value="png">PNG</option>
             <option value="jpg">JPG</option>
+            <option value="pdf">PDF</option>
           </select>
           <button type="button" onClick={onExportImages} disabled={!hasPdf || busy}>
-            Farklı Kaydet
+            Dışarı Aktar
           </button>
         </div>
         {compressAvailable === true ? (

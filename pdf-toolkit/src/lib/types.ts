@@ -12,7 +12,7 @@ export type LoadedPdf = {
 
 export type CompressPreset = "web" | "balanced" | "strong";
 
-export type ImageExportFormat = "png" | "jpg";
+export type ImageExportFormat = "png" | "jpg" | "pdf";
 
 export type CompressStatus =
   | { kind: "idle" }

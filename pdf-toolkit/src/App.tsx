@@ -417,7 +417,15 @@ export default function App() {
   }
 
   async function handleExportImages() {
-    if (!loadedPdf || pages.length === 0) return;
+    if (!loadedPdf) return;
+
+    if (imageExportFormat === "pdf") {
+      downloadBytes(loadedPdf.fileBytes, loadedPdf.fileName);
+      setToast("PDF indirildi.");
+      return;
+    }
+
+    if (pages.length === 0) return;
 
     const targets = pages.filter((page) =>
       selectedPages.size > 0 ? selectedPages.has(page.pageIndex) : true
@@ -432,7 +440,7 @@ export default function App() {
             loadedPdf.fileBytes,
             page.pageIndex,
             page.rotation,
-            imageExportFormat
+            imageExportFormat as "png" | "jpg"
           );
 
           return {
@@ -826,7 +834,6 @@ export default function App() {
                 compressAvailable={compressAvailable}
                 onSplit={() => void handleSplit()}
                 onMerge={() => mergeInputRef.current?.click()}
-                onExtract={() => void handleExtract()}
                 onDeleteSelected={() => void handleDeleteSelected()}
                 onApplyRotations={() => void handleApplyRotations()}
                 onRepair={() => void handleRepair()}

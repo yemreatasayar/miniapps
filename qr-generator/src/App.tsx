@@ -880,10 +880,12 @@ function App() {
         <img className="hero-logo" src={logoUrl} alt="QR Oluşturucu" />
             </div>
             <div className="hero-side">
-              <div className="customer-pill-row">
-                <span className="customer-pill">{customerScope.customerName}</span>
-                <span className="customer-pill customer-pill-muted">{customerScope.customerCity}</span>
-              </div>
+              {customerScope.customerId !== "global" && (
+                <div className="customer-pill-row">
+                  <span className="customer-pill">{customerScope.customerName}</span>
+                  <span className="customer-pill customer-pill-muted">{customerScope.customerCity}</span>
+                </div>
+              )}
               <div className="action-row hero-actions">
                 <button type="button" className="primary-action" onClick={handleNewQr}>
                   Yeni QR
