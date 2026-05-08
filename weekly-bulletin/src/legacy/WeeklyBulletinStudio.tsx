@@ -335,7 +335,7 @@ export default function WeeklyBulletinStudio() {
             <button type="button" className="primary-button alt" onClick={() => void handleExportPdf()}>
               PDF Dışa Aktar
             </button>
-            <button type="button" className="ghost-button" onClick={handleClearCurrent}>
+            <button type="button" className="ghost-button" onClick={() => { if (window.confirm("Tüm içerik silinecek. Emin misiniz?")) handleClearCurrent(); }}>
               Temizle
             </button>
             <button type="button" className="ghost-button" onClick={handleAddNews}>
