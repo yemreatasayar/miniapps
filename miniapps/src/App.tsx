@@ -13,27 +13,12 @@ type MiniApp = {
 };
 
 type CustomerAppMap = Record<string, string[]>;
-type ShellVariant = "distribution" | "internal";
-type DistributionConfig = {
-  packLabel?: string;
-  packVersion?: string;
-  authorLabel?: string;
-  visibleAppIds?: string[];
-  hiddenAppIds?: string[];
-  launchUrlOverrides?: Record<string, string>;
-};
 
 function assetUrl(fileName: string): string {
   return `${import.meta.env.BASE_URL}assets/${fileName}`;
 }
 
-const FORCED_VARIANT_ENV = import.meta.env.VITE_MINIAPPS_FORCE_VARIANT;
-const FORCED_SHELL_VARIANT: ShellVariant | null =
-  FORCED_VARIANT_ENV === "distribution" || FORCED_VARIANT_ENV === "internal" ? FORCED_VARIANT_ENV : null;
-const DISTRIBUTION_LOCKED = import.meta.env.VITE_MINIAPPS_LOCK_DISTRIBUTION === "true";
-const DISTRIBUTION_BUILD = FORCED_SHELL_VARIANT === "distribution";
-const ADMIN_PIN_HASH = "c90ef8c5f8807ef4756af7a5f02be5fb0444e0ca51728181d4e1c864d2d2e759";
-const STORAGE_NAMESPACE = DISTRIBUTION_LOCKED ? "miniapps.distribution" : "miniapps";
+const STORAGE_NAMESPACE = "miniapps";
 const CUSTOMERS_STORAGE_KEY = `${STORAGE_NAMESPACE}.customers`;
 const APPS_STORAGE_KEY = `${STORAGE_NAMESPACE}.apps`;
 const SELECTED_CUSTOMER_STORAGE_KEY = `${STORAGE_NAMESPACE}.selectedCustomerId`;
@@ -54,18 +39,7 @@ const STEM_SPLITTER_URL = "http://127.0.0.1:4194/";
 const DEFAULT_PACK_LABEL = "miniapps pack";
 const DEFAULT_PACK_VERSION = "2026.1";
 const DEFAULT_AUTHOR_LABEL = "by y.e.a.";
-const DISTRIBUTION_CORE_APP_IDS = [
-  "pdf-toolkit",
-  "csv-toolkit",
-  "qr-generator",
-  "image-toolkit",
-  "exif-cleaner",
-  "image-format-converter",
-  "bg-remover",
-  "video-to-audio",
-  "audio-editor",
-  "dev-toolkit",
-] as const;
+const ADMIN_PIN_HASH = "c90ef8c5f8807ef4756af7a5f02be5fb0444e0ca51728181d4e1c864d2d2e759";
 const SHARED_APP_DISPLAY_ORDER = [
   "pdf-toolkit",
   "csv-toolkit",
@@ -92,7 +66,6 @@ const DEFAULT_AUTO_ATTACH_APP_IDS = [
   "dev-toolkit",
   "stem-splitter",
 ] as const;
-const DISTRIBUTION_CORE_APP_ID_SET = new Set<string>(DISTRIBUTION_CORE_APP_IDS);
 
 const INTERNAL_CUSTOMERS: Customer[] = [
   { id: "mmo-istanbul", name: "MMO İstanbul Şubesi", city: "İstanbul" },
@@ -113,12 +86,8 @@ const INTERNAL_APPS: MiniApp[] = [
   { id: "stem-splitter", name: "Stem Splitter", launchUrl: STEM_SPLITTER_URL },
   { id: "dev-toolkit", name: "Dev Toolkit", launchUrl: DEV_TOOLKIT_URL },
 ];
-const DISTRIBUTION_APPS: MiniApp[] = INTERNAL_APPS.filter((app) => DISTRIBUTION_CORE_APP_ID_SET.has(app.id));
-const initialCustomers: Customer[] = DISTRIBUTION_BUILD ? [] : INTERNAL_CUSTOMERS;
-const initialApps: MiniApp[] = DISTRIBUTION_BUILD ? DISTRIBUTION_APPS : INTERNAL_APPS;
-const initialCustomerApps: CustomerAppMap = DISTRIBUTION_BUILD
-  ? {}
-  : {
+
+const initialCustomerApps: CustomerAppMap = {
   "mmo-istanbul": [
     "weekly-bulletin",
     "qr-generator",
@@ -163,51 +132,6 @@ async function sha256Hex(value: string): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-function readShellVariant(): ShellVariant {
-  if (typeof window === "undefined") return "internal";
-  if (FORCED_SHELL_VARIANT) return FORCED_SHELL_VARIANT;
-  const variant = new URLSearchParams(window.location.search).get("variant");
-  return variant === "distribution" ? "distribution" : "internal";
-}
-
-function isDistributionVisibleApp(appId: string): boolean {
-  return DISTRIBUTION_CORE_APP_IDS.includes(appId as (typeof DISTRIBUTION_CORE_APP_IDS)[number]);
-}
-
-function applyDistributionConfig(apps: MiniApp[], config: DistributionConfig | null): MiniApp[] {
-  if (!config?.launchUrlOverrides) return apps;
-
-  return apps.map((app) => ({
-    ...app,
-    launchUrl: config.launchUrlOverrides?.[app.id] || app.launchUrl,
-  }));
-}
-
-function getDistributionVisibleAppIds(apps: MiniApp[], config: DistributionConfig | null): string[] {
-  const availableIds = new Set(apps.map((app) => app.id));
-  const hiddenIds = new Set(config?.hiddenAppIds ?? []);
-  const preferredIds =
-    config?.visibleAppIds?.filter((appId) => availableIds.has(appId) && !hiddenIds.has(appId)) ??
-    DISTRIBUTION_CORE_APP_IDS.filter((appId) => availableIds.has(appId) && !hiddenIds.has(appId));
-
-  return preferredIds;
-}
-
-function buildShellVariantUrl(variant: ShellVariant): string {
-  if (typeof window === "undefined") return "/";
-  if (DISTRIBUTION_LOCKED) {
-    return variant === "distribution" ? window.location.href : window.location.origin + window.location.pathname;
-  }
-
-  const url = new URL(window.location.href);
-  if (variant === "internal") {
-    url.searchParams.delete("variant");
-  } else {
-    url.searchParams.set("variant", variant);
-  }
-  return url.toString();
-}
-
 function readStoredValue<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
 
@@ -247,7 +171,7 @@ function normalizeApps(storedApps: MiniApp[]): MiniApp[] {
     !devToolkit &&
     !stemSplitter
   )
-    return initialApps;
+    return INTERNAL_APPS;
 
   const nextApps: MiniApp[] = [];
 
@@ -259,71 +183,17 @@ function normalizeApps(storedApps: MiniApp[]): MiniApp[] {
     });
   }
 
-  nextApps.push({
-    id: "qr-generator",
-    name: qrGenerator?.name || "QR Generator",
-    launchUrl: qrGenerator?.launchUrl || QR_GENERATOR_URL,
-  });
-
-  nextApps.push({
-    id: "pdf-toolkit",
-    name: pdfToolkit?.name || "PDF Toolkit",
-    launchUrl: pdfToolkit?.launchUrl || PDF_TOOLKIT_URL,
-  });
-
-  nextApps.push({
-    id: "image-toolkit",
-    name: imageToolkit?.name || "Image Toolkit",
-    launchUrl: imageToolkit?.launchUrl || IMAGE_TOOLKIT_URL,
-  });
-
-  nextApps.push({
-    id: "video-to-audio",
-    name: videoToAudio?.name || "Video to Audio",
-    launchUrl: videoToAudio?.launchUrl || VIDEO_TO_AUDIO_URL,
-  });
-
-  nextApps.push({
-    id: "csv-toolkit",
-    name: csvToolkit?.name || "CSV Toolkit",
-    launchUrl: csvToolkit?.launchUrl || CSV_TOOLKIT_URL,
-  });
-
-  nextApps.push({
-    id: "bg-remover",
-    name: bgRemover?.name || "BG Remover",
-    launchUrl: bgRemover?.launchUrl || BG_REMOVER_URL,
-  });
-
-  nextApps.push({
-    id: "audio-editor",
-    name: audioEditor?.name || "Audio Editor",
-    launchUrl: audioEditor?.launchUrl || AUDIO_EDITOR_URL,
-  });
-
-  nextApps.push({
-    id: "exif-cleaner",
-    name: exifCleaner?.name || "EXIF Cleaner",
-    launchUrl: exifCleaner?.launchUrl || EXIF_CLEANER_URL,
-  });
-
-  nextApps.push({
-    id: "image-format-converter",
-    name: imageFormatConverter?.name || "Format Converter",
-    launchUrl: imageFormatConverter?.launchUrl || IMAGE_FORMAT_CONVERTER_URL,
-  });
-
-  nextApps.push({
-    id: "dev-toolkit",
-    name: devToolkit?.name || "Dev Toolkit",
-    launchUrl: devToolkit?.launchUrl || DEV_TOOLKIT_URL,
-  });
-
-  nextApps.push({
-    id: "stem-splitter",
-    name: stemSplitter?.name || "Stem Splitter",
-    launchUrl: stemSplitter?.launchUrl || STEM_SPLITTER_URL,
-  });
+  nextApps.push({ id: "qr-generator", name: qrGenerator?.name || "QR Generator", launchUrl: qrGenerator?.launchUrl || QR_GENERATOR_URL });
+  nextApps.push({ id: "pdf-toolkit", name: pdfToolkit?.name || "PDF Toolkit", launchUrl: pdfToolkit?.launchUrl || PDF_TOOLKIT_URL });
+  nextApps.push({ id: "image-toolkit", name: imageToolkit?.name || "Image Toolkit", launchUrl: imageToolkit?.launchUrl || IMAGE_TOOLKIT_URL });
+  nextApps.push({ id: "video-to-audio", name: videoToAudio?.name || "Video to Audio", launchUrl: videoToAudio?.launchUrl || VIDEO_TO_AUDIO_URL });
+  nextApps.push({ id: "csv-toolkit", name: csvToolkit?.name || "CSV Toolkit", launchUrl: csvToolkit?.launchUrl || CSV_TOOLKIT_URL });
+  nextApps.push({ id: "bg-remover", name: bgRemover?.name || "BG Remover", launchUrl: bgRemover?.launchUrl || BG_REMOVER_URL });
+  nextApps.push({ id: "audio-editor", name: audioEditor?.name || "Audio Editor", launchUrl: audioEditor?.launchUrl || AUDIO_EDITOR_URL });
+  nextApps.push({ id: "exif-cleaner", name: exifCleaner?.name || "EXIF Cleaner", launchUrl: exifCleaner?.launchUrl || EXIF_CLEANER_URL });
+  nextApps.push({ id: "image-format-converter", name: imageFormatConverter?.name || "Format Converter", launchUrl: imageFormatConverter?.launchUrl || IMAGE_FORMAT_CONVERTER_URL });
+  nextApps.push({ id: "dev-toolkit", name: devToolkit?.name || "Dev Toolkit", launchUrl: devToolkit?.launchUrl || DEV_TOOLKIT_URL });
+  nextApps.push({ id: "stem-splitter", name: stemSplitter?.name || "Stem Splitter", launchUrl: stemSplitter?.launchUrl || STEM_SPLITTER_URL });
 
   return nextApps;
 }
@@ -361,15 +231,13 @@ function buildAppLaunchUrl(app: MiniApp, customer: Customer | undefined): string
 }
 
 export default function App() {
-  const [shellVariant] = useState<ShellVariant>(() => readShellVariant());
-  const [distributionConfig, setDistributionConfig] = useState<DistributionConfig | null>(null);
-  const [customers, setCustomers] = useState<Customer[]>(() => readStoredValue(CUSTOMERS_STORAGE_KEY, initialCustomers));
-  const [apps, setApps] = useState<MiniApp[]>(() => normalizeApps(readStoredValue<MiniApp[]>(APPS_STORAGE_KEY, initialApps)));
+  const [customers, setCustomers] = useState<Customer[]>(() => readStoredValue(CUSTOMERS_STORAGE_KEY, INTERNAL_CUSTOMERS));
+  const [apps, setApps] = useState<MiniApp[]>(() => normalizeApps(readStoredValue<MiniApp[]>(APPS_STORAGE_KEY, INTERNAL_APPS)));
   const [customerApps, setCustomerApps] = useState<CustomerAppMap>(() =>
     readStoredValue<CustomerAppMap>(CUSTOMER_APPS_STORAGE_KEY, initialCustomerApps)
   );
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(() =>
-    readStoredValue(SELECTED_CUSTOMER_STORAGE_KEY, initialCustomers[0]?.id ?? "")
+    readStoredValue(SELECTED_CUSTOMER_STORAGE_KEY, INTERNAL_CUSTOMERS[0]?.id ?? "")
   );
   const [customerName, setCustomerName] = useState("");
   const [customerCity, setCustomerCity] = useState("");
@@ -381,12 +249,6 @@ export default function App() {
   const [adminVerified, setAdminVerified] = useState(false);
   const [adminError, setAdminError] = useState("");
   const [pendingDelete, setPendingDelete] = useState<PendingDelete>(null);
-  const effectiveApps = useMemo(() => applyDistributionConfig(apps, distributionConfig), [apps, distributionConfig]);
-  const distributionPackLine = useMemo(
-    () => `${distributionConfig?.packLabel ?? DEFAULT_PACK_LABEL} ${distributionConfig?.packVersion ?? DEFAULT_PACK_VERSION}`,
-    [distributionConfig]
-  );
-  const distributionAuthorLine = distributionConfig?.authorLabel ?? DEFAULT_AUTHOR_LABEL;
 
   const selectedCustomer = useMemo(
     () => customers.find((customer) => customer.id === selectedCustomerId) ?? customers[0],
@@ -395,66 +257,18 @@ export default function App() {
   const selectedCustomerApps = useMemo(() => {
     if (!selectedCustomer) return [];
 
-    const appIds = orderAppIds(customerApps[selectedCustomer.id] ?? [], effectiveApps);
+    const appIds = orderAppIds(customerApps[selectedCustomer.id] ?? [], apps);
     return appIds
-      .map((appId) => effectiveApps.find((app) => app.id === appId))
+      .map((appId) => apps.find((app) => app.id === appId))
       .filter((app): app is MiniApp => Boolean(app));
-  }, [customerApps, effectiveApps, selectedCustomer]);
-  const distributionApps = useMemo(
-    () =>
-      orderAppIds(
-        getDistributionVisibleAppIds(effectiveApps, distributionConfig),
-        effectiveApps
-      )
-        .map((appId) => effectiveApps.find((app) => app.id === appId))
-        .filter((app): app is MiniApp => Boolean(app)),
-    [distributionConfig, effectiveApps]
-  );
-  const distributionPreviewUrl = useMemo(() => buildShellVariantUrl("distribution"), []);
-  const visibleApps = shellVariant === "distribution" ? distributionApps : selectedCustomerApps;
-  const gridItems = useMemo(
-    () => {
-      const slotCount = Math.max(MIN_GRID_SLOT_COUNT, visibleApps.length);
-      return Array.from({ length: slotCount }, (_, index) => ({
-        app: visibleApps[index] ?? null,
-        key:
-          visibleApps[index]?.id ??
-          `placeholder-${shellVariant}-${selectedCustomer?.id ?? "empty"}-${index}`,
-      }));
-    },
-    [selectedCustomer, shellVariant, visibleApps]
-  );
-
-  useEffect(() => {
-    if (shellVariant !== "distribution") {
-      setDistributionConfig(null);
-      return;
-    }
-
-    let cancelled = false;
-
-    fetch("./distribution-config.json", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`Config unavailable: ${response.status}`);
-        }
-        return (await response.json()) as DistributionConfig;
-      })
-      .then((config) => {
-        if (!cancelled) {
-          setDistributionConfig(config);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setDistributionConfig(null);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [shellVariant]);
+  }, [customerApps, apps, selectedCustomer]);
+  const gridItems = useMemo(() => {
+    const slotCount = Math.max(MIN_GRID_SLOT_COUNT, selectedCustomerApps.length);
+    return Array.from({ length: slotCount }, (_, index) => ({
+      app: selectedCustomerApps[index] ?? null,
+      key: selectedCustomerApps[index]?.id ?? `placeholder-${selectedCustomer?.id ?? "empty"}-${index}`,
+    }));
+  }, [selectedCustomer, selectedCustomerApps]);
 
   useEffect(() => {
     window.localStorage.setItem(CUSTOMERS_STORAGE_KEY, JSON.stringify(customers));
@@ -604,11 +418,7 @@ export default function App() {
     setCustomers((current) =>
       current.map((customer) =>
         customer.id === selectedCustomer.id
-          ? {
-              ...customer,
-              name: trimmedName,
-              city: trimmedCity || "Etiket yok",
-            }
+          ? { ...customer, name: trimmedName, city: trimmedCity || "Etiket yok" }
           : customer
       )
     );
@@ -635,7 +445,7 @@ export default function App() {
             {app ? (
               <a
                 className="app-card-link"
-                href={buildAppLaunchUrl(app, shellVariant === "distribution" ? undefined : selectedCustomer)}
+                href={buildAppLaunchUrl(app, selectedCustomer)}
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`${app.name} uygulamasını yeni sekmede aç`}
@@ -653,52 +463,6 @@ export default function App() {
   }
 
   function renderDangerZone() {
-    if (shellVariant === "distribution") {
-      return (
-        <section className="danger-zone">
-          <div className="danger-zone-header">
-            <div>
-              <h2>APP Düzenle</h2>
-              <p>Bu alandan dağıtım paketindeki uygulamaları listeden kaldırabilirsin.</p>
-            </div>
-            <button type="button" className="danger-zone-back" onClick={closeDangerZone}>
-              Geri Dön
-            </button>
-          </div>
-
-          <div className="danger-management danger-management-single">
-            <article className="danger-panel danger-panel-wide">
-              <h3>APP Listesi</h3>
-              <div className="danger-app-list">
-                {distributionApps.length === 0 ? (
-                  <p className="danger-empty">Silinecek APP kalmadı.</p>
-                ) : (
-                  distributionApps.map((app) => (
-                    <div key={app.id} className="danger-app-row">
-                      <span>{app.name}</span>
-                      <button
-                        type="button"
-                        className="danger-delete"
-                        onClick={() =>
-                          setPendingDelete({
-                            kind: "app",
-                            id: app.id,
-                            name: app.name,
-                          })
-                        }
-                      >
-                        APP Sil
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </article>
-          </div>
-        </section>
-      );
-    }
-
     return (
       <section className="danger-zone">
         <div className="danger-zone-header">
@@ -706,19 +470,9 @@ export default function App() {
             <h2>Müşteri veya APP Düzenle</h2>
             <p>Bu alan müşteri düzenleme ve APP yönetimi için PIN korumalıdır.</p>
           </div>
-          <div className="danger-zone-header-actions">
-            <a
-              className="danger-zone-link"
-              href={distributionPreviewUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Dağıtım Ekranını Aç
-            </a>
-            <button type="button" className="danger-zone-back" onClick={closeDangerZone}>
-              Geri Dön
-            </button>
-          </div>
+          <button type="button" className="danger-zone-back" onClick={closeDangerZone}>
+            Geri Dön
+          </button>
         </div>
 
         {!adminVerified ? (
@@ -789,11 +543,7 @@ export default function App() {
                 className="danger-delete"
                 onClick={() =>
                   selectedCustomer
-                    ? setPendingDelete({
-                        kind: "customer",
-                        id: selectedCustomer.id,
-                        name: selectedCustomer.name,
-                      })
+                    ? setPendingDelete({ kind: "customer", id: selectedCustomer.id, name: selectedCustomer.name })
                     : undefined
                 }
                 disabled={!selectedCustomer}
@@ -814,13 +564,7 @@ export default function App() {
                       <button
                         type="button"
                         className="danger-delete"
-                        onClick={() =>
-                          setPendingDelete({
-                            kind: "app",
-                            id: app.id,
-                            name: app.name,
-                          })
-                        }
+                        onClick={() => setPendingDelete({ kind: "app", id: app.id, name: app.name })}
                       >
                         APP Sil
                       </button>
@@ -836,53 +580,18 @@ export default function App() {
   }
 
   function renderAppCard(app: MiniApp) {
-    if (app.id === "weekly-bulletin") {
-      return <img className="app-card-art" src={assetUrl("filtre-card.svg")} alt="Filtre Kartı" />;
-    }
-
-    if (app.id === "qr-generator") {
-      return <img className="app-card-art" src={assetUrl("qr-generator-card.svg")} alt="QR Generator Kartı" />;
-    }
-
-    if (app.id === "pdf-toolkit") {
-      return <img className="app-card-art" src={assetUrl("pdf-toolkit-card.svg")} alt="PDF Toolkit Kartı" />;
-    }
-
-    if (app.id === "image-toolkit") {
-      return <img className="app-card-art" src={assetUrl("image-toolkit-card.svg")} alt="Image Toolkit Kartı" />;
-    }
-
-    if (app.id === "video-to-audio") {
-      return <img className="app-card-art" src={assetUrl("video-to-audio-card.svg")} alt="Video to Audio Kartı" />;
-    }
-
-    if (app.id === "csv-toolkit") {
-      return <img className="app-card-art" src={assetUrl("csv-toolkit-card.svg")} alt="CSV Toolkit Kartı" />;
-    }
-
-    if (app.id === "bg-remover") {
-      return <img className="app-card-art" src={assetUrl("bg-remover-card.svg")} alt="BG Remover Kartı" />;
-    }
-
-    if (app.id === "audio-editor") {
-      return <img className="app-card-art" src={assetUrl("audio-editor-card.svg")} alt="Audio Editor Kartı" />;
-    }
-
-    if (app.id === "exif-cleaner") {
-      return <img className="app-card-art" src={assetUrl("exif-cleaner-card.svg")} alt="EXIF Cleaner Kartı" />;
-    }
-
-    if (app.id === "image-format-converter") {
-      return <img className="app-card-art" src={assetUrl("image-format-converter-card.svg")} alt="Image Format Converter Kartı" />;
-    }
-
-    if (app.id === "dev-toolkit") {
-      return <img className="app-card-art" src={assetUrl("dev-toolkit-card.svg")} alt="Dev Toolkit Kartı" />;
-    }
-
-    if (app.id === "stem-splitter") {
-      return <img className="app-card-art" src={assetUrl("stem-splitter-card.svg")} alt="Stem Splitter Kartı" />;
-    }
+    if (app.id === "weekly-bulletin") return <img className="app-card-art" src={assetUrl("filtre-card.svg")} alt="Filtre Kartı" />;
+    if (app.id === "qr-generator") return <img className="app-card-art" src={assetUrl("qr-generator-card.svg")} alt="QR Generator Kartı" />;
+    if (app.id === "pdf-toolkit") return <img className="app-card-art" src={assetUrl("pdf-toolkit-card.svg")} alt="PDF Toolkit Kartı" />;
+    if (app.id === "image-toolkit") return <img className="app-card-art" src={assetUrl("image-toolkit-card.svg")} alt="Image Toolkit Kartı" />;
+    if (app.id === "video-to-audio") return <img className="app-card-art" src={assetUrl("video-to-audio-card.svg")} alt="Video to Audio Kartı" />;
+    if (app.id === "csv-toolkit") return <img className="app-card-art" src={assetUrl("csv-toolkit-card.svg")} alt="CSV Toolkit Kartı" />;
+    if (app.id === "bg-remover") return <img className="app-card-art" src={assetUrl("bg-remover-card.svg")} alt="BG Remover Kartı" />;
+    if (app.id === "audio-editor") return <img className="app-card-art" src={assetUrl("audio-editor-card.svg")} alt="Audio Editor Kartı" />;
+    if (app.id === "exif-cleaner") return <img className="app-card-art" src={assetUrl("exif-cleaner-card.svg")} alt="EXIF Cleaner Kartı" />;
+    if (app.id === "image-format-converter") return <img className="app-card-art" src={assetUrl("image-format-converter-card.svg")} alt="Image Format Converter Kartı" />;
+    if (app.id === "dev-toolkit") return <img className="app-card-art" src={assetUrl("dev-toolkit-card.svg")} alt="Dev Toolkit Kartı" />;
+    if (app.id === "stem-splitter") return <img className="app-card-art" src={assetUrl("stem-splitter-card.svg")} alt="Stem Splitter Kartı" />;
 
     return (
       <div className="app-card-fallback">
@@ -893,80 +602,59 @@ export default function App() {
   }
 
   return (
-    <main className={`miniapps-shell ${shellVariant === "distribution" ? "is-distribution" : ""}`}>
-      {shellVariant === "distribution" ? (
-        <>
-          <section className="workspace distribution-workspace">{workspaceMode === "grid" ? renderWorkspaceGrid() : renderDangerZone()}</section>
+    <main className="miniapps-shell">
+      <aside className="sidebar">
+        <div className="sidebar-brand">
+          <img className="brand-logo" src={assetUrl("miniapps-logo.svg")} alt="miniapps" />
+        </div>
 
-          <footer className="distribution-header">
-            <div className="distribution-brand">
-              <img className="brand-logo" src={assetUrl("miniapps-logo.svg")} alt="miniapps" />
-            </div>
+        <section className="customer-create-card">
+          <label className="sidebar-field">
+            <input
+              value={customerName}
+              onChange={(event) => setCustomerName(event.target.value)}
+              placeholder="Yeni Müşteri"
+            />
+          </label>
+          <label className="sidebar-field">
+            <input
+              value={customerCity}
+              onChange={(event) => setCustomerCity(event.target.value)}
+              placeholder="Şehir veya Etiket"
+            />
+          </label>
+          <button type="button" className="create-button" onClick={handleCreateCustomer}>
+            Oluştur
+          </button>
+        </section>
 
-            <div className="distribution-version" aria-label="Sürüm bilgisi">
-              <span>{distributionPackLine}</span>
-              <span>{distributionAuthorLine}</span>
-            </div>
-
-            <button type="button" className="danger-entry distribution-danger-entry" onClick={openDangerZone}>
-              APP Düzenle
+        <section className="customer-list">
+          {customers.map((customer) => (
+            <button
+              key={customer.id}
+              type="button"
+              className={`customer-list-item ${customer.id === selectedCustomerId ? "is-active" : ""}`}
+              onClick={() => setSelectedCustomerId(customer.id)}
+            >
+              <strong>{customer.name}</strong>
+              <span>{customer.city}</span>
             </button>
-          </footer>
-        </>
-      ) : (
-        <>
-          <aside className="sidebar">
-            <div className="sidebar-brand">
-              <img className="brand-logo" src={assetUrl("miniapps-logo.svg")} alt="miniapps" />
-            </div>
+          ))}
+        </section>
 
-            <section className="customer-create-card">
-              <label className="sidebar-field">
-                <input
-                  value={customerName}
-                  onChange={(event) => setCustomerName(event.target.value)}
-                  placeholder="Yeni Müşteri"
-                />
-              </label>
-              <label className="sidebar-field">
-                <input
-                  value={customerCity}
-                  onChange={(event) => setCustomerCity(event.target.value)}
-                  placeholder="Şehir veya Etiket"
-                />
-              </label>
-              <button type="button" className="create-button" onClick={handleCreateCustomer}>
-                Oluştur
-              </button>
-            </section>
+        <button type="button" className="danger-entry" onClick={openDangerZone}>
+          Müşteri veya APP Düzenle
+        </button>
 
-            <section className="customer-list">
-              {customers.map((customer) => (
-                <button
-                  key={customer.id}
-                  type="button"
-                  className={`customer-list-item ${customer.id === selectedCustomerId ? "is-active" : ""}`}
-                  onClick={() => setSelectedCustomerId(customer.id)}
-                >
-                  <strong>{customer.name}</strong>
-                  <span>{customer.city}</span>
-                </button>
-              ))}
-            </section>
+        <div className="sidebar-version" aria-label="Sürüm bilgisi">
+          <span>{DEFAULT_PACK_LABEL} {DEFAULT_PACK_VERSION}</span>
+          <span>{DEFAULT_AUTHOR_LABEL}</span>
+        </div>
+      </aside>
 
-            <button type="button" className="danger-entry" onClick={openDangerZone}>
-              Müşteri veya APP Düzenle
-            </button>
-
-            <div className="sidebar-version" aria-label="Sürüm bilgisi">
-              <span>{distributionPackLine}</span>
-              <span>{distributionAuthorLine}</span>
-            </div>
-          </aside>
-
-          <section className="workspace">{workspaceMode === "grid" ? renderWorkspaceGrid() : renderDangerZone()}</section>
-        </>
-      )}
+      <section className="workspace">
+        {workspaceMode === "grid" ? renderWorkspaceGrid() : renderDangerZone()}
+      </section>
 
       {pendingDelete ? (
         <div className="danger-modal-backdrop" role="presentation" onClick={() => setPendingDelete(null)}>
