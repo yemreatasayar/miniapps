@@ -11,10 +11,10 @@
     "image-format-converter",
     "bg-remover",
     "video-to-audio",
-    "video-compressor",
     "audio-editor",
     "stem-splitter",
-    "dev-toolkit"
+    "dev-toolkit",
+    "video-compressor"
   ],
   "hiddenAppIds": [
     "weekly-bulletin"
@@ -28,9 +28,9 @@
     "image-format-converter": "./apps/image-format-converter/",
     "bg-remover": "./apps/bg-remover/",
     "video-to-audio": "./apps/video-to-audio/",
-    "video-compressor": "./apps/video-compressor/",
     "audio-editor": "./apps/audio-editor/",
     "stem-splitter": "./apps/stem-splitter/",
-    "dev-toolkit": "./apps/dev-toolkit/"
+    "dev-toolkit": "./apps/dev-toolkit/",
+    "video-compressor": "./apps/video-compressor/"
   }
 }

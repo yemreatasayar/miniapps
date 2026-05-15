@@ -22,11 +22,12 @@ const apps = [
   { id: "audio-editor", dir: "audio-editor", script: "build" },
   { id: "stem-splitter", dir: "stem-splitter", script: "build" },
   { id: "dev-toolkit", dir: "dev-toolkit", script: "build" },
+  { id: "video-compressor", dir: "video-compressor", script: "build" },
 ];
 
 const distributionConfig = {
   packLabel: "miniapps pack",
-  packVersion: "2026.1",
+  packVersion: "2026.1.1",
   authorLabel: "by y.e.a.",
   visibleAppIds: [
     "pdf-toolkit",
@@ -40,6 +41,7 @@ const distributionConfig = {
     "audio-editor",
     "stem-splitter",
     "dev-toolkit",
+    "video-compressor",
   ],
   hiddenAppIds: ["weekly-bulletin"],
   launchUrlOverrides: Object.fromEntries(apps.map((app) => [app.id, `./apps/${app.id}/`])),
@@ -188,6 +190,19 @@ const seoMeta = new Map([
       en: {
         title: "Dev Toolkit — Free Online Developer Tools",
         description: "JSON formatter, Base64 encoder/decoder, JWT decoder, code minifier and more. All developer tools run in your browser.",
+      },
+    },
+  ],
+  [
+    "video-compressor",
+    {
+      tr: {
+        title: "Video Compressor — Ücretsiz Online Video Sıkıştırıcı",
+        description: "Videoları tarayıcınızda sıkıştırın, dönüştürün ve kırpın. MP4, WebM, MOV, AVI, MKV desteği. Sunucuya yükleme yok, hesap gerekmez.",
+      },
+      en: {
+        title: "Video Compressor — Free Online Video Compressor",
+        description: "Compress, convert and trim videos in your browser. Supports MP4, WebM, MOV, AVI, MKV. No server upload, no account required.",
       },
     },
   ],

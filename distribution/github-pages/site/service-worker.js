@@ -1,4 +1,4 @@
-const CACHE_VERSION = "20260508t163216560z";
+const CACHE_VERSION = "20260515t144716396z";
 const CACHE_PREFIX = "miniapps-github-pages";
 const SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;
 const APP_CACHE = `${CACHE_PREFIX}-apps-${CACHE_VERSION}`;
@@ -21,7 +21,7 @@ const SHELL_PRECACHE_URLS = [
   "./assets/image-toolkit-card.svg",
   "./assets/image-upscaler-card.svg",
   "./assets/index-C1ISZ3ii.css",
-  "./assets/index-DxroQEL-.js",
+  "./assets/index-DPQ9wLy_.js",
   "./assets/miniapps-icon-maskable.svg",
   "./assets/miniapps-icon.svg",
   "./assets/miniapps-logo.svg",
@@ -30,6 +30,7 @@ const SHELL_PRECACHE_URLS = [
   "./assets/pdf-toolkit-card.svg",
   "./assets/qr-generator-card.svg",
   "./assets/stem-splitter-card.svg",
+  "./assets/video-compressor-card.svg",
   "./assets/video-to-audio-card.svg",
   "./favicon.ico",
   "./manifesto-en.html",
@@ -57,7 +58,9 @@ const APP_ENTRY_URLS = [
   "./apps/stem-splitter/",
   "./apps-en/stem-splitter/",
   "./apps/dev-toolkit/",
-  "./apps-en/dev-toolkit/"
+  "./apps-en/dev-toolkit/",
+  "./apps/video-compressor/",
+  "./apps-en/video-compressor/"
 ];
 const CROSS_ORIGIN_ISOLATED_ENTRY_URLS = [
   "./apps/audio-editor/",

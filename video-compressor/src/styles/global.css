@@ -61,28 +61,6 @@ button { cursor: pointer; }
   display: block;
 }
 
-.lang-toggle {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 6px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: 20px;
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  transition: all 0.15s;
-}
-
-.lang-toggle:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-
 /* Hero Panel */
 .hero-panel {
   display: grid;
@@ -1052,4 +1030,16 @@ button { cursor: pointer; }
     min-width: 0;
     justify-content: space-between;
   }
+}
+
+/* miniapps footer (distribution only) */
+.miniapps-footer {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+  opacity: 0.35;
+}
+
+.miniapps-footer-logo {
+  height: 36px;
 }
