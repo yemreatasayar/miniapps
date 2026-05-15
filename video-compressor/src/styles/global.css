@@ -61,27 +61,6 @@ button { cursor: pointer; }
   display: block;
 }
 
-.lang-toggle {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 6px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: 20px;
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  transition: all 0.15s;
-}
-
-.lang-toggle:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
-}
 
 /* Hero Panel */
 .hero-panel {
@@ -1006,6 +985,23 @@ button { cursor: pointer; }
   background: rgba(220, 38, 38, 0.08);
   border: 1px solid rgba(220, 38, 38, 0.25);
   color: var(--danger);
+}
+
+/* miniapps footer (distribution only) */
+.miniapps-footer {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+
+.miniapps-footer:hover { opacity: 0.7; }
+
+.miniapps-footer-logo {
+  height: 36px;
+  width: auto;
+  display: block;
 }
 
 /* Toast */
