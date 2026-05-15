@@ -1,6 +1,6 @@
 {
   "packLabel": "miniapps pack",
-  "packVersion": "2026.1",
+  "packVersion": "2026.1.1",
   "authorLabel": "by y.e.a.",
   "visibleAppIds": [
     "pdf-toolkit",
@@ -11,6 +11,7 @@
     "image-format-converter",
     "bg-remover",
     "video-to-audio",
+    "video-compressor",
     "audio-editor",
     "dev-toolkit"
   ],
@@ -25,6 +26,7 @@
     "bg-remover": "http://127.0.0.1:4318/",
     "video-to-audio": "http://127.0.0.1:4316/",
     "audio-editor": "http://127.0.0.1:4320/",
-    "dev-toolkit": "http://127.0.0.1:4323/"
+    "dev-toolkit": "http://127.0.0.1:4323/",
+    "video-compressor": "http://127.0.0.1:4324/"
   }
 }

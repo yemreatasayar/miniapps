@@ -36,8 +36,9 @@ const EXIF_CLEANER_URL = "http://127.0.0.1:4321/";
 const IMAGE_FORMAT_CONVERTER_URL = "http://127.0.0.1:4322/";
 const DEV_TOOLKIT_URL = "http://127.0.0.1:4323/";
 const STEM_SPLITTER_URL = "http://127.0.0.1:4194/";
+const VIDEO_COMPRESSOR_URL = "http://127.0.0.1:4324/";
 const DEFAULT_PACK_LABEL = "miniapps pack";
-const DEFAULT_PACK_VERSION = "2026.1";
+const DEFAULT_PACK_VERSION = "2026.1.1";
 const DEFAULT_AUTHOR_LABEL = "by y.e.a.";
 const ADMIN_PIN_HASH = "c90ef8c5f8807ef4756af7a5f02be5fb0444e0ca51728181d4e1c864d2d2e759";
 const SHARED_APP_DISPLAY_ORDER = [
@@ -49,6 +50,7 @@ const SHARED_APP_DISPLAY_ORDER = [
   "image-format-converter",
   "bg-remover",
   "video-to-audio",
+  "video-compressor",
   "audio-editor",
   "stem-splitter",
   "dev-toolkit",
@@ -58,6 +60,7 @@ const DEFAULT_AUTO_ATTACH_APP_IDS = [
   "pdf-toolkit",
   "image-toolkit",
   "video-to-audio",
+  "video-compressor",
   "csv-toolkit",
   "bg-remover",
   "audio-editor",
@@ -85,6 +88,7 @@ const INTERNAL_APPS: MiniApp[] = [
   { id: "audio-editor", name: "Audio Editor", launchUrl: AUDIO_EDITOR_URL },
   { id: "stem-splitter", name: "Stem Splitter", launchUrl: STEM_SPLITTER_URL },
   { id: "dev-toolkit", name: "Dev Toolkit", launchUrl: DEV_TOOLKIT_URL },
+  { id: "video-compressor", name: "Video Compressor", launchUrl: VIDEO_COMPRESSOR_URL },
 ];
 
 const initialCustomerApps: CustomerAppMap = {
@@ -94,6 +98,7 @@ const initialCustomerApps: CustomerAppMap = {
     "pdf-toolkit",
     "image-toolkit",
     "video-to-audio",
+    "video-compressor",
     "csv-toolkit",
     "bg-remover",
     "audio-editor",
@@ -107,6 +112,7 @@ const initialCustomerApps: CustomerAppMap = {
     "pdf-toolkit",
     "image-toolkit",
     "video-to-audio",
+    "video-compressor",
     "csv-toolkit",
     "bg-remover",
     "audio-editor",
@@ -156,6 +162,7 @@ function normalizeApps(storedApps: MiniApp[]): MiniApp[] {
   const imageFormatConverter = storedApps.find((app) => app.id === "image-format-converter");
   const devToolkit = storedApps.find((app) => app.id === "dev-toolkit");
   const stemSplitter = storedApps.find((app) => app.id === "stem-splitter");
+  const videoCompressor = storedApps.find((app) => app.id === "video-compressor");
 
   if (
     !weeklyBulletin &&
@@ -169,7 +176,8 @@ function normalizeApps(storedApps: MiniApp[]): MiniApp[] {
     !exifCleaner &&
     !imageFormatConverter &&
     !devToolkit &&
-    !stemSplitter
+    !stemSplitter &&
+    !videoCompressor
   )
     return INTERNAL_APPS;
 
@@ -194,6 +202,7 @@ function normalizeApps(storedApps: MiniApp[]): MiniApp[] {
   nextApps.push({ id: "image-format-converter", name: imageFormatConverter?.name || "Format Converter", launchUrl: imageFormatConverter?.launchUrl || IMAGE_FORMAT_CONVERTER_URL });
   nextApps.push({ id: "dev-toolkit", name: devToolkit?.name || "Dev Toolkit", launchUrl: devToolkit?.launchUrl || DEV_TOOLKIT_URL });
   nextApps.push({ id: "stem-splitter", name: stemSplitter?.name || "Stem Splitter", launchUrl: stemSplitter?.launchUrl || STEM_SPLITTER_URL });
+  nextApps.push({ id: "video-compressor", name: videoCompressor?.name || "Video Compressor", launchUrl: videoCompressor?.launchUrl || VIDEO_COMPRESSOR_URL });
 
   return nextApps;
 }
@@ -592,6 +601,7 @@ export default function App() {
     if (app.id === "image-format-converter") return <img className="app-card-art" src={assetUrl("image-format-converter-card.svg")} alt="Image Format Converter Kartı" />;
     if (app.id === "dev-toolkit") return <img className="app-card-art" src={assetUrl("dev-toolkit-card.svg")} alt="Dev Toolkit Kartı" />;
     if (app.id === "stem-splitter") return <img className="app-card-art" src={assetUrl("stem-splitter-card.svg")} alt="Stem Splitter Kartı" />;
+    if (app.id === "video-compressor") return <img className="app-card-art" src={assetUrl("video-compressor-card.svg")} alt="Video Compressor Kartı" />;
 
     return (
       <div className="app-card-fallback">

@@ -24,7 +24,7 @@ function assetUrl(fileName: string): string {
 const OFFLINE_READY_APPS_STORAGE_KEY = "miniapps.distribution.offlineReadyApps";
 const SHELL_LANGUAGE_STORAGE_KEY = "miniapps.distribution.language";
 const DEFAULT_PACK_LABEL = "miniapps pack";
-const DEFAULT_PACK_VERSION = "2026.1";
+const DEFAULT_PACK_VERSION = "2026.1.1";
 const DEFAULT_AUTHOR_LABEL = "by y.e.a.";
 
 const defaultApps: MiniApp[] = [
@@ -39,6 +39,7 @@ const defaultApps: MiniApp[] = [
   { id: "audio-editor", name: "Audio Editor", launchUrl: "http://127.0.0.1:4320/" },
   { id: "stem-splitter", name: "Stem Splitter", launchUrl: "http://127.0.0.1:4194/" },
   { id: "dev-toolkit", name: "Dev Toolkit", launchUrl: "http://127.0.0.1:4323/" },
+  { id: "video-compressor", name: "Video Compressor", launchUrl: "http://127.0.0.1:4324/" },
 ];
 
 const shellCopy = {
@@ -129,6 +130,8 @@ function renderAppCardArt(app: MiniApp, language: ShellLanguage) {
       return <img className="app-card-art" src={assetUrl("dev-toolkit-card.svg")} alt={`Dev Toolkit ${suffix}`} />;
     case "stem-splitter":
       return <img className="app-card-art" src={assetUrl("stem-splitter-card.svg")} alt={`Stem Splitter ${suffix}`} />;
+    case "video-compressor":
+      return <img className="app-card-art" src={assetUrl("video-compressor-card.svg")} alt={`Video Compressor ${suffix}`} />;
     default:
       return (
         <div className="app-card-fallback">

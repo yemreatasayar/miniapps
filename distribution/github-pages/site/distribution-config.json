@@ -1,6 +1,6 @@
 {
   "packLabel": "miniapps pack",
-  "packVersion": "2026.1",
+  "packVersion": "2026.1.1",
   "authorLabel": "by y.e.a.",
   "visibleAppIds": [
     "pdf-toolkit",
@@ -11,6 +11,7 @@
     "image-format-converter",
     "bg-remover",
     "video-to-audio",
+    "video-compressor",
     "audio-editor",
     "stem-splitter",
     "dev-toolkit"
@@ -27,6 +28,7 @@
     "image-format-converter": "./apps/image-format-converter/",
     "bg-remover": "./apps/bg-remover/",
     "video-to-audio": "./apps/video-to-audio/",
+    "video-compressor": "./apps/video-compressor/",
     "audio-editor": "./apps/audio-editor/",
     "stem-splitter": "./apps/stem-splitter/",
     "dev-toolkit": "./apps/dev-toolkit/"
