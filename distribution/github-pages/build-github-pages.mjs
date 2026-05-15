@@ -1858,6 +1858,8 @@ function buildServiceWorker({ version, shellPrecacheUrls, appEntryUrls }) {
     "./apps-en/audio-editor/",
     "./apps/video-to-audio/",
     "./apps-en/video-to-audio/",
+    "./apps/video-compressor/",
+    "./apps-en/video-compressor/",
   ];
 
   return `const CACHE_VERSION = ${JSON.stringify(version)};
@@ -2015,7 +2017,7 @@ function removeMacMetadata(dir) {
 }
 
 function hardenFfmpegWorkerFallbacks(siteRoot) {
-  const workerFiles = collectFiles(siteRoot).filter((filePath) => /\/apps(?:-en)?\/(?:audio-editor|video-to-audio)\/assets\/worker-.*\.js$/.test(filePath));
+  const workerFiles = collectFiles(siteRoot).filter((filePath) => /\/apps(?:-en)?\/(?:audio-editor|video-to-audio|video-compressor)\/assets\/worker-.*\.js$/.test(filePath));
   const fallbackUrlPattern = /const ([A-Za-z_$][\w$]*)="https:\/\/unpkg\.com\/@ffmpeg\/core@0\.12\.9\/dist\/umd\/ffmpeg-core\.js";/;
   const fallbackLogicPattern =
     /try\{([A-Za-z_$][\w$]*)\|\|\(\1=([A-Za-z_$][\w$]*)\),importScripts\(\1\)\}catch\{if\(\(!\1\|\|\1===\2\)&&\(\1=\2\.replace\("\/umd\/","\/esm\/"\)\),self\.createFFmpegCore=\(await import\(\1\)\)\.default,!self\.createFFmpegCore\)throw ([A-Za-z_$][\w$]*)\}/;

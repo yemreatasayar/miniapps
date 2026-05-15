@@ -1,4 +1,4 @@
-const CACHE_VERSION = "20260515t144716396z";
+const CACHE_VERSION = "20260515t145745385z";
 const CACHE_PREFIX = "miniapps-github-pages";
 const SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;
 const APP_CACHE = `${CACHE_PREFIX}-apps-${CACHE_VERSION}`;
@@ -66,7 +66,9 @@ const CROSS_ORIGIN_ISOLATED_ENTRY_URLS = [
   "./apps/audio-editor/",
   "./apps-en/audio-editor/",
   "./apps/video-to-audio/",
-  "./apps-en/video-to-audio/"
+  "./apps-en/video-to-audio/",
+  "./apps/video-compressor/",
+  "./apps-en/video-compressor/"
 ];
 
 function isSameOrigin(url) {
