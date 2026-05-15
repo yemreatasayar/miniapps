@@ -1850,16 +1850,15 @@ function buildManifestoPageHtml(language) {
 }
 
 function buildServiceWorker({ version, shellPrecacheUrls, appEntryUrls }) {
-  // Apps that require SharedArrayBuffer (FFmpeg WASM) → need COOP/COEP headers.
+  // Apps that require SharedArrayBuffer (FFmpeg WASM multi-threaded) → need COOP/COEP headers.
   // GitHub Pages cannot set HTTP headers, so the SW injects them for these specific apps.
   // Using require-corp (not credentialless) because these apps load no cross-origin resources.
+  // NOTE: video-compressor uses @ffmpeg/core (single-threaded) — does NOT need COOP/COEP.
   const crossOriginIsolatedEntryUrls = [
     "./apps/audio-editor/",
     "./apps-en/audio-editor/",
     "./apps/video-to-audio/",
     "./apps-en/video-to-audio/",
-    "./apps/video-compressor/",
-    "./apps-en/video-compressor/",
   ];
 
   return `const CACHE_VERSION = ${JSON.stringify(version)};
