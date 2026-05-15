@@ -50,12 +50,9 @@ async function getVideoDuration(file: File): Promise<number> {
   });
 }
 
-const isDistribution = typeof window !== "undefined" && window.location.hostname === "miniapps.tr";
-
 export default function App() {
-  const { t } = useLang();
+  const { t, lang, toggleLang } = useLang();
   const logoUrl = `${import.meta.env.BASE_URL}assets/video-compressor-logo.svg`;
-  const miniappsLogoUrl = `${import.meta.env.BASE_URL}assets/miniapps-logo-dark.svg`;
 
   const [loadedVideo, setLoadedVideo] = useState<LoadedVideo | null>(null);
   const [settings, setSettings] = useState<ProcessSettings>(() => ({
@@ -152,6 +149,14 @@ export default function App() {
     <main className="video-compressor-shell">
       <header className="saas-header">
         <img className="brand-logo" src={logoUrl} alt="Video Compressor" />
+        <button
+          type="button"
+          className="lang-toggle"
+          onClick={toggleLang}
+          title={lang === "tr" ? "Switch to English" : "Türkçeye geç"}
+        >
+          {lang === "tr" ? "EN" : "TR"}
+        </button>
       </header>
 
       {!loadedVideo ? (
@@ -264,14 +269,6 @@ export default function App() {
       )}
 
       <Toast message={toast} onClose={() => setToast(null)} />
-
-      {isDistribution && (
-        <footer className="miniapps-footer">
-          <a href="https://miniapps.tr" aria-label="miniapps.tr">
-            <img src={miniappsLogoUrl} alt="miniapps.tr" className="miniapps-footer-logo" />
-          </a>
-        </footer>
-      )}
     </main>
   );
 }
