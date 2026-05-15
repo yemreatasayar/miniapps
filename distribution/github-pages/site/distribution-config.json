@@ -11,10 +11,10 @@
     "image-format-converter",
     "bg-remover",
     "video-to-audio",
+    "video-compressor",
     "audio-editor",
     "stem-splitter",
-    "dev-toolkit",
-    "video-compressor"
+    "dev-toolkit"
   ],
   "hiddenAppIds": [
     "weekly-bulletin"
