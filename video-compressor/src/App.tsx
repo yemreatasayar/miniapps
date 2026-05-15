@@ -6,8 +6,8 @@ import ProgressPanel from "./components/ProgressPanel";
 import ResultPanel from "./components/ResultPanel";
 import Toast from "./components/Toast";
 import { useLang } from "./lib/LangContext";
-import { loadFFmpeg, processVideo, terminateFFmpeg } from "./lib/ffmpeg-service";
-import type { LoadedVideo, ProcessSettings, ProcessStatus } from "./lib/types";
+import { loadFFmpeg, NativeHelperUnavailableError, processVideo, processVideoWithNativeHelper, terminateFFmpeg } from "./lib/ffmpeg-service";
+import type { LoadedVideo, ProcessSettings, ProcessStatus, VideoFormat } from "./lib/types";
 
 const SETTINGS_KEY = "video-compressor.settings";
 
@@ -20,11 +20,31 @@ const DEFAULT_STORED: StoredSettings = {
   audioBitrate: "128",
 };
 
+const VALID_OUTPUT_FORMATS = new Set<VideoFormat>(["original", "mp4", "webm", "mov"]);
+const VALID_AUDIO_BITRATES = new Set<StoredSettings["audioBitrate"]>(["64", "128", "192"]);
+
+function normalizeStoredSettings(settings: Partial<StoredSettings>): StoredSettings {
+  return {
+    outputFormat: VALID_OUTPUT_FORMATS.has(settings.outputFormat as VideoFormat)
+      ? settings.outputFormat as VideoFormat
+      : DEFAULT_STORED.outputFormat,
+    videoCrf: typeof settings.videoCrf === "number" && Number.isFinite(settings.videoCrf)
+      ? Math.min(40, Math.max(16, Math.round(settings.videoCrf)))
+      : DEFAULT_STORED.videoCrf,
+    includeAudio: typeof settings.includeAudio === "boolean"
+      ? settings.includeAudio
+      : DEFAULT_STORED.includeAudio,
+    audioBitrate: VALID_AUDIO_BITRATES.has(settings.audioBitrate as StoredSettings["audioBitrate"])
+      ? settings.audioBitrate as StoredSettings["audioBitrate"]
+      : DEFAULT_STORED.audioBitrate,
+  };
+}
+
 function readStoredSettings(): StoredSettings {
   try {
     const raw = window.localStorage.getItem(SETTINGS_KEY);
     if (!raw) return DEFAULT_STORED;
-    return { ...DEFAULT_STORED, ...(JSON.parse(raw) as Partial<StoredSettings>) };
+    return normalizeStoredSettings({ ...DEFAULT_STORED, ...(JSON.parse(raw) as Partial<StoredSettings>) });
   } catch {
     return DEFAULT_STORED;
   }
@@ -119,10 +139,27 @@ export default function App() {
   async function handleProcess() {
     if (!loadedVideo) return;
     try {
+      const label = hasCuts ? t.processingSegments : t.processingVideo;
+      setStatus({ kind: "processing", progress: 0, label });
+
+      try {
+        const { blob, fileName } = await processVideoWithNativeHelper(
+          loadedVideo,
+          settings,
+          p => setStatus({ kind: "processing", progress: p, label })
+        );
+        const outputUrl = URL.createObjectURL(blob);
+        setStatus({ kind: "success", outputUrl, outputFileName: fileName, outputSize: blob.size });
+        return;
+      } catch (nativeError) {
+        if (!(nativeError instanceof NativeHelperUnavailableError)) {
+          throw nativeError;
+        }
+      }
+
       setStatus({ kind: "loading-ffmpeg", progress: 0 });
       await loadFFmpeg(p => setStatus({ kind: "loading-ffmpeg", progress: p }));
 
-      const label = hasCuts ? t.processingSegments : t.processingVideo;
       setStatus({ kind: "processing", progress: 0, label });
       const { blob, fileName } = await processVideo(
         loadedVideo,

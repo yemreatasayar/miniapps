@@ -4,6 +4,14 @@ import type { LoadedVideo, ProcessSettings, Segment, VideoFormat } from "./types
 
 let ffmpegInstance: FFmpeg | null = null;
 let loadPromise: Promise<void> | null = null;
+const NATIVE_HELPER_URL = "http://127.0.0.1:4186";
+
+export class NativeHelperUnavailableError extends Error {
+  constructor() {
+    super("Native video helper unavailable.");
+    this.name = "NativeHelperUnavailableError";
+  }
+}
 
 function ffmpegAssetUrl(f: string) {
   return `${import.meta.env.BASE_URL}ffmpeg/${f}`;
@@ -56,11 +64,15 @@ function ext(fileName: string): string {
   return (fileName.match(/\.[^.]+$/)?.[0] ?? ".mp4").toLowerCase();
 }
 
+function effectiveFormat(format: VideoFormat, inExt: string): Exclude<VideoFormat, "original"> {
+  if (format !== "original") return format;
+  if (inExt === ".webm") return "webm";
+  if (inExt === ".mov") return "mov";
+  return "mp4";
+}
+
 function outputExt(format: VideoFormat, inputFile: string): string {
-  if (format === "mp4") return ".mp4";
-  if (format === "webm") return ".webm";
-  if (format === "mov") return ".mov";
-  return ext(inputFile);
+  return `.${effectiveFormat(format, ext(inputFile))}`;
 }
 
 function mime(e: string): string {
@@ -72,6 +84,40 @@ function mime(e: string): string {
 
 function toBlob(data: Uint8Array, m: string) {
   return new Blob([data.slice().buffer as ArrayBuffer], { type: m });
+}
+
+function bytesToBase64Url(bytes: Uint8Array): string {
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function encodeHeaderValue(value: unknown): string {
+  return bytesToBase64Url(new TextEncoder().encode(JSON.stringify(value)));
+}
+
+function encodeFileName(fileName: string): string {
+  return bytesToBase64Url(new TextEncoder().encode(fileName));
+}
+
+function decodeFileNameHeader(value: string | null, fallback: string): string {
+  if (!value) return fallback;
+
+  try {
+    const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const bytes = Uint8Array.from(atob(padded), (char) => char.charCodeAt(0));
+    return decodeURIComponent(new TextDecoder().decode(bytes));
+  } catch {
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return fallback;
+    }
+  }
 }
 
 function toText(data: Uint8Array | string): string {
@@ -115,7 +161,7 @@ function isWasmMemoryError(message: string): boolean {
 }
 
 function memoryErrorMessage(): string {
-  return "Tarayıcı belleği bu render için yetmedi. Video büyükse daha kısa segmentlerle deneyin veya çıktı kalitesini biraz düşürün.";
+  return "Tarayıcı belleği bu render için yetmedi. Yerel video helper çalışıyorsa aynı işlem native FFmpeg ile tamamlanabilir.";
 }
 
 function pickRelevantLogLine(entries: LogEntry[]): string | undefined {
@@ -131,17 +177,29 @@ function pickRelevantLogLine(entries: LogEntry[]): string | undefined {
 }
 
 function vCodec(format: VideoFormat, inExt: string, crf: number): string[] {
-  const eff = format === "original" ? (inExt === ".webm" ? "webm" : "mp4") : format;
-  if (eff === "webm") return ["-vcodec", "libvpx-vp9", "-crf", String(crf), "-b:v", "0", "-threads", "1"];
+  const eff = effectiveFormat(format, inExt);
+  if (eff === "webm") return ["-vcodec", "libvpx-vp9", "-crf", String(crf), "-b:v", "0", "-deadline", "realtime", "-cpu-used", "8", "-row-mt", "1", "-threads", "2"];
   // ultrafast preset for significantly faster renders
   return ["-vcodec", "libx264", "-crf", String(crf), "-preset", "ultrafast", "-threads", "1", "-pix_fmt", "yuv420p"];
 }
 
 function aCodec(format: VideoFormat, inExt: string, include: boolean, bitrate: string): string[] {
   if (!include) return ["-an"];
-  const eff = format === "original" ? (inExt === ".webm" ? "webm" : "mp4") : format;
+  const eff = effectiveFormat(format, inExt);
   if (eff === "webm") return ["-acodec", "libopus", "-b:a", `${bitrate}k`];
   return ["-acodec", "aac", "-b:a", `${bitrate}k`];
+}
+
+function containerArgs(format: VideoFormat, inExt: string): string[] {
+  return effectiveFormat(format, inExt) === "mp4" ? ["-movflags", "+faststart"] : [];
+}
+
+function segmentInputArgs(inputName: string, seg: Segment): string[] {
+  return ["-ss", String(seg.start), "-t", String(Math.max(seg.end - seg.start, 0.1)), "-i", inputName];
+}
+
+function segmentOutputArgs(): string[] {
+  return ["-avoid_negative_ts", "make_zero"];
 }
 
 async function run(ffmpeg: FFmpeg, args: string[]): Promise<void> {
@@ -211,6 +269,79 @@ async function hasAudioStream(ffmpeg: FFmpeg, inputName: string): Promise<boolea
   }
 }
 
+export async function isNativeVideoHelperAvailable(): Promise<boolean> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 1200);
+
+  try {
+    const response = await fetch(`${NATIVE_HELPER_URL}/api/health`, {
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    if (!response.ok) return false;
+
+    const data = await response.json() as { ok?: unknown; ffmpeg?: unknown };
+    return data.ok === true && data.ffmpeg === true;
+  } catch {
+    return false;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+export async function processVideoWithNativeHelper(
+  video: LoadedVideo,
+  settings: ProcessSettings,
+  onProgress: (p: number) => void
+): Promise<{ blob: Blob; fileName: string }> {
+  const helperAvailable = await isNativeVideoHelperAvailable();
+  if (!helperAvailable) {
+    throw new NativeHelperUnavailableError();
+  }
+
+  onProgress(0.08);
+  let heartbeatProgress = 0.08;
+  const heartbeat = window.setInterval(() => {
+    heartbeatProgress = Math.min(0.92, heartbeatProgress + Math.max(0.004, (0.92 - heartbeatProgress) * 0.08));
+    onProgress(heartbeatProgress);
+  }, 1200);
+
+  try {
+    const response = await fetch(`${NATIVE_HELPER_URL}/api/process`, {
+      method: "POST",
+      headers: {
+        "Content-Type": video.file.type || "application/octet-stream",
+        "X-Miniapps-Settings": encodeHeaderValue(settings),
+        "X-Miniapps-File-Name": encodeFileName(video.fileName),
+      },
+      body: video.file,
+    });
+    onProgress(0.95);
+
+    if (!response.ok) {
+      let message = "Native FFmpeg işlemi başarısız.";
+      try {
+        const data = await response.json() as { message?: unknown };
+        if (typeof data.message === "string" && data.message.trim()) {
+          message = data.message;
+        }
+      } catch {
+        // ignore non-JSON errors
+      }
+      throw new Error(message);
+    }
+
+    const blob = await response.blob();
+    onProgress(1);
+    return {
+      blob,
+      fileName: decodeFileNameHeader(response.headers.get("X-Miniapps-Output-File-Name"), `${video.fileName.replace(/\.[^.]+$/, "")}_processed.mp4`),
+    };
+  } finally {
+    window.clearInterval(heartbeat);
+  }
+}
+
 
 async function del(ffmpeg: FFmpeg, names: string[]): Promise<void> {
   for (const n of names) try { await ffmpeg.deleteFile(n); } catch { /* */ }
@@ -239,6 +370,7 @@ export async function processVideo(
   if (validSegs.length === 0) throw new Error("Geçerli segment bulunamadı.");
 
   const vc = vCodec(settings.outputFormat, inExt, settings.videoCrf);
+  const container = containerArgs(settings.outputFormat, inExt);
 
   const inputName = "vc_in" + inExt;
   const toClean: string[] = [inputName];
@@ -260,7 +392,7 @@ export async function processVideo(
       const out = "vc_out" + outExt;
       toClean.push(out);
       stepBase = 0; stepRange = 1;
-      await run(ffmpeg, ["-filter_threads", "1", "-i", inputName, ...vc, ...ac, out]);
+      await run(ffmpeg, ["-filter_threads", "1", "-i", inputName, ...vc, ...ac, ...container, out]);
       const data = await ffmpeg.readFile(out) as Uint8Array;
       return { blob: toBlob(data, outMime), fileName: `${baseName}_compressed${outExt}` };
     }
@@ -271,7 +403,7 @@ export async function processVideo(
       toClean.push(out);
       const seg = validSegs[0];
       stepBase = 0; stepRange = 1;
-      await run(ffmpeg, ["-filter_threads", "1", "-i", inputName, "-ss", String(seg.start), "-to", String(seg.end), ...vc, ...ac, out]);
+      await run(ffmpeg, ["-filter_threads", "1", ...segmentInputArgs(inputName, seg), ...vc, ...ac, ...segmentOutputArgs(), ...container, out]);
       const data = await ffmpeg.readFile(out) as Uint8Array;
       return { blob: toBlob(data, outMime), fileName: `${baseName}_cut${outExt}` };
     }
@@ -291,7 +423,7 @@ export async function processVideo(
       toClean.push(part);
       stepBase = (i / n) * encRange;
       stepRange = (1 / n) * encRange;
-      await run(ffmpeg, ["-filter_threads", "1", "-i", inputName, "-ss", String(seg.start), "-to", String(seg.end), ...vc, ...ac, part]);
+      await run(ffmpeg, ["-filter_threads", "1", ...segmentInputArgs(inputName, seg), ...vc, ...ac, ...segmentOutputArgs(), part]);
     }
 
     const concatTxt = "vc_concat.txt";
@@ -300,7 +432,7 @@ export async function processVideo(
     await ffmpeg.writeFile(concatTxt, new TextEncoder().encode(partNames.map(p => `file '${p}'`).join("\n") + "\n"));
 
     stepBase = encRange; stepRange = 1 - encRange;
-    await run(ffmpeg, ["-f", "concat", "-safe", "0", "-i", concatTxt, "-c", "copy", out]);
+    await run(ffmpeg, ["-fflags", "+genpts", "-f", "concat", "-safe", "0", "-i", concatTxt, "-c", "copy", ...container, out]);
 
     const data = await ffmpeg.readFile(out) as Uint8Array;
     return { blob: toBlob(data, outMime), fileName: `${baseName}_cut${outExt}` };

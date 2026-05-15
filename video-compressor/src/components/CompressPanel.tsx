@@ -8,6 +8,16 @@ type Props = {
 };
 
 const FORMAT_VALUES: VideoFormat[] = ["original", "mp4", "webm", "mov"];
+const MIN_CRF = 16;
+const MAX_CRF = 40;
+
+function crfToSliderValue(crf: number): number {
+  return MIN_CRF + MAX_CRF - crf;
+}
+
+function sliderValueToCrf(value: number): number {
+  return MIN_CRF + MAX_CRF - value;
+}
 
 export default function CompressPanel({ settings, onSettingsChange, disabled }: Props) {
   const { t } = useLang();
@@ -63,18 +73,18 @@ export default function CompressPanel({ settings, onSettingsChange, disabled }: 
           <span className="crf-badge">({crfLabel(settings.videoCrf)})</span>
         </label>
         <div className="slider-row">
-          <span className="slider-edge-label">{t.qualityHigh}</span>
+          <span className="slider-edge-label">{t.qualitySmall}</span>
           <input
             type="range"
-            min={16}
-            max={40}
+            min={MIN_CRF}
+            max={MAX_CRF}
             step={1}
-            value={settings.videoCrf}
-            onChange={(e) => update("videoCrf", Number(e.target.value))}
+            value={crfToSliderValue(settings.videoCrf)}
+            onChange={(e) => update("videoCrf", sliderValueToCrf(Number(e.target.value)))}
             disabled={disabled}
             className="quality-slider"
           />
-          <span className="slider-edge-label">{t.qualitySmall}</span>
+          <span className="slider-edge-label">{t.qualityHigh}</span>
         </div>
         <p className="settings-hint">{t.qualityHint}</p>
       </div>
