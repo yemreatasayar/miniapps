@@ -125,6 +125,29 @@ GitHub Actions (`.github/workflows/deploy.yml`) otomatik tetiklenir:
 
 ---
 
+## Uygulama Sıralama Prensibi (Web — visibleAppIds)
+
+Kartlar kullanıcıya ilişkili gruplar halinde gösterilir. Mevcut sıra ve mantık:
+
+```
+pdf-toolkit            ← Belge işleme
+csv-toolkit            ← Veri işleme
+qr-generator           ← Üretim araçları
+image-toolkit          ← Görsel işleme
+exif-cleaner           ↑
+image-format-converter ↑
+bg-remover             ↑
+video-to-audio         ← Video/Ses işleme
+video-compressor       ↑
+audio-editor           ↑
+stem-splitter          ↑
+dev-toolkit            ← Geliştirici araçları
+```
+
+Yeni uygulama eklenirken `build-github-pages.mjs`'deki `visibleAppIds` dizisinde mantıksal grubuna göre konumlandır.
+
+---
+
 ## Local Deploy Akışı
 
 ### Tek Uygulama Güncelleme
