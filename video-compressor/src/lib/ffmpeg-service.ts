@@ -13,6 +13,26 @@ export class NativeHelperUnavailableError extends Error {
   }
 }
 
+export class WasmMemoryLimitError extends Error {
+  constructor() {
+    super("WASM_MEMORY_LIMIT");
+    this.name = "WasmMemoryLimitError";
+  }
+}
+
+// On the public web build the native helper is unreachable, so all rendering
+// happens in the browser's WASM ffmpeg. Linear memory is capped (~2 GB), so
+// HD inputs blow up with "memory access out of bounds". We downscale the
+// largest dimension to 720p only when running on the distribution host.
+function isWebDistribution(): boolean {
+  return typeof window !== "undefined" && window.location.hostname === "miniapps.tr";
+}
+
+function webScaleFilter(): string[] {
+  if (!isWebDistribution()) return [];
+  return ["-vf", "scale='if(gt(iw,ih),min(1280,iw),-2)':'if(gt(iw,ih),-2,min(1280,ih))'"];
+}
+
 function ffmpegAssetUrl(f: string) {
   return `${import.meta.env.BASE_URL}ffmpeg/${f}`;
 }
@@ -157,11 +177,7 @@ function isActionableLogLine(line: string): boolean {
 }
 
 function isWasmMemoryError(message: string): boolean {
-  return /(memory access out of bounds|out of memory|cannot enlarge memory|allocation failed)/i.test(message);
-}
-
-function memoryErrorMessage(): string {
-  return "Tarayıcı belleği bu render için yetmedi. Yerel video helper çalışıyorsa aynı işlem native FFmpeg ile tamamlanabilir.";
+  return /(memory access out of bounds|out of memory|cannot enlarge memory|allocation failed|maximum call stack|aborted)/i.test(message);
 }
 
 function pickRelevantLogLine(entries: LogEntry[]): string | undefined {
@@ -226,19 +242,23 @@ async function run(ffmpeg: FFmpeg, args: string[]): Promise<void> {
     if (error instanceof Error) {
       if (isWasmMemoryError(error.message)) {
         terminateFFmpeg();
-        throw new Error(memoryErrorMessage());
+        throw new WasmMemoryLimitError();
       }
 
       const detail = pickRelevantLogLine(logs);
       if (detail && isWasmMemoryError(detail)) {
         terminateFFmpeg();
-        throw new Error(memoryErrorMessage());
+        throw new WasmMemoryLimitError();
       }
 
       throw new Error(detail ? `FFmpeg işlem hatası: ${detail}` : error.message);
     }
 
     const detail = pickRelevantLogLine(logs);
+    if (detail && isWasmMemoryError(detail)) {
+      terminateFFmpeg();
+      throw new WasmMemoryLimitError();
+    }
     throw new Error(detail ?? `FFmpeg işlem hatası: ${String(error)}`);
   } finally {
     ffmpeg.off("log", onLog);
@@ -387,12 +407,14 @@ export async function processVideo(
     const shouldIncludeAudio = settings.includeAudio && await hasAudioStream(ffmpeg, inputName);
     const ac = aCodec(settings.outputFormat, inExt, shouldIncludeAudio, settings.audioBitrate);
 
+    const scale = webScaleFilter();
+
     // ── Full video (no cuts): single encode pass ──────────────────────────
     if (isFullVideo(validSegs, video.duration)) {
       const out = "vc_out" + outExt;
       toClean.push(out);
       stepBase = 0; stepRange = 1;
-      await run(ffmpeg, ["-filter_threads", "1", "-i", inputName, ...vc, ...ac, ...container, out]);
+      await run(ffmpeg, ["-filter_threads", "1", "-i", inputName, ...scale, ...vc, ...ac, ...container, out]);
       const data = await ffmpeg.readFile(out) as Uint8Array;
       return { blob: toBlob(data, outMime), fileName: `${baseName}_compressed${outExt}` };
     }
@@ -403,7 +425,7 @@ export async function processVideo(
       toClean.push(out);
       const seg = validSegs[0];
       stepBase = 0; stepRange = 1;
-      await run(ffmpeg, ["-filter_threads", "1", ...segmentInputArgs(inputName, seg), ...vc, ...ac, ...segmentOutputArgs(), ...container, out]);
+      await run(ffmpeg, ["-filter_threads", "1", ...segmentInputArgs(inputName, seg), ...scale, ...vc, ...ac, ...segmentOutputArgs(), ...container, out]);
       const data = await ffmpeg.readFile(out) as Uint8Array;
       return { blob: toBlob(data, outMime), fileName: `${baseName}_cut${outExt}` };
     }
@@ -423,7 +445,7 @@ export async function processVideo(
       toClean.push(part);
       stepBase = (i / n) * encRange;
       stepRange = (1 / n) * encRange;
-      await run(ffmpeg, ["-filter_threads", "1", ...segmentInputArgs(inputName, seg), ...vc, ...ac, ...segmentOutputArgs(), part]);
+      await run(ffmpeg, ["-filter_threads", "1", ...segmentInputArgs(inputName, seg), ...scale, ...vc, ...ac, ...segmentOutputArgs(), part]);
     }
 
     const concatTxt = "vc_concat.txt";
@@ -437,6 +459,14 @@ export async function processVideo(
     const data = await ffmpeg.readFile(out) as Uint8Array;
     return { blob: toBlob(data, outMime), fileName: `${baseName}_cut${outExt}` };
 
+  } catch (err) {
+    if (err instanceof WasmMemoryLimitError) throw err;
+    const msg = err instanceof Error ? err.message : String(err);
+    if (isWasmMemoryError(msg) || /RangeError|allocation failed/i.test(msg)) {
+      terminateFFmpeg();
+      throw new WasmMemoryLimitError();
+    }
+    throw err;
   } finally {
     ffmpeg.off("progress", onProg);
     await del(ffmpeg, toClean);

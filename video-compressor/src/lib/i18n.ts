@@ -104,6 +104,7 @@ export type Strings = {
   processFailed: string;
   processingSegments: string;
   processingVideo: string;
+  memoryError: string;
 };
 
 export const strings: Record<Lang, Strings> = {
@@ -193,6 +194,7 @@ export const strings: Record<Lang, Strings> = {
     processFailed: "İşlem başarısız.",
     processingSegments: "Segmentler işleniyor",
     processingVideo: "Video işleniyor",
+    memoryError: "Tarayıcı belleği bu video için yetmedi. Daha küçük/daha kısa bir dosya deneyin veya daha yüksek CRF (daha fazla sıkıştırma) seçin.",
   },
 
   en: {
@@ -281,5 +283,6 @@ export const strings: Record<Lang, Strings> = {
     processFailed: "Processing failed.",
     processingSegments: "Processing segments",
     processingVideo: "Processing video",
+    memoryError: "Browser memory wasn't enough for this video. Try a smaller / shorter file or pick a higher CRF (more compression).",
   },
 };

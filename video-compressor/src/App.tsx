@@ -6,7 +6,7 @@ import ProgressPanel from "./components/ProgressPanel";
 import ResultPanel from "./components/ResultPanel";
 import Toast from "./components/Toast";
 import { useLang } from "./lib/LangContext";
-import { loadFFmpeg, NativeHelperUnavailableError, processVideo, processVideoWithNativeHelper, terminateFFmpeg } from "./lib/ffmpeg-service";
+import { loadFFmpeg, NativeHelperUnavailableError, processVideo, processVideoWithNativeHelper, terminateFFmpeg, WasmMemoryLimitError } from "./lib/ffmpeg-service";
 import type { LoadedVideo, ProcessSettings, ProcessStatus, VideoFormat } from "./lib/types";
 
 const SETTINGS_KEY = "video-compressor.settings";
@@ -169,7 +169,9 @@ export default function App() {
       const outputUrl = URL.createObjectURL(blob);
       setStatus({ kind: "success", outputUrl, outputFileName: fileName, outputSize: blob.size });
     } catch (error) {
-      const message = error instanceof Error ? error.message : t.processFailed;
+      const message = error instanceof WasmMemoryLimitError
+        ? t.memoryError
+        : error instanceof Error ? error.message : t.processFailed;
       setStatus({ kind: "error", message });
       setToast(message);
     }
