@@ -38,12 +38,14 @@ const distributionConfig = {
     "image-format-converter",
     "bg-remover",
     "video-to-audio",
-    "video-compressor",
     "audio-editor",
     "stem-splitter",
     "dev-toolkit",
   ],
-  hiddenAppIds: ["weekly-bulletin"],
+  // video-compressor: temporarily hidden on web — WASM OOM on HD inputs.
+  // Page itself is still built and reachable via direct URL; revisit after
+  // WebCodecs migration (see Desktop/video-compressor-webcodecs-plani.md).
+  hiddenAppIds: ["weekly-bulletin", "video-compressor"],
   launchUrlOverrides: Object.fromEntries(apps.map((app) => [app.id, `./apps/${app.id}/`])),
 };
 
