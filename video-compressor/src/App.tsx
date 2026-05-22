@@ -59,13 +59,20 @@ function formatBytes(bytes: number): string {
   return `${value.toFixed(1)} ${units[i]}`;
 }
 
-async function getVideoDuration(file: File): Promise<number> {
+async function getVideoMetadata(file: File): Promise<{ duration: number; width: number; height: number }> {
   return new Promise((resolve) => {
     const v = document.createElement("video");
     v.preload = "metadata";
     const url = URL.createObjectURL(file);
-    v.onloadedmetadata = () => { URL.revokeObjectURL(url); resolve(isFinite(v.duration) ? v.duration : 0); };
-    v.onerror = () => { URL.revokeObjectURL(url); resolve(0); };
+    v.onloadedmetadata = () => {
+      URL.revokeObjectURL(url);
+      resolve({
+        duration: isFinite(v.duration) ? v.duration : 0,
+        width: v.videoWidth || 0,
+        height: v.videoHeight || 0,
+      });
+    };
+    v.onerror = () => { URL.revokeObjectURL(url); resolve({ duration: 0, width: 0, height: 0 }); };
     v.src = url;
   });
 }
@@ -125,10 +132,10 @@ export default function App() {
     }
     if (status.kind === "success") URL.revokeObjectURL(status.outputUrl);
 
-    const duration = await getVideoDuration(file);
+    const { duration, width, height } = await getVideoMetadata(file);
     const previewUrl = URL.createObjectURL(file);
 
-    setLoadedVideo({ file, fileName: file.name, fileSize: file.size, duration, previewUrl });
+    setLoadedVideo({ file, fileName: file.name, fileSize: file.size, duration, width, height, previewUrl });
     setSettings(prev => ({
       ...prev,
       segments: [{ id: crypto.randomUUID(), start: 0, end: Math.max(duration, 0.1) }],

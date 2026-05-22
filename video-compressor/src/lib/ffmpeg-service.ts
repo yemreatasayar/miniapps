@@ -21,16 +21,45 @@ export class WasmMemoryLimitError extends Error {
 }
 
 // On the public web build the native helper is unreachable, so all rendering
-// happens in the browser's WASM ffmpeg. Linear memory is capped (~2 GB), so
-// HD inputs blow up with "memory access out of bounds". We downscale the
-// largest dimension to 720p only when running on the distribution host.
+// happens in the browser's WASM ffmpeg. Linear memory is capped (~2 GB) and
+// the decoder must hold reference frames at full input resolution before
+// any scale filter runs — so we pick the target size from the *input*
+// dimensions and constrain the encoder memory footprint as well.
 function isWebDistribution(): boolean {
   return typeof window !== "undefined" && window.location.hostname === "miniapps.tr";
 }
 
-function webScaleFilter(): string[] {
+function webTargetLongSide(inputLongSide: number, attempt: number): number {
+  // attempt 0 = first try, attempt 1 = retry after OOM with a tighter cap
+  if (attempt >= 1) return 640;
+  if (inputLongSide > 1920) return 854;   // 4K / 1440p screen recordings → 480p
+  if (inputLongSide > 1280) return 1280;  // 1080p → 720p
+  return 0;                                // already ≤ 720p-ish, no scale
+}
+
+function webScaleFilter(width: number, height: number, attempt: number): string[] {
   if (!isWebDistribution()) return [];
-  return ["-vf", "scale='if(gt(iw,ih),min(1280,iw),-2)':'if(gt(iw,ih),-2,min(1280,ih))'"];
+  const longSide = Math.max(width, height);
+  if (!longSide) {
+    // unknown dimensions → fall back to the conservative 720p cap
+    return attempt >= 1
+      ? ["-vf", "scale='if(gt(iw,ih),min(640,iw),-2)':'if(gt(iw,ih),-2,min(640,ih))'"]
+      : ["-vf", "scale='if(gt(iw,ih),min(1280,iw),-2)':'if(gt(iw,ih),-2,min(1280,ih))'"];
+  }
+  const target = webTargetLongSide(longSide, attempt);
+  if (target === 0) return [];
+  return ["-vf", `scale='if(gt(iw,ih),min(${target},iw),-2)':'if(gt(iw,ih),-2,min(${target},ih))'`];
+}
+
+function webEncoderConstraints(format: VideoFormat, inExt: string): string[] {
+  if (!isWebDistribution()) return [];
+  // libx264 encoder ref frames + B-frames are the largest avoidable buffers.
+  // refs=1 and bf=0 shrink encoder state significantly; tune=fastdecode
+  // simplifies the bitstream for browsers playing back the output.
+  if (effectiveFormat(format, inExt) === "mp4" || effectiveFormat(format, inExt) === "mov") {
+    return ["-refs", "1", "-bf", "0", "-tune", "fastdecode"];
+  }
+  return [];
 }
 
 function ffmpegAssetUrl(f: string) {
@@ -376,6 +405,29 @@ export async function processVideo(
   settings: ProcessSettings,
   onProgress: (p: number) => void
 ): Promise<{ blob: Blob; fileName: string }> {
+  try {
+    return await processVideoAttempt(video, settings, onProgress, 0);
+  } catch (err) {
+    // On the public web build, retry once with an even tighter downscale
+    // cap. The first WASM OOM almost always means the decode/encode buffers
+    // are too big for this device's WASM heap.
+    if (err instanceof WasmMemoryLimitError && isWebDistribution()) {
+      onProgress(0);
+      // run() called terminateFFmpeg() on the OOM, so we need a fresh core
+      // before the retry can use writeFile/exec/readFile again.
+      await loadFFmpeg(() => { /* progress already shown by caller */ });
+      return await processVideoAttempt(video, settings, onProgress, 1);
+    }
+    throw err;
+  }
+}
+
+async function processVideoAttempt(
+  video: LoadedVideo,
+  settings: ProcessSettings,
+  onProgress: (p: number) => void,
+  attempt: number
+): Promise<{ blob: Blob; fileName: string }> {
   const ffmpeg = getFFmpeg();
 
   const inExt = ext(video.fileName);
@@ -389,7 +441,7 @@ export async function processVideo(
 
   if (validSegs.length === 0) throw new Error("Geçerli segment bulunamadı.");
 
-  const vc = vCodec(settings.outputFormat, inExt, settings.videoCrf);
+  const vc = [...vCodec(settings.outputFormat, inExt, settings.videoCrf), ...webEncoderConstraints(settings.outputFormat, inExt)];
   const container = containerArgs(settings.outputFormat, inExt);
 
   const inputName = "vc_in" + inExt;
@@ -407,7 +459,7 @@ export async function processVideo(
     const shouldIncludeAudio = settings.includeAudio && await hasAudioStream(ffmpeg, inputName);
     const ac = aCodec(settings.outputFormat, inExt, shouldIncludeAudio, settings.audioBitrate);
 
-    const scale = webScaleFilter();
+    const scale = webScaleFilter(video.width, video.height, attempt);
 
     // ── Full video (no cuts): single encode pass ──────────────────────────
     if (isFullVideo(validSegs, video.duration)) {

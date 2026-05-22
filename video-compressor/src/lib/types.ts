@@ -12,6 +12,8 @@ export type LoadedVideo = {
   fileName: string;
   fileSize: number;
   duration: number;
+  width: number;
+  height: number;
   previewUrl: string;
 };
 
