@@ -20,8 +20,17 @@
 // Plan and historical context: ~/Desktop/video-compressor-webcodecs-plani.md
 
 import { createFile, DataStream, Endianness } from "mp4box";
-import { Muxer, ArrayBufferTarget } from "mp4-muxer";
+import { Muxer as Mp4Muxer, ArrayBufferTarget as Mp4Target } from "mp4-muxer";
+import { Muxer as WebmMuxer, ArrayBufferTarget as WebmTarget } from "webm-muxer";
 import type { LoadedVideo, ProcessSettings, Segment, VideoFormat } from "./types";
+
+// Both muxers expose the same minimal surface we need.
+type ContainerMuxer = {
+  addVideoChunk(chunk: EncodedVideoChunk, meta?: EncodedVideoChunkMetadata): void;
+  addAudioChunk(chunk: EncodedAudioChunk, meta?: EncodedAudioChunkMetadata): void;
+  finalize(): void;
+  target: { buffer: ArrayBuffer };
+};
 
 export class WebCodecsNotSupportedError extends Error {
   constructor(reason: string) {
@@ -62,6 +71,18 @@ function codecForFormat(format: ConcreteFormat): string {
     case "webm":
       return "vp09.00.10.08";
   }
+}
+
+// Per-format codec strings. Browser-level for VideoEncoder.isConfigSupported,
+// muxer-level strings for the corresponding container library.
+function audioCodecForFormat(format: ConcreteFormat): { browser: string; muxer: string } {
+  if (format === "webm") return { browser: "opus", muxer: "A_OPUS" };
+  return { browser: "mp4a.40.2", muxer: "aac" };
+}
+
+function videoMuxerCodec(format: ConcreteFormat): string {
+  if (format === "webm") return "V_VP9";
+  return "avc";
 }
 
 const SUPPORTED_INPUT_EXTS = new Set([".mp4", ".mov", ".m4v"]);
@@ -114,11 +135,6 @@ export async function isWebCodecsSupported(
   }
 
   const resolvedFormat = resolveFormat(settings.outputFormat, video.fileName);
-  // For now the muxer only emits MP4. WebM output would require webm-muxer.
-  if (resolvedFormat === "webm") {
-    return { supported: false, reason: "webm output not implemented in WebCodecs path yet" };
-  }
-
   const codec = codecForFormat(resolvedFormat);
   const target = computeTargetDimensions(video.width || 1280, video.height || 720);
   const bitrate = computeBitrate(target.w, target.h, settings.videoCrf);
@@ -478,9 +494,6 @@ export async function processVideoWithWebCodecs(
   }
 
   const outputFormat = resolveFormat(settings.outputFormat, video.fileName);
-  if (outputFormat === "webm") {
-    throw new WebCodecsNotSupportedError("webm output not yet implemented");
-  }
 
   onProgress(0.02);
 
@@ -513,7 +526,8 @@ export async function processVideoWithWebCodecs(
   // must not have explicitly disabled audio. We probe both decoder and
   // encoder up-front: if either rejects we silently drop audio (similar to
   // the WASM path's `-an` fallback) rather than failing the whole job.
-  const targetAudioCodec = "mp4a.40.2";
+  const audioCodecs = audioCodecForFormat(outputFormat);
+  const targetAudioCodec = audioCodecs.browser;
   const audioBitrate = (Number.parseInt(settings.audioBitrate, 10) || 128) * 1000;
   let useAudio = settings.includeAudio && demux.audio !== null;
   if (useAudio && demux.audio) {
@@ -530,18 +544,40 @@ export async function processVideoWithWebCodecs(
     }
   }
 
-  const muxer = new Muxer({
-    target: new ArrayBufferTarget(),
-    video: { codec: "avc", width: target.w, height: target.h, frameRate: demux.framerate },
-    audio: useAudio && demux.audio
-      ? {
-          codec: "aac",
-          sampleRate: demux.audio.sampleRate,
-          numberOfChannels: demux.audio.numberOfChannels,
-        }
-      : undefined,
-    fastStart: "in-memory",
-  });
+  // Output-container-specific muxer. Both libraries expose the same minimal
+  // surface (`addVideoChunk`, `addAudioChunk`, `finalize`, `target.buffer`)
+  // so the rest of the pipeline is agnostic.
+  const muxerVideoCodec = videoMuxerCodec(outputFormat);
+  let muxer: ContainerMuxer;
+  if (outputFormat === "webm") {
+    const m = new WebmMuxer({
+      target: new WebmTarget(),
+      video: { codec: muxerVideoCodec, width: target.w, height: target.h, frameRate: demux.framerate },
+      audio: useAudio && demux.audio
+        ? {
+            codec: audioCodecs.muxer,
+            sampleRate: demux.audio.sampleRate,
+            numberOfChannels: demux.audio.numberOfChannels,
+          }
+        : undefined,
+      firstTimestampBehavior: "offset",
+    });
+    muxer = m as unknown as ContainerMuxer;
+  } else {
+    const m = new Mp4Muxer({
+      target: new Mp4Target(),
+      video: { codec: muxerVideoCodec as "avc" | "hevc" | "vp9" | "av1", width: target.w, height: target.h, frameRate: demux.framerate },
+      audio: useAudio && demux.audio
+        ? {
+            codec: audioCodecs.muxer as "aac" | "opus",
+            sampleRate: demux.audio.sampleRate,
+            numberOfChannels: demux.audio.numberOfChannels,
+          }
+        : undefined,
+      fastStart: "in-memory",
+    });
+    muxer = m as unknown as ContainerMuxer;
+  }
 
   let encoderError: Error | null = null;
   const encoder = new VideoEncoder({
@@ -553,14 +589,19 @@ export async function processVideoWithWebCodecs(
     },
   });
 
-  encoder.configure({
+  const encoderConfig: VideoEncoderConfig = {
     codec: targetCodec,
     width: target.w,
     height: target.h,
     bitrate,
     framerate: demux.framerate,
-    avc: { format: "avc" },
-  });
+  };
+  // avcC bitstream format is only meaningful for H.264 inside an MP4 container.
+  // VP9/AV1 in WebM don't need it (and rejecting unknown fields would error).
+  if (outputFormat !== "webm") {
+    encoderConfig.avc = { format: "avc" };
+  }
+  encoder.configure(encoderConfig);
 
   // Decode + (scale) + encode each segment
   const needsScale = target.w !== demux.width || target.h !== demux.height;
@@ -738,8 +779,10 @@ export async function processVideoWithWebCodecs(
   muxer.finalize();
   onProgress(0.98);
 
-  const buffer = (muxer.target as ArrayBufferTarget).buffer;
-  const blob = new Blob([buffer], { type: "video/mp4" });
+  const buffer = muxer.target.buffer;
+  const mime = outputFormat === "webm" ? "video/webm" : outputFormat === "mov" ? "video/quicktime" : "video/mp4";
+  const ext = outputFormat === "webm" ? ".webm" : outputFormat === "mov" ? ".mov" : ".mp4";
+  const blob = new Blob([buffer], { type: mime });
 
   const baseName = video.fileName.replace(/\.[^.]+$/, "");
   const isFullVideo =
@@ -748,5 +791,5 @@ export async function processVideoWithWebCodecs(
     settings.segments[0].end >= video.duration - 0.05;
   const suffix = isFullVideo ? "_compressed" : "_cut";
   onProgress(1);
-  return { blob, fileName: `${baseName}${suffix}.mp4` };
+  return { blob, fileName: `${baseName}${suffix}${ext}` };
 }
