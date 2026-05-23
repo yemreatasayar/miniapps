@@ -1,4 +1,4 @@
-const CACHE_VERSION = "20260522t161236927z";
+const CACHE_VERSION = "20260523t125031321z";
 const CACHE_PREFIX = "miniapps-github-pages";
 const SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;
 const APP_CACHE = `${CACHE_PREFIX}-apps-${CACHE_VERSION}`;
@@ -53,6 +53,8 @@ const APP_ENTRY_URLS = [
   "./apps-en/bg-remover/",
   "./apps/video-to-audio/",
   "./apps-en/video-to-audio/",
+  "./apps/video-compressor/",
+  "./apps-en/video-compressor/",
   "./apps/audio-editor/",
   "./apps-en/audio-editor/",
   "./apps/stem-splitter/",

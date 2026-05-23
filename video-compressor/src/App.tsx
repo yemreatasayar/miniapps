@@ -6,7 +6,7 @@ import ProgressPanel from "./components/ProgressPanel";
 import ResultPanel from "./components/ResultPanel";
 import Toast from "./components/Toast";
 import { useLang } from "./lib/LangContext";
-import { loadFFmpeg, NativeHelperUnavailableError, processVideo, processVideoWithNativeHelper, terminateFFmpeg, WasmMemoryLimitError } from "./lib/ffmpeg-service";
+import { isWebCodecsDebugForced, loadFFmpeg, NativeHelperUnavailableError, processVideo, processVideoWithNativeHelper, terminateFFmpeg, WasmMemoryLimitError } from "./lib/ffmpeg-service";
 import type { LoadedVideo, ProcessSettings, ProcessStatus, VideoFormat } from "./lib/types";
 
 const SETTINGS_KEY = "video-compressor.settings";
@@ -149,18 +149,23 @@ export default function App() {
       const label = hasCuts ? t.processingSegments : t.processingVideo;
       setStatus({ kind: "processing", progress: 0, label });
 
-      try {
-        const { blob, fileName } = await processVideoWithNativeHelper(
-          loadedVideo,
-          settings,
-          p => setStatus({ kind: "processing", progress: p, label })
-        );
-        const outputUrl = URL.createObjectURL(blob);
-        setStatus({ kind: "success", outputUrl, outputFileName: fileName, outputSize: blob.size });
-        return;
-      } catch (nativeError) {
-        if (!(nativeError instanceof NativeHelperUnavailableError)) {
-          throw nativeError;
+      // Debug: `?engine=webcodecs` in the URL skips the native helper so we
+      // can validate the WebCodecs path against the same local environment
+      // without restarting the helper daemon.
+      if (!isWebCodecsDebugForced()) {
+        try {
+          const { blob, fileName } = await processVideoWithNativeHelper(
+            loadedVideo,
+            settings,
+            p => setStatus({ kind: "processing", progress: p, label })
+          );
+          const outputUrl = URL.createObjectURL(blob);
+          setStatus({ kind: "success", outputUrl, outputFileName: fileName, outputSize: blob.size });
+          return;
+        } catch (nativeError) {
+          if (!(nativeError instanceof NativeHelperUnavailableError)) {
+            throw nativeError;
+          }
         }
       }
 

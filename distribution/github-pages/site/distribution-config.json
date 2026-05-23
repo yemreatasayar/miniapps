@@ -11,13 +11,13 @@
     "image-format-converter",
     "bg-remover",
     "video-to-audio",
+    "video-compressor",
     "audio-editor",
     "stem-splitter",
     "dev-toolkit"
   ],
   "hiddenAppIds": [
-    "weekly-bulletin",
-    "video-compressor"
+    "weekly-bulletin"
   ],
   "launchUrlOverrides": {
     "pdf-toolkit": "./apps/pdf-toolkit/",

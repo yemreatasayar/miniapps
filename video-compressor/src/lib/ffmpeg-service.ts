@@ -1,6 +1,36 @@
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { toBlobURL } from "@ffmpeg/util";
 import type { LoadedVideo, ProcessSettings, Segment, VideoFormat } from "./types";
+// The WebCodecs engine and its mp4box / mp4-muxer dependencies are heavy
+// (~220 KB minified). Use a dynamic import so they only enter the bundle
+// once a user actually exercises the WebCodecs path.
+type WebCodecsEngineModule = typeof import("./webcodecs-engine");
+let webCodecsEnginePromise: Promise<WebCodecsEngineModule> | null = null;
+function loadWebCodecsEngine(): Promise<WebCodecsEngineModule> {
+  if (!webCodecsEnginePromise) {
+    webCodecsEnginePromise = import("./webcodecs-engine");
+  }
+  return webCodecsEnginePromise;
+}
+
+// WebCodecs migration is live. processVideo() tries the native (WebCodecs)
+// pipeline first. If the browser doesn't support the input codec, the
+// engine throws WebCodecsNotSupportedError and we fall back to the WASM
+// path automatically — so users on older browsers still get a working
+// render. Set this back to `false` to disable WebCodecs entirely.
+const WEBCODECS_ENABLED = true;
+
+// Debug helper: ?engine=webcodecs in the URL forces the WebCodecs path on
+// (and bypasses the native helper in App.tsx) so we can validate the
+// in-progress engine without flipping the production flag.
+export function isWebCodecsDebugForced(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return new URLSearchParams(window.location.search).get("engine") === "webcodecs";
+  } catch {
+    return false;
+  }
+}
 
 let ffmpegInstance: FFmpeg | null = null;
 let loadPromise: Promise<void> | null = null;
@@ -405,6 +435,34 @@ export async function processVideo(
   settings: ProcessSettings,
   onProgress: (p: number) => void
 ): Promise<{ blob: Blob; fileName: string }> {
+  const webCodecsForced = isWebCodecsDebugForced();
+  if (WEBCODECS_ENABLED || webCodecsForced) {
+    try {
+      const engine = await loadWebCodecsEngine();
+      const capability = await engine.isWebCodecsSupported(video, settings);
+      if (capability.supported) {
+        return await engine.processVideoWithWebCodecs(video, settings, onProgress);
+      }
+      // When forced via URL param, surface the reason loudly so we can fix
+      // the rejection instead of silently falling through.
+      if (webCodecsForced) {
+        // eslint-disable-next-line no-console
+        console.warn("[webcodecs forced] capability check rejected:", capability.reason);
+      }
+    } catch (err) {
+      // Expected during the migration: the engine may throw NotImplemented or
+      // NotSupported. Other failures fall back silently so users always get a
+      // working WASM render. Identify by error.name so we do not have to
+      // statically import the class symbols (and so keep the engine lazy).
+      const name = err instanceof Error ? err.name : "";
+      if (name !== "WebCodecsNotImplementedError" && name !== "WebCodecsNotSupportedError") {
+        // eslint-disable-next-line no-console
+        console.warn("WebCodecs path failed, falling back to WASM ffmpeg:", err);
+      }
+    }
+    onProgress(0);
+  }
+
   try {
     return await processVideoAttempt(video, settings, onProgress, 0);
   } catch (err) {
