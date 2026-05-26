@@ -1,5 +1,5 @@
 import { zipSync } from "fflate";
-import type { ConvertibleImage, OutputFormat } from "./types";
+import type { ConvertibleImage, CropSettings, OutputFormat } from "./types";
 
 const MAX_THUMBNAIL_WIDTH = 640;
 const MAX_CANVAS_DIMENSION = 16_384;
@@ -252,19 +252,27 @@ export async function loadConvertibleImage(file: File): Promise<ConvertibleImage
   }
 }
 
-export async function convertImage(image: ConvertibleImage, format: OutputFormat): Promise<Blob> {
+export async function convertImage(image: ConvertibleImage, format: OutputFormat, crop?: CropSettings): Promise<Blob> {
   const { image: imageElement, objectUrl } = await loadImageElement(image.workingFile);
 
   try {
-    validateCanvasSize(imageElement.naturalWidth, imageElement.naturalHeight);
-    const { canvas, context } = createCanvas(imageElement.naturalWidth, imageElement.naturalHeight);
+    const naturalWidth = imageElement.naturalWidth;
+    const naturalHeight = imageElement.naturalHeight;
+    const cropEnabled = crop?.enabled && (crop.width ?? 0) > 0 && (crop.height ?? 0) > 0;
+    const srcX = cropEnabled ? Math.max(0, crop!.x) : 0;
+    const srcY = cropEnabled ? Math.max(0, crop!.y) : 0;
+    const srcW = cropEnabled ? Math.min(crop!.width, naturalWidth - srcX) : naturalWidth;
+    const srcH = cropEnabled ? Math.min(crop!.height, naturalHeight - srcY) : naturalHeight;
+
+    validateCanvasSize(srcW, srcH);
+    const { canvas, context } = createCanvas(srcW, srcH);
 
     if (format === "jpg") {
       context.fillStyle = "#ffffff";
-      context.fillRect(0, 0, imageElement.naturalWidth, imageElement.naturalHeight);
+      context.fillRect(0, 0, srcW, srcH);
     }
 
-    context.drawImage(imageElement, 0, 0, imageElement.naturalWidth, imageElement.naturalHeight);
+    context.drawImage(imageElement, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
     return await canvasToBlob(canvas, getMimeType(format), format === "jpg" ? 0.92 : undefined);
   } finally {
     URL.revokeObjectURL(objectUrl);

@@ -39,10 +39,7 @@ export default function CompressPanel({
   return (
     <section className="compress-panel">
       <div className="section-header">
-        <div>
-          <h2>Compress</h2>
-          <p>Ghostscript ile PDF sıkıştırma</p>
-        </div>
+        <div><h2>Compress</h2></div>
       </div>
 
       {available === null ? <div className="status-banner">Compress motoru kontrol ediliyor...</div> : null}

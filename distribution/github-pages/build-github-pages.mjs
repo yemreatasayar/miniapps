@@ -54,11 +54,11 @@ const seoMeta = new Map([
     "pdf-toolkit",
     {
       tr: {
-        title: "PDF Toolkit — Ücretsiz PDF Sıkıştırıcı, Düzenleyici ve Dönüştürücü",
+        title: "PDF Toolkit: Ücretsiz PDF Sıkıştırıcı, Düzenleyici ve Dönüştürücü",
         description: "PDF dosyalarını tarayıcınızda sıkıştırın, bölün, birleştirin, döndürün ve filigran ekleyin. Hiçbir dosya sunucuya gönderilmez. Ücretsiz ve kayıt gerektirmez.",
       },
       en: {
-        title: "PDF Toolkit — Free PDF Compressor, Editor & Converter",
+        title: "PDF Toolkit: Free PDF Compressor, Editor & Converter",
         description: "Compress, split, merge, rotate, watermark and extract text from PDFs in your browser. No file uploads. Free, no account required.",
       },
     },
@@ -67,11 +67,11 @@ const seoMeta = new Map([
     "csv-toolkit",
     {
       tr: {
-        title: "CSV Toolkit — Ücretsiz Online CSV Düzenleyici ve Temizleyici",
+        title: "CSV Toolkit: Ücretsiz Online CSV Düzenleyici ve Temizleyici",
         description: "CSV dosyalarınızı tarayıcınızda filtreleyin, temizleyin, tekilleştirin ve düzenleyin. Sunucuya dosya gönderilmez.",
       },
       en: {
-        title: "CSV Toolkit — Free Online CSV Editor & Cleaner",
+        title: "CSV Toolkit: Free Online CSV Editor & Cleaner",
         description: "Filter, clean, deduplicate and edit CSV files directly in your browser. No file uploads, no account needed.",
       },
     },
@@ -80,11 +80,11 @@ const seoMeta = new Map([
     "qr-generator",
     {
       tr: {
-        title: "QR Generator — Ücretsiz QR Kod Oluşturucu",
+        title: "QR Generator: Ücretsiz QR Kod Oluşturucu",
         description: "URL, metin, e-posta ve Wi-Fi için QR kod oluşturun. PNG veya PDF olarak indirin. Ücretsiz ve kayıt gerektirmez.",
       },
       en: {
-        title: "QR Generator — Free QR Code Creator",
+        title: "QR Generator: Free QR Code Creator",
         description: "Generate QR codes for URLs, text, email and Wi-Fi. Download as PNG or PDF. Free, no account needed.",
       },
     },
@@ -93,11 +93,11 @@ const seoMeta = new Map([
     "image-toolkit",
     {
       tr: {
-        title: "Image Toolkit — Ücretsiz Online Görsel Düzenleyici",
+        title: "Image Toolkit: Ücretsiz Online Görsel Düzenleyici",
         description: "Görselleri tarayıcınızda yeniden boyutlandırın, kırpın, sıkıştırın ve düzenleyin. Sunucuya yükleme yok, hesap gerekmez.",
       },
       en: {
-        title: "Image Toolkit — Free Online Image Editor",
+        title: "Image Toolkit: Free Online Image Editor",
         description: "Resize, crop, compress and edit images in your browser. No server upload, no account required.",
       },
     },
@@ -106,11 +106,11 @@ const seoMeta = new Map([
     "exif-cleaner",
     {
       tr: {
-        title: "EXIF Temizleyici — Görsel Metaverisini Ücretsiz Sil",
+        title: "EXIF Temizleyici: Görsel Metaverisini Ücretsiz Sil",
         description: "JPG, PNG ve HEIC fotoğraflarından EXIF metaverisini tarayıcınızda temizleyin. Gizliliğinizi koruyun, dosya yüklemeyin.",
       },
       en: {
-        title: "EXIF Cleaner — Remove Image Metadata Online Free",
+        title: "EXIF Cleaner: Remove Image Metadata Online Free",
         description: "Strip EXIF metadata from JPG, PNG and HEIC photos directly in your browser. Protect your privacy without uploading files.",
       },
     },
@@ -119,11 +119,11 @@ const seoMeta = new Map([
     "image-format-converter",
     {
       tr: {
-        title: "Görsel Dönüştürücü — JPG, PNG, WebP, HEIC Ücretsiz Çevir",
+        title: "Görsel Dönüştürücü: JPG, PNG, WebP, HEIC Ücretsiz Çevir",
         description: "JPG, PNG, WebP, GIF, BMP ve HEIC/HEIF formatları arasında toplu dönüştürme. Tarayıcıda çalışır, sunucuya dosya gönderilmez.",
       },
       en: {
-        title: "Image Converter — Free JPG PNG WebP HEIC Converter",
+        title: "Image Converter: Free JPG PNG WebP HEIC Converter",
         description: "Convert between JPG, PNG, WebP, GIF, BMP and HEIC/HEIF formats in your browser. Batch conversion, no server upload.",
       },
     },
@@ -132,11 +132,11 @@ const seoMeta = new Map([
     "bg-remover",
     {
       tr: {
-        title: "Arka Plan Kaldırıcı — Ücretsiz AI ile Arka Plan Silme",
+        title: "Arka Plan Kaldırıcı: Ücretsiz AI ile Arka Plan Silme",
         description: "Görsellerden arka planı yapay zeka ile tarayıcıda kaldırın. Hiçbir dosya sunucuya gönderilmez. İlk yüklemeden sonra çevrimdışı çalışır.",
       },
       en: {
-        title: "Background Remover — Free AI Background Removal",
+        title: "Background Remover: Free AI Background Removal",
         description: "Remove image backgrounds using AI, directly in your browser. No file is sent to any server. Works offline after first load.",
       },
     },
@@ -145,11 +145,11 @@ const seoMeta = new Map([
     "video-to-audio",
     {
       tr: {
-        title: "Video to Audio — Ücretsiz MP3 ve WAV Çıkarıcı",
+        title: "Video to Audio: Ücretsiz MP3 ve WAV Çıkarıcı",
         description: "MP4, MKV, AVI, MOV ve diğer video formatlarından ses çıkarın. MP3, WAV veya orijinal ses akışına dönüştürün. Tarayıcıda çalışır.",
       },
       en: {
-        title: "Video to Audio — Free MP3 & WAV Extractor",
+        title: "Video to Audio: Free MP3 & WAV Extractor",
         description: "Extract audio from MP4, MKV, AVI, MOV and other video files. Convert to MP3, WAV or the original audio stream. All processing in-browser.",
       },
     },
@@ -158,11 +158,11 @@ const seoMeta = new Map([
     "audio-editor",
     {
       tr: {
-        title: "Ses Editörü — Ücretsiz Online Ses Kesici ve Düzenleyici",
+        title: "Ses Editörü: Ücretsiz Online Ses Kesici ve Düzenleyici",
         description: "MP3, WAV, FLAC ve diğer ses dosyalarını tarayıcınızda kesin ve düzenleyin. FFmpeg WASM ile çalışır, sunucuya yükleme yok.",
       },
       en: {
-        title: "Audio Editor — Free Online Audio Cutter & Trimmer",
+        title: "Audio Editor: Free Online Audio Cutter & Trimmer",
         description: "Trim, cut and edit MP3, WAV, FLAC and other audio files in your browser. Powered by FFmpeg WASM, no server upload.",
       },
     },
@@ -171,11 +171,11 @@ const seoMeta = new Map([
     "stem-splitter",
     {
       tr: {
-        title: "Stem Splitter — Ücretsiz Vokal ve Enstrüman Ayırıcı",
+        title: "Stem Splitter: Ücretsiz Vokal ve Enstrüman Ayırıcı",
         description: "Müziği vokal, davul, bas ve diğer parçalara AI ile ayırın. Ücretsiz online stem ayrıştırıcı.",
       },
       en: {
-        title: "Stem Splitter — Free Vocal & Instrument Separator",
+        title: "Stem Splitter: Free Vocal & Instrument Separator",
         description: "Separate music into vocals, drums, bass and other stems using AI. Free online stem splitter.",
       },
     },
@@ -184,11 +184,11 @@ const seoMeta = new Map([
     "dev-toolkit",
     {
       tr: {
-        title: "Dev Toolkit — Ücretsiz Online Geliştirici Araçları",
+        title: "Dev Toolkit: Ücretsiz Online Geliştirici Araçları",
         description: "JSON formatlama, Base64, JWT decoder, kod minimize etme ve daha fazlası. Tüm araçlar tarayıcınızda çalışır.",
       },
       en: {
-        title: "Dev Toolkit — Free Online Developer Tools",
+        title: "Dev Toolkit: Free Online Developer Tools",
         description: "JSON formatter, Base64 encoder/decoder, JWT decoder, code minifier and more. All developer tools run in your browser.",
       },
     },
@@ -197,11 +197,11 @@ const seoMeta = new Map([
     "video-compressor",
     {
       tr: {
-        title: "Video Compressor — Ücretsiz Online Video Sıkıştırıcı",
+        title: "Video Compressor: Ücretsiz Online Video Sıkıştırıcı",
         description: "Videoları tarayıcınızda sıkıştırın, dönüştürün ve kırpın. MP4, WebM, MOV, AVI, MKV desteği. Sunucuya yükleme yok, hesap gerekmez.",
       },
       en: {
-        title: "Video Compressor — Free Online Video Compressor",
+        title: "Video Compressor: Free Online Video Compressor",
         description: "Compress, convert and trim videos in your browser. Supports MP4, WebM, MOV, AVI, MKV. No server upload, no account required.",
       },
     },
@@ -419,7 +419,7 @@ const enLocalizationReplacements = new Map([
       ['"Görsel export işlemi başarısız."', '"Image export failed."'],
       ['"Rotasyon uygulanamadı."', '"Failed to apply rotation."'],
       ['"Onarım başarısız."', '"Repair failed."'],
-      ['"Onarım tamamlandı — Acrobat uyumlu PDF indirildi."', '"Repair completed — Acrobat-compatible PDF downloaded."'],
+      ['"Onarım tamamlandı: Acrobat uyumlu PDF indirildi."', '"Repair completed: Acrobat-compatible PDF downloaded."'],
       ['"OCR hazırlanıyor. İlk kullanım biraz sürebilir."', '"Preparing OCR. First use may take a while."'],
       ['"Metin katmanı okunuyor."', '"Reading text layer."'],
       ['"Metin çıkarma tamamlandı."', '"Text extraction completed."'],
@@ -1213,7 +1213,7 @@ function build404Html() {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#060606" />
     <meta name="robots" content="noindex, follow" />
-    <title>404 — miniapps</title>
+    <title>404: miniapps</title>
     <style>
       :root {
         color-scheme: light;
@@ -1764,6 +1764,14 @@ function buildManifestoPageHtml(language) {
         .manifesto-list li {
           font-size: 16px;
         }
+
+        .distribution-version span:first-child {
+          font-size: 12px;
+        }
+
+        .distribution-author-link {
+          font-size: 11px;
+        }
       }
 
       @media (max-width: 560px) {
@@ -1853,7 +1861,7 @@ function buildServiceWorker({ version, shellPrecacheUrls, appEntryUrls }) {
   // Apps that require SharedArrayBuffer (FFmpeg WASM multi-threaded) → need COOP/COEP headers.
   // GitHub Pages cannot set HTTP headers, so the SW injects them for these specific apps.
   // Using require-corp (not credentialless) because these apps load no cross-origin resources.
-  // NOTE: video-compressor uses @ffmpeg/core (single-threaded) — does NOT need COOP/COEP.
+  // NOTE: video-compressor uses @ffmpeg/core (single-threaded): does NOT need COOP/COEP.
   const crossOriginIsolatedEntryUrls = [
     "./apps/audio-editor/",
     "./apps-en/audio-editor/",
@@ -1960,7 +1968,7 @@ self.addEventListener("activate", (event) => {
           .map((key) => caches.delete(key))
       );
       await self.clients.claim();
-      // SW just activated — notify open windows so they can reload to pick up
+      // SW just activated: notify open windows so they can reload to pick up
       // COOP/COEP headers (needed for FFmpeg WASM on audio-editor/video-to-audio).
       const clients = await self.clients.matchAll({ type: "window" });
       for (const client of clients) {
@@ -2111,7 +2119,7 @@ function addMiniappsLogoToLegacyEnApps(trAppsRoot, enAppsRoot) {
     const enLogoPath = path.join(enAppsRoot, appId, "assets", logoFileName);
 
     if (existsSync(enLogoPath)) {
-      continue; // Non-legacy app — React footer already handles the logo
+      continue; // Non-legacy app: React footer already handles the logo
     }
 
     const trLogoPath = path.join(trAppsRoot, appId, "assets", logoFileName);

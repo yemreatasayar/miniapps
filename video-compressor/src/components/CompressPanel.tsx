@@ -43,10 +43,7 @@ export default function CompressPanel({ settings, onSettingsChange, disabled }: 
   return (
     <div className="workspace-section settings-panel">
       <div className="section-header">
-        <div>
-          <h2>{t.compressTitle}</h2>
-          <p>{t.compressDesc}</p>
-        </div>
+        <div><h2>{t.compressTitle}</h2></div>
       </div>
 
       <div className="settings-group">
@@ -86,7 +83,6 @@ export default function CompressPanel({ settings, onSettingsChange, disabled }: 
           />
           <span className="slider-edge-label">{t.qualityHigh}</span>
         </div>
-        <p className="settings-hint">{t.qualityHint}</p>
       </div>
 
       <div className="settings-group">
@@ -129,6 +125,7 @@ export default function CompressPanel({ settings, onSettingsChange, disabled }: 
           <p className="settings-muted">{t.audioMuted}</p>
         )}
       </div>
+
     </div>
   );
 }

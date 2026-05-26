@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { computeSmartQualities } from "../lib/quality-estimator";
 import type { LoadedImage, SmartCompressSettings } from "../lib/types";
 
@@ -7,6 +8,8 @@ type SmartCompressPanelProps = {
   onSettingsChange: (settings: SmartCompressSettings) => void;
   onCompress: () => void;
   busy: boolean;
+  keepOriginalName: boolean;
+  onKeepOriginalNameChange: (v: boolean) => void;
 };
 
 function formatBytes(bytes: number): string {
@@ -27,7 +30,10 @@ export default function SmartCompressPanel({
   onSettingsChange,
   onCompress,
   busy,
+  keepOriginalName,
+  onKeepOriginalNameChange,
 }: SmartCompressPanelProps) {
+  const [infoOpen, setInfoOpen] = useState(false);
   const qualities = computeSmartQualities(
     images.map((image) => image.normalizedScore),
     settings.slider
@@ -36,10 +42,7 @@ export default function SmartCompressPanel({
   return (
     <section className="compress-panel">
       <div className="section-header">
-        <div>
-          <h2>Smart Compress</h2>
-          <p>Kaliteli görselleri daha fazla, düşük kalitelileri daha az sıkıştırır.</p>
-        </div>
+        <div><h2>Smart Compress</h2></div>
       </div>
 
       <div className="preset-group">
@@ -94,6 +97,33 @@ export default function SmartCompressPanel({
           );
         })}
       </ul>
+
+      <div className="compress-name-row">
+        <label className="toggle-label">
+          <input
+            type="checkbox"
+            checked={keepOriginalName}
+            onChange={(event) => onKeepOriginalNameChange(event.target.checked)}
+          />
+          <span className={`toggle-track ${keepOriginalName ? "is-on" : ""}`}>
+            <span className="toggle-thumb" />
+          </span>
+          <span>Dosya adını koru</span>
+        </label>
+        <button
+          type="button"
+          className="infotip-trigger"
+          aria-label="Bilgi"
+          onClick={() => setInfoOpen((v) => !v)}
+        >
+          i
+        </button>
+        {infoOpen ? (
+          <div className="infotip-box">
+            Aktifken çıktı dosyalarına ".comp" eki eklenmez; orijinal dosya adı korunur.
+          </div>
+        ) : null}
+      </div>
 
       <button type="button" className="compress-button" onClick={onCompress} disabled={busy || images.length === 0}>
         {busy ? "İşleniyor..." : "Tümünü Sıkıştır ve İndir"}

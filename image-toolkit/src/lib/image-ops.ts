@@ -305,7 +305,15 @@ export async function processImage(image: LoadedImage, options: ProcessOptions):
   try {
     const naturalWidth = imageElement.naturalWidth;
     const naturalHeight = imageElement.naturalHeight;
-    const output = computeOutputSize(naturalWidth, naturalHeight, options.resize);
+
+    const crop = options.crop;
+    const cropEnabled = crop?.enabled && crop.width > 0 && crop.height > 0;
+    const srcX = cropEnabled ? Math.max(0, crop!.x) : 0;
+    const srcY = cropEnabled ? Math.max(0, crop!.y) : 0;
+    const srcW = cropEnabled ? Math.min(crop!.width, naturalWidth - srcX) : naturalWidth;
+    const srcH = cropEnabled ? Math.min(crop!.height, naturalHeight - srcY) : naturalHeight;
+
+    const output = computeOutputSize(srcW, srcH, options.resize);
     const rotation = options.rotation ?? 0;
     const flipH = options.flipH ?? false;
     const flipV = options.flipV ?? false;
@@ -326,7 +334,11 @@ export async function processImage(image: LoadedImage, options: ProcessOptions):
     context.translate(canvasWidth / 2, canvasHeight / 2);
     context.rotate((rotation * Math.PI) / 180);
     context.scale(flipH ? -1 : 1, flipV ? -1 : 1);
-    context.drawImage(imageElement, -output.width / 2, -output.height / 2, output.width, output.height);
+    if (cropEnabled) {
+      context.drawImage(imageElement, srcX, srcY, srcW, srcH, -output.width / 2, -output.height / 2, output.width, output.height);
+    } else {
+      context.drawImage(imageElement, -output.width / 2, -output.height / 2, output.width, output.height);
+    }
     context.restore();
 
     return await canvasToBlob(canvas, getMimeType(options.format), options.quality);

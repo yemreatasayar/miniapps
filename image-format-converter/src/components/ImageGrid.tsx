@@ -2,6 +2,7 @@ import type { ConvertibleImage } from "../lib/types";
 
 type ImageGridProps = {
   images: ConvertibleImage[];
+  onCropRequest: (id: string) => void;
 };
 
 function formatBytes(size: number): string {
@@ -16,7 +17,7 @@ function formatBytes(size: number): string {
   return `${value.toFixed(1)} ${units[unitIndex]}`;
 }
 
-export default function ImageGrid({ images }: ImageGridProps) {
+export default function ImageGrid({ images, onCropRequest }: ImageGridProps) {
   return (
     <section className="image-grid">
       {images.map((image) => (
@@ -31,15 +32,20 @@ export default function ImageGrid({ images }: ImageGridProps) {
             <dl className="detail-list">
               <div>
                 <dt>Ölçü</dt>
-                <dd>
-                  {image.width} × {image.height}
-                </dd>
+                <dd>{image.width} × {image.height}</dd>
               </div>
               <div>
                 <dt>Boyut</dt>
                 <dd>{formatBytes(image.fileSize)}</dd>
               </div>
             </dl>
+            <button
+              type="button"
+              className={`crop-card-btn${image.crop?.enabled ? " is-active" : ""}`}
+              onClick={() => onCropRequest(image.id)}
+            >
+              {image.crop?.enabled ? "Kırpıldı ✓" : "Kırp"}
+            </button>
           </div>
         </article>
       ))}

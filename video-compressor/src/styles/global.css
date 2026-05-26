@@ -1043,3 +1043,44 @@ button { cursor: pointer; }
 .miniapps-footer-logo {
   height: 36px;
 }
+
+/* Infotip for filename toggle */
+.compress-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.infotip-trigger {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--border);
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.infotip-box {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 100;
+  background: #111;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 8px 12px;
+  border-radius: 8px;
+  width: 240px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}

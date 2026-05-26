@@ -12,6 +12,7 @@ type ImageCardProps = {
   onFlipH: () => void;
   onFlipV: () => void;
   onRemove: () => void;
+  onCropRequest: () => void;
 };
 
 function formatBytes(bytes: number): string {
@@ -38,6 +39,7 @@ export default function ImageCard({
   onFlipH,
   onFlipV,
   onRemove,
+  onCropRequest,
 }: ImageCardProps) {
   const scaleX = flipH ? -1 : 1;
   const scaleY = flipV ? -1 : 1;
@@ -64,17 +66,12 @@ export default function ImageCard({
       </div>
 
       <div className="image-card-actions">
-        <button type="button" onClick={() => onRotate("ccw")}>
-          ↺
-        </button>
-        <button type="button" onClick={() => onRotate("cw")}>
-          ↻
-        </button>
-        <button type="button" onClick={onFlipH}>
-          Flip H
-        </button>
-        <button type="button" onClick={onFlipV}>
-          Flip V
+        <button type="button" onClick={() => onRotate("ccw")}>↺</button>
+        <button type="button" onClick={() => onRotate("cw")}>↻</button>
+        <button type="button" onClick={onFlipH}>Flip H</button>
+        <button type="button" onClick={onFlipV}>Flip V</button>
+        <button type="button" className={image.crop?.enabled ? "is-active" : ""} onClick={onCropRequest}>
+          {image.crop?.enabled ? "Kırpıldı" : "Kırp"}
         </button>
       </div>
 

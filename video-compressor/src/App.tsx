@@ -107,7 +107,8 @@ export default function App() {
 
   const fileSummary = useMemo(() => {
     if (!loadedVideo) return t.waiting;
-    return `${loadedVideo.fileName} · ${formatBytes(loadedVideo.fileSize)}`;
+    const dur = loadedVideo.duration > 0 ? ` · ${loadedVideo.duration.toFixed(1)}s` : "";
+    return `${formatBytes(loadedVideo.fileSize)}${dur}`;
   }, [loadedVideo, t]);
 
   const hasCuts = useMemo(() => {
@@ -247,11 +248,6 @@ export default function App() {
               </div>
             </div>
             <div className="hero-side hero-side-summary">
-              <div className="summary-card">
-                <span className="summary-label">{t.sourceFileLabel}</span>
-                <strong>{loadedVideo.fileName}</strong>
-                <span>{formatBytes(loadedVideo.fileSize)}</span>
-              </div>
               <div className="summary-card summary-card-accent">
                 <span className="summary-label">{t.operationsLabel}</span>
                 <strong>{processSummary}</strong>
@@ -301,7 +297,7 @@ export default function App() {
 
               <section className="workspace-section info-card">
                 <div className="section-header">
-                  <div><h2>{t.tipsTitle}</h2><p>{t.tipsBest}</p></div>
+                  <div><h2>{t.tipsTitle}</h2></div>
                 </div>
                 <div className="tip-list">
                   <div className="tip-item"><strong>{t.tip1Title}</strong><span>{t.tip1Desc}</span></div>

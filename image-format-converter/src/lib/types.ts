@@ -1,5 +1,13 @@
 export type OutputFormat = "jpg" | "png" | "webp";
 
+export type CropSettings = {
+  enabled: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export type ConvertibleImage = {
   id: string;
   sourceFile: File;
@@ -9,4 +17,5 @@ export type ConvertibleImage = {
   height: number;
   fileSize: number;
   thumbnail: string;
+  crop?: CropSettings;
 };

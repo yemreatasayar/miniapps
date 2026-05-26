@@ -11,9 +11,18 @@ export type LoadedImage = {
   thumbnail: string;
   bpp: number;
   normalizedScore: number;
+  crop?: CropSettings;
 };
 
 export type ResizeMode = "off" | "width" | "fit";
+
+export type CropSettings = {
+  enabled: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 export type ResizeSettings = {
   mode: ResizeMode;
@@ -37,6 +46,7 @@ export type ProcessOptions = {
   quality: number;
   format: OutputFormat;
   resize?: ResizeSettings;
+  crop?: CropSettings;
   rotation?: number;
   flipH?: boolean;
   flipV?: boolean;

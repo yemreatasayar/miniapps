@@ -11,6 +11,7 @@ import {
   isSupportedImageFile,
   loadConvertibleImage,
 } from "./lib/image-ops";
+import CropModal from "./components/CropModal";
 import type { ConvertibleImage, OutputFormat } from "./lib/types";
 
 function formatCountLabel(count: number, singular: string, plural: string): string {
@@ -27,6 +28,7 @@ export default function App() {
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("jpg");
   const [toast, setToast] = useState<string | null>(null);
   const loadMoreRef = useRef<HTMLInputElement | null>(null);
+  const [cropModal, setCropModal] = useState<{ imageId: string; src: string; naturalWidth: number; naturalHeight: number } | null>(null);
 
   const heicCount = useMemo(
     () => images.filter((image) => /\.(heic|heif)$/i.test(image.fileName)).length,
@@ -56,6 +58,22 @@ export default function App() {
     }
   }
 
+  function handleCropRequest(id: string) {
+    const image = images.find((img) => img.id === id);
+    if (!image) return;
+    setCropModal({ imageId: id, src: image.thumbnail, naturalWidth: image.width, naturalHeight: image.height });
+  }
+
+  function handleCropConfirm(x: number, y: number, width: number, height: number) {
+    if (!cropModal) return;
+    setImages((prev) =>
+      prev.map((img) =>
+        img.id === cropModal.imageId ? { ...img, crop: { enabled: true, x, y, width, height } } : img
+      )
+    );
+    setCropModal(null);
+  }
+
   async function handleDownload() {
     if (!images.length) return;
 
@@ -63,7 +81,7 @@ export default function App() {
       setExporting(true);
       const entries = await Promise.all(
         images.map(async (image) => ({
-          blob: await convertImage(image, outputFormat),
+          blob: await convertImage(image, outputFormat, image.crop),
           fileName: buildOutputFileName(image, outputFormat),
         }))
       );
@@ -118,7 +136,6 @@ export default function App() {
           <div className="workspace-toolbar">
             <div className="workspace-toolbar-copy">
               <h2>Dönüştür ve dışa aktar.</h2>
-              <p>Çıktı formatını seç, sonra tüm dosyaları tek seferde indir. Çoklu dosyalar zip olarak hazırlanır.</p>
 
               <div className="workspace-summary">
                 <span className="summary-pill">
@@ -150,6 +167,7 @@ export default function App() {
                     <option value="webp">WebP</option>
                   </select>
                 </label>
+
               </div>
 
               <div className="workspace-toolbar-bottom">
@@ -161,9 +179,19 @@ export default function App() {
           </div>
 
           <div className="workspace-main">
-            <ImageGrid images={images} />
+            <ImageGrid images={images} onCropRequest={handleCropRequest} />
           </div>
         </section>
+      )}
+
+      {cropModal && (
+        <CropModal
+          src={cropModal.src}
+          naturalWidth={cropModal.naturalWidth}
+          naturalHeight={cropModal.naturalHeight}
+          onConfirm={handleCropConfirm}
+          onCancel={() => setCropModal(null)}
+        />
       )}
 
       <Toast message={toast} onClose={() => setToast(null)} />

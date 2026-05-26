@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import CropModal from "./components/CropModal";
 import DropZone from "./components/DropZone";
 import ImageGrid from "./components/ImageGrid";
 import SmartCompressPanel from "./components/SmartCompressPanel";
@@ -27,6 +28,7 @@ const ACTIVE_TAB_KEY = "image-toolkit.activeTab";
 const SMART_SETTINGS_KEY = "image-toolkit.smartSettings";
 const STANDARD_SETTINGS_KEY = "image-toolkit.standardSettings";
 const RESIZE_SETTINGS_KEY = "image-toolkit.resizeSettings";
+const KEEP_ORIGINAL_NAME_KEY = "image-toolkit.keepOriginalName";
 
 function readStoredValue<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -52,6 +54,33 @@ function applyNormalizedScores(images: LoadedImage[]): LoadedImage[] {
 
 const isDistribution = window.location.hostname === "miniapps.tr";
 
+function CompressNameToggle({
+  keepOriginalName,
+  onChange,
+  infoText,
+}: {
+  keepOriginalName: boolean;
+  onChange: (v: boolean) => void;
+  infoText: string;
+}) {
+  const [infoOpen, setInfoOpen] = useState(false);
+  return (
+    <div className="compress-name-row">
+      <label className="toggle-label">
+        <input type="checkbox" checked={keepOriginalName} onChange={(e) => onChange(e.target.checked)} />
+        <span className={`toggle-track ${keepOriginalName ? "is-on" : ""}`}>
+          <span className="toggle-thumb" />
+        </span>
+        <span>Dosya adını koru</span>
+      </label>
+      <button type="button" className="infotip-trigger" aria-label="Bilgi" onClick={() => setInfoOpen((v) => !v)}>
+        i
+      </button>
+      {infoOpen ? <div className="infotip-box">{infoText}</div> : null}
+    </div>
+  );
+}
+
 export default function App() {
   const logoUrl = `${import.meta.env.BASE_URL}assets/image-resizer-logo.svg`;
   const [images, setImages] = useState<LoadedImage[]>([]);
@@ -65,6 +94,10 @@ export default function App() {
   );
   const [resizeSettings, setResizeSettings] = useState<ResizeSettings>(() =>
     readStoredValue(RESIZE_SETTINGS_KEY, { mode: "off", width: 1920, height: 1080 })
+  );
+  const [cropModal, setCropModal] = useState<{ imageId: string; src: string; naturalWidth: number; naturalHeight: number } | null>(null);
+  const [keepOriginalName, setKeepOriginalName] = useState<boolean>(() =>
+    readStoredValue(KEEP_ORIGINAL_NAME_KEY, false)
   );
   const [rotations, setRotations] = useState<Record<string, number>>({});
   const [flips, setFlips] = useState<Record<string, { h: boolean; v: boolean }>>({});
@@ -87,6 +120,10 @@ export default function App() {
   useEffect(() => {
     window.localStorage.setItem(RESIZE_SETTINGS_KEY, JSON.stringify(resizeSettings));
   }, [resizeSettings]);
+
+  useEffect(() => {
+    window.localStorage.setItem(KEEP_ORIGINAL_NAME_KEY, JSON.stringify(keepOriginalName));
+  }, [keepOriginalName]);
 
   useEffect(() => {
     function handleSelectAllShortcut(event: KeyboardEvent) {
@@ -268,6 +305,7 @@ export default function App() {
           quality,
           format,
           resize: resizeSettings,
+          crop: image.crop,
           rotation: rotations[image.id] ?? 0,
           flipH: flips[image.id]?.h ?? false,
           flipV: flips[image.id]?.v ?? false,
@@ -295,10 +333,11 @@ export default function App() {
     const targets = images.filter((image) => selectedImages.has(image.id));
     if (targets.length === 0) return;
 
+    const compVariant = keepOriginalName ? undefined : "comp";
     try {
       setBusy(true);
       if (targets.length === 1) {
-        await downloadProcessedImages(targets, standardSettings.format, standardSettings.quality, "comp");
+        await downloadProcessedImages(targets, standardSettings.format, standardSettings.quality, compVariant);
         setToast("Görsel indirildi.");
       } else {
         const entries = await Promise.all(
@@ -307,6 +346,7 @@ export default function App() {
               quality: standardSettings.quality,
               format: standardSettings.format,
               resize: resizeSettings,
+              crop: image.crop,
               rotation: rotations[image.id] ?? 0,
               flipH: flips[image.id]?.h ?? false,
               flipV: flips[image.id]?.v ?? false,
@@ -314,7 +354,7 @@ export default function App() {
 
             return {
               blob,
-              fileName: buildFileName(image.fileName, standardSettings.format, "comp"),
+              fileName: buildFileName(image.fileName, standardSettings.format, compVariant),
             };
           })
         );
@@ -328,6 +368,22 @@ export default function App() {
     }
   }
 
+  function handleCropRequest(id: string) {
+    const image = images.find((img) => img.id === id);
+    if (!image) return;
+    setCropModal({ imageId: id, src: image.thumbnail, naturalWidth: image.width, naturalHeight: image.height });
+  }
+
+  function handleCropConfirm(x: number, y: number, width: number, height: number) {
+    if (!cropModal) return;
+    setImages((prev) =>
+      prev.map((img) =>
+        img.id === cropModal.imageId ? { ...img, crop: { enabled: true, x, y, width, height } } : img
+      )
+    );
+    setCropModal(null);
+  }
+
   function handleReorder(newIds: string[]) {
     setImages((current) => {
       const map = new Map(current.map((img) => [img.id, img]));
@@ -336,6 +392,7 @@ export default function App() {
   }
 
   async function handleDownloadZip(targets: LoadedImage[], zipName: string) {
+    const compVariant = keepOriginalName ? undefined : "comp";
     try {
       setBusy(true);
       const entries = await Promise.all(
@@ -344,11 +401,12 @@ export default function App() {
             quality: standardSettings.quality,
             format: standardSettings.format,
             resize: resizeSettings,
+            crop: image.crop,
             rotation: rotations[image.id] ?? 0,
             flipH: flips[image.id]?.h ?? false,
             flipV: flips[image.id]?.v ?? false,
           });
-          return { blob, fileName: buildFileName(image.fileName, standardSettings.format, "comp") };
+          return { blob, fileName: buildFileName(image.fileName, standardSettings.format, compVariant) };
         })
       );
       await downloadAsZip(entries, zipName);
@@ -363,10 +421,11 @@ export default function App() {
   async function handleDownloadAll() {
     if (images.length === 0) return;
 
+    const compVariant = keepOriginalName ? undefined : "comp";
     try {
       setBusy(true);
       if (images.length === 1) {
-        await downloadProcessedImages(images, standardSettings.format, standardSettings.quality, "comp");
+        await downloadProcessedImages(images, standardSettings.format, standardSettings.quality, compVariant);
         setToast("Görsel indirildi.");
       } else {
         const entries = await Promise.all(
@@ -375,6 +434,7 @@ export default function App() {
               quality: standardSettings.quality,
               format: standardSettings.format,
               resize: resizeSettings,
+              crop: image.crop,
               rotation: rotations[image.id] ?? 0,
               flipH: flips[image.id]?.h ?? false,
               flipV: flips[image.id]?.v ?? false,
@@ -382,7 +442,7 @@ export default function App() {
 
             return {
               blob,
-              fileName: buildFileName(image.fileName, standardSettings.format, "comp"),
+              fileName: buildFileName(image.fileName, standardSettings.format, compVariant),
             };
           })
         );
@@ -399,6 +459,7 @@ export default function App() {
   async function handleSmartCompress() {
     if (images.length === 0) return;
 
+    const compVariant = keepOriginalName ? undefined : "comp";
     try {
       setBusy(true);
       const smartQualities = computeSmartQualities(
@@ -412,6 +473,7 @@ export default function App() {
             quality: smartQualities[index] ?? 1,
             format: smartSettings.format,
             resize: resizeSettings,
+            crop: image.crop,
             rotation: rotations[image.id] ?? 0,
             flipH: flips[image.id]?.h ?? false,
             flipV: flips[image.id]?.v ?? false,
@@ -419,7 +481,7 @@ export default function App() {
 
           return {
             blob,
-            fileName: buildFileName(image.fileName, smartSettings.format, "comp"),
+            fileName: buildFileName(image.fileName, smartSettings.format, compVariant),
           };
         })
       );
@@ -516,6 +578,7 @@ export default function App() {
                 onFlipH={(id) => handleFlip(id, "h")}
                 onFlipV={(id) => handleFlip(id, "v")}
                 onRemove={handleRemove}
+                onCropRequest={handleCropRequest}
               />
             </section>
           ) : null}
@@ -527,16 +590,15 @@ export default function App() {
               onSettingsChange={setSmartSettings}
               onCompress={() => void handleSmartCompress()}
               busy={busy}
+              keepOriginalName={keepOriginalName}
+              onKeepOriginalNameChange={setKeepOriginalName}
             />
           ) : null}
 
           {activeTab === "compress" ? (
             <section className="compress-panel">
               <div className="section-header">
-                <div>
-                  <h2>Compress</h2>
-                  <p>Standart kalite ve format ayarlarıyla tüm görselleri indir.</p>
-                </div>
+                <div><h2>Compress</h2></div>
               </div>
 
               <div className="preset-group">
@@ -574,12 +636,28 @@ export default function App() {
                 <div className="status-banner is-warning">PNG çıktısı kayıpsızdır; boyut küçülmesi sınırlı olabilir.</div>
               ) : null}
 
+              <CompressNameToggle
+                keepOriginalName={keepOriginalName}
+                onChange={setKeepOriginalName}
+                infoText="Aktifken çıktı dosyalarına '.comp' eki eklenmez; orijinal dosya adı korunur."
+              />
+
               <button type="button" className="compress-button" onClick={() => void handleDownloadAll()} disabled={busy}>
                 {busy ? "İşleniyor..." : "Tümünü İndir"}
               </button>
             </section>
           ) : null}
         </>
+      )}
+
+      {cropModal && (
+        <CropModal
+          src={cropModal.src}
+          naturalWidth={cropModal.naturalWidth}
+          naturalHeight={cropModal.naturalHeight}
+          onConfirm={handleCropConfirm}
+          onCancel={() => setCropModal(null)}
+        />
       )}
 
       <Toast message={toast} onClose={() => setToast(null)} />

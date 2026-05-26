@@ -1,4 +1,4 @@
-const CACHE_VERSION = "20260523t132610858z";
+const CACHE_VERSION = "20260526t220837082z";
 const CACHE_PREFIX = "miniapps-github-pages";
 const SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;
 const APP_CACHE = `${CACHE_PREFIX}-apps-${CACHE_VERSION}`;
@@ -158,7 +158,7 @@ self.addEventListener("activate", (event) => {
           .map((key) => caches.delete(key))
       );
       await self.clients.claim();
-      // SW just activated — notify open windows so they can reload to pick up
+      // SW just activated: notify open windows so they can reload to pick up
       // COOP/COEP headers (needed for FFmpeg WASM on audio-editor/video-to-audio).
       const clients = await self.clients.matchAll({ type: "window" });
       for (const client of clients) {

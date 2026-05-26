@@ -13,6 +13,7 @@ type ImageGridProps = {
   onFlipH: (id: string) => void;
   onFlipV: (id: string) => void;
   onRemove: (id: string) => void;
+  onCropRequest: (id: string) => void;
 };
 
 export default function ImageGrid({
@@ -26,6 +27,7 @@ export default function ImageGrid({
   onFlipH,
   onFlipV,
   onRemove,
+  onCropRequest,
 }: ImageGridProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
@@ -69,6 +71,7 @@ export default function ImageGrid({
             onFlipH={() => onFlipH(image.id)}
             onFlipV={() => onFlipV(image.id)}
             onRemove={() => onRemove(image.id)}
+            onCropRequest={() => onCropRequest(image.id)}
           />
         </div>
       ))}
