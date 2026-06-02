@@ -807,6 +807,14 @@ button {
   .danger-management {
     grid-template-columns: 1fr;
   }
+
+  .distribution-version span:first-child {
+    font-size: 12px;
+  }
+
+  .distribution-author-link {
+    font-size: 11px;
+  }
 }
 
 @media (max-width: 560px) {

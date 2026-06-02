@@ -1842,7 +1842,7 @@ function buildManifestoPageHtml(language) {
       </a>
       <div class="distribution-version">
         <span>${escapeHtml(packLine)}</span>
-        <a class="distribution-author-link" href="https://www.behance.net/yemreatasayar" target="_blank" rel="noreferrer">${escapeHtml(authorLine)}</a>
+        <a class="distribution-author-link" href="https://yemreatasayar.com/" target="_blank" rel="noreferrer">${escapeHtml(authorLine)}</a>
       </div>
       <div class="distribution-controls">
         <a class="distribution-link-button" href="./">${escapeHtml(copy.homeLabel)}</a>

@@ -258,10 +258,10 @@ export default function DistributionApp() {
           <span>{distributionPackLine}</span>
           <a
             className="distribution-author-link"
-            href="https://www.behance.net/yemreatasayar"
+            href="https://yemreatasayar.com/"
             target="_blank"
             rel="noreferrer"
-            aria-label="y.e.a. Behance"
+            aria-label="y.e.a. website"
           >
             {distributionAuthorLine}
           </a>
