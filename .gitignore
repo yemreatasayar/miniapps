@@ -4,6 +4,8 @@ node_modules/
 # App build outputs (not the GitHub Pages site)
 dist/
 dist-internal/
+dist-en/
+dist-tr/
 
 # Legacy English build source (large binary files, kept locally only)
 distribution/github-pages/legacy-en-build/
