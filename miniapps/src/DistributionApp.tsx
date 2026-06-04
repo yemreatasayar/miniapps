@@ -161,7 +161,7 @@ export default function DistributionApp() {
     [distributionConfig]
   );
   const distributionAuthorLine = distributionConfig?.authorLabel ?? DEFAULT_AUTHOR_LABEL;
-  const manifestoUrl = shellLanguage === "en" ? "./manifesto-en.html" : "./manifesto.html";
+  const manifestoUrl = shellLanguage === "en" ? "./manifesto-en/" : "./manifesto/";
 
   useEffect(() => {
     let cancelled = false;

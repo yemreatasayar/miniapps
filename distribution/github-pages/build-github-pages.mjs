@@ -1372,20 +1372,27 @@ function injectSeoMeta(htmlPath, { title, description, lang, canonicalUrl }) {
 
   const t = escapeHtml(title);
   const d = escapeHtml(description);
+  const ogImage = `${SITE_BASE_URL}/assets/miniapps-og-card.png`;
 
   html = html.replace(/(<html\b[^>]*\blang=")[^"]*(")/i, `$1${lang}$2`);
   html = html.replace(/<title>[^<]*<\/title>/, `<title>${t}</title>`);
 
   const canonical = canonicalUrl ?? "";
+  const appName = title.split(":")[0].trim();
   const jsonLd = JSON.stringify({
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": title.replace(/ —.*/, ""),
+    ...(canonical ? { "@id": `${canonical}#webapplication` } : {}),
+    "name": appName,
     "url": canonical,
     "description": description,
     "applicationCategory": "UtilitiesApplication",
     "operatingSystem": "Web Browser",
     "inLanguage": lang,
+    "isPartOf": { "@id": `${SITE_BASE_URL}/#webapplication` },
+    "creator": { "@type": "Person", "name": "Yusuf Emre Atasayar", "url": "https://yemreatasayar.com" },
+    "author": { "@type": "Person", "name": "Yusuf Emre Atasayar", "url": "https://yemreatasayar.com" },
+    "image": ogImage,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock" },
   });
 
@@ -1394,11 +1401,17 @@ function injectSeoMeta(htmlPath, { title, description, lang, canonicalUrl }) {
   } else {
     const metaBlock = [
       `<meta name="description" content="${d}">`,
+      `<meta property="og:site_name" content="miniapps">`,
       `<meta property="og:title" content="${t}">`,
       `<meta property="og:description" content="${d}">`,
       `<meta property="og:type" content="website">`,
+      `<meta property="og:image" content="${ogImage}">`,
       ...(canonical ? [`<meta property="og:url" content="${canonical}">`, `<link rel="canonical" href="${canonical}">`] : []),
       `<meta name="robots" content="index, follow">`,
+      `<meta name="twitter:card" content="summary_large_image">`,
+      `<meta name="twitter:title" content="${t}">`,
+      `<meta name="twitter:description" content="${d}">`,
+      `<meta name="twitter:image" content="${ogImage}">`,
       `<script type="application/ld+json">${jsonLd}</script>`,
     ].join("\n    ");
     html = html.replace("</head>", `    ${metaBlock}\n  </head>`);
@@ -1419,6 +1432,12 @@ function injectSeoMeta(htmlPath, { title, description, lang, canonicalUrl }) {
   }
   if (html.includes('property="og:description"')) {
     html = html.replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${d}">`);
+  }
+  if (html.includes('name="twitter:title"')) {
+    html = html.replace(/<meta name="twitter:title" content="[^"]*">/, `<meta name="twitter:title" content="${t}">`);
+  }
+  if (html.includes('name="twitter:description"')) {
+    html = html.replace(/<meta name="twitter:description" content="[^"]*">/, `<meta name="twitter:description" content="${d}">`);
   }
 
   if (html.includes("<noscript>")) {
@@ -1443,8 +1462,8 @@ function buildManifestoPageHtml(language) {
   const copy = manifestoContent[language];
   const packLine = `${distributionConfig.packLabel} ${distributionConfig.packVersion}`;
   const authorLine = distributionConfig.authorLabel;
-  const trHref = "./manifesto.html";
-  const enHref = "./manifesto-en.html";
+  const trHref = "../manifesto/";
+  const enHref = "../manifesto-en/";
 
   const sectionsMarkup = copy.sections
     .map((section) => {
@@ -1486,7 +1505,7 @@ function buildManifestoPageHtml(language) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#060606" />
-    <link rel="icon" type="image/svg+xml" href="./assets/miniapps-icon.svg" />
+    <link rel="icon" type="image/svg+xml" href="../assets/miniapps-icon.svg" />
     <title>miniapps manifesto</title>
     ${analyticsSnippet}
     <style>
@@ -1837,15 +1856,15 @@ function buildManifestoPageHtml(language) {
       </article>
     </main>
     <footer class="distribution-header">
-      <a class="distribution-brand" href="./">
-        <img class="brand-logo" src="./assets/miniapps-logo.svg" alt="miniapps" />
+      <a class="distribution-brand" href="../">
+        <img class="brand-logo" src="../assets/miniapps-logo.svg" alt="miniapps" />
       </a>
       <div class="distribution-version">
         <span>${escapeHtml(packLine)}</span>
         <a class="distribution-author-link" href="https://yemreatasayar.com/" target="_blank" rel="noreferrer">${escapeHtml(authorLine)}</a>
       </div>
       <div class="distribution-controls">
-        <a class="distribution-link-button" href="./">${escapeHtml(copy.homeLabel)}</a>
+        <a class="distribution-link-button" href="../">${escapeHtml(copy.homeLabel)}</a>
         <div class="distribution-language-group">
           <a class="language-switch-button ${language === "tr" ? "is-active" : ""}" href="${trHref}">TR</a>
           <a class="language-switch-button ${language === "en" ? "is-active" : ""}" href="${enHref}">ENG</a>
@@ -2241,8 +2260,10 @@ writeFileSync(path.join(outputRoot, "distribution-config.json"), `${JSON.stringi
 writeFileSync(path.join(outputRoot, "manifest.webmanifest"), `${JSON.stringify(buildManifest(), null, 2)}\n`);
 writeFileSync(path.join(outputRoot, "offline.html"), buildOfflineFallbackHtml());
 writeFileSync(path.join(outputRoot, "404.html"), build404Html());
-writeFileSync(path.join(outputRoot, "manifesto.html"), buildManifestoPageHtml("tr"));
-writeFileSync(path.join(outputRoot, "manifesto-en.html"), buildManifestoPageHtml("en"));
+mkdirSync(path.join(outputRoot, "manifesto"), { recursive: true });
+writeFileSync(path.join(outputRoot, "manifesto", "index.html"), buildManifestoPageHtml("tr"));
+mkdirSync(path.join(outputRoot, "manifesto-en"), { recursive: true });
+writeFileSync(path.join(outputRoot, "manifesto-en", "index.html"), buildManifestoPageHtml("en"));
 
 const rootFiles = collectFiles(outputRoot)
   .map((filePath) => toWebPath(filePath))
@@ -2282,6 +2303,8 @@ removeMacMetadata(outputRoot);
 
 const sitemapUrls = [
   `${SITE_BASE_URL}/`,
+  `${SITE_BASE_URL}/manifesto/`,
+  `${SITE_BASE_URL}/manifesto-en/`,
   ...distributionConfig.visibleAppIds.flatMap((id) => [
     `${SITE_BASE_URL}/apps/${id}/`,
     `${SITE_BASE_URL}/apps-en/${id}/`,
@@ -2302,5 +2325,58 @@ writeFileSync(
   path.join(outputRoot, "robots.txt"),
   `User-agent: *\nAllow: /\nSitemap: ${SITE_BASE_URL}/sitemap.xml\n`
 );
+
+const llmsAppList = distributionConfig.visibleAppIds.map((id) => {
+  const en = seoMeta.get(id)?.en;
+  const appTitle = en ? en.title.split(":")[0].trim() : id;
+  return `- [${appTitle}](${SITE_BASE_URL}/apps/${id}/)`;
+}).join("\n");
+
+const llmsTxt = `# miniapps
+
+> miniapps is a free collection of browser-based utilities for quick everyday digital tasks such as QR code generation, PDF editing, image resizing, image compression and file conversion.
+
+## Product
+
+miniapps brings small but useful digital tools together in one simple, fast and accessible browser-based platform. The product focuses on quick utility workflows, clean interfaces and practical everyday tasks without unnecessary complexity.
+
+## Main Use Cases
+
+- QR code generation
+- PDF editing and compression
+- Image resizing and compression
+- Image format conversion (JPG, PNG, WebP, HEIC)
+- Background removal with AI
+- Video to audio conversion
+- Audio editing and trimming
+- Stem splitting (vocal and instrument separation)
+- EXIF metadata cleaning
+- CSV file editing
+- Video compression
+- Developer tools (JSON formatter, Base64, JWT decoder)
+
+## Key Features
+
+- Free browser-based tools
+- Simple and fast interfaces
+- No unnecessary complexity
+- Local-first workflow where possible
+- No account or sign-up required
+- Privacy-focused: files stay on your device
+
+## Audience
+
+miniapps is designed for designers, developers, students, content creators and everyday users who need quick digital tools without complex software.
+
+## Important Pages
+
+- [Home](${SITE_BASE_URL}/)
+${llmsAppList}
+
+## Creator
+
+miniapps was created by Yusuf Emre Atasayar, an art director and graphic designer working across digital tools, visual systems and AI-assisted product building.
+`;
+writeFileSync(path.join(outputRoot, "llms.txt"), llmsTxt);
 
 console.log(`\nGitHub Pages bundle ready at ${outputRoot}`);

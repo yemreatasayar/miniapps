@@ -1,0 +1,55 @@
+# miniapps
+
+> miniapps is a free collection of browser-based utilities for quick everyday digital tasks such as QR code generation, PDF editing, image resizing, image compression and file conversion.
+
+## Product
+
+miniapps brings small but useful digital tools together in one simple, fast and accessible browser-based platform. The product focuses on quick utility workflows, clean interfaces and practical everyday tasks without unnecessary complexity.
+
+## Main Use Cases
+
+- QR code generation
+- PDF editing and compression
+- Image resizing and compression
+- Image format conversion (JPG, PNG, WebP, HEIC)
+- Background removal with AI
+- Video to audio conversion
+- Audio editing and trimming
+- Stem splitting (vocal and instrument separation)
+- EXIF metadata cleaning
+- CSV file editing
+- Video compression
+- Developer tools (JSON formatter, Base64, JWT decoder)
+
+## Key Features
+
+- Free browser-based tools
+- Simple and fast interfaces
+- No unnecessary complexity
+- Local-first workflow where possible
+- No account or sign-up required
+- Privacy-focused: files stay on your device
+
+## Audience
+
+miniapps is designed for designers, developers, students, content creators and everyday users who need quick digital tools without complex software.
+
+## Important Pages
+
+- [Home](https://miniapps.tr/)
+- [PDF Toolkit](https://miniapps.tr/apps/pdf-toolkit/)
+- [CSV Toolkit](https://miniapps.tr/apps/csv-toolkit/)
+- [QR Generator](https://miniapps.tr/apps/qr-generator/)
+- [Image Toolkit](https://miniapps.tr/apps/image-toolkit/)
+- [EXIF Cleaner](https://miniapps.tr/apps/exif-cleaner/)
+- [Image Converter](https://miniapps.tr/apps/image-format-converter/)
+- [Background Remover](https://miniapps.tr/apps/bg-remover/)
+- [Video to Audio](https://miniapps.tr/apps/video-to-audio/)
+- [Video Compressor](https://miniapps.tr/apps/video-compressor/)
+- [Audio Editor](https://miniapps.tr/apps/audio-editor/)
+- [Stem Splitter](https://miniapps.tr/apps/stem-splitter/)
+- [Dev Toolkit](https://miniapps.tr/apps/dev-toolkit/)
+
+## Creator
+
+miniapps was created by Yusuf Emre Atasayar, an art director and graphic designer working across digital tools, visual systems and AI-assisted product building.
