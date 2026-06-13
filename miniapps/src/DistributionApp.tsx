@@ -17,6 +17,13 @@ type DistributionConfig = {
 
 type ShellLanguage = "tr" | "en";
 
+function trackMiniappsEvent(eventName: string, params: Record<string, string | number | boolean> = {}): void {
+  if (["localhost", "127.0.0.1"].includes(window.location.hostname)) return;
+
+  const gtag = (window as typeof window & { gtag?: (...args: unknown[]) => void }).gtag;
+  gtag?.("event", eventName, params);
+}
+
 function assetUrl(fileName: string): string {
   return `${import.meta.env.BASE_URL}assets/${fileName}`;
 }
@@ -40,6 +47,7 @@ const defaultApps: MiniApp[] = [
   { id: "stem-splitter", name: "Stem Splitter", launchUrl: "http://127.0.0.1:4194/" },
   { id: "dev-toolkit", name: "Dev Toolkit", launchUrl: "http://127.0.0.1:4323/" },
   { id: "video-compressor", name: "Video Compressor", launchUrl: "http://127.0.0.1:4324/" },
+  { id: "ga-report-bridge", name: "Analytica", launchUrl: "http://127.0.0.1:4326/" },
 ];
 
 const shellCopy = {
@@ -132,6 +140,8 @@ function renderAppCardArt(app: MiniApp, language: ShellLanguage) {
       return <img className="app-card-art" src={assetUrl("stem-splitter-card.svg")} alt={`Stem Splitter ${suffix}`} />;
     case "video-compressor":
       return <img className="app-card-art" src={assetUrl("video-compressor-card.svg")} alt={`Video Compressor ${suffix}`} />;
+    case "ga-report-bridge":
+      return <img className="app-card-art" src={assetUrl("ga-report-bridge-card.svg")} alt={`Analytica ${suffix}`} />;
     default:
       return (
         <div className="app-card-fallback">
@@ -216,6 +226,18 @@ export default function DistributionApp() {
   }
 
   function handleLaunchApp(event: MouseEvent<HTMLAnchorElement>, app: MiniApp) {
+    trackMiniappsEvent("tool_open", {
+      app_id: app.id,
+      app_version: distributionConfig?.packVersion ?? DEFAULT_PACK_VERSION,
+      shell_version: distributionConfig?.packVersion ?? DEFAULT_PACK_VERSION,
+      source: "home_grid",
+      page_language: shellLanguage,
+      tool_id: app.id,
+      tool_name: app.name,
+      shell_variant: "distribution",
+      language: shellLanguage,
+    });
+
     const isOfflineReady = offlineReadySet.has(app.id);
 
     if (isOffline && !isOfflineReady) {

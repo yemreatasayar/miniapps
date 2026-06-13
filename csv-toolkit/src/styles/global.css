@@ -98,7 +98,6 @@ button {
 }
 
 .dropzone-card,
-.panel-card,
 .preview-card,
 .toolbar-section {
   border: 1px solid var(--border);
@@ -225,10 +224,14 @@ select {
 .app-layout {
   display: grid;
   grid-template-columns: minmax(380px, 460px) minmax(0, 1fr);
-  grid-template-areas: "panel preview";
+  grid-template-areas:
+    "toolbar toolbar"
+    "panel preview";
   gap: 16px;
   min-height: calc(100vh - 180px);
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .panel-column {
@@ -246,9 +249,7 @@ select {
   gap: 16px;
   padding: 18px;
   border: 1px solid var(--border);
-  background:
-    linear-gradient(180deg, rgba(53, 92, 155, 0.05), rgba(53, 92, 155, 0)),
-    var(--surface);
+  background: var(--surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   min-height: 0;
@@ -258,10 +259,10 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: linear-gradient(180deg, #fbfdff 0%, #f5f9ff 100%);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   overflow-x: auto;
 }
 
@@ -318,10 +319,10 @@ select {
   gap: 18px;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid rgba(53, 92, 155, 0.1);
-  background:
-    linear-gradient(180deg, rgba(53, 92, 155, 0.02), rgba(255, 255, 255, 0)),
-    var(--surface);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .dual-panel {
@@ -355,8 +356,8 @@ select {
 
 .inline-actions {
   justify-content: flex-start;
-  gap: 14px;
-  flex: 1 1 100%;
+  gap: 10px;
+  flex: 0 1 auto;
 }
 
 .inline-actions button {
@@ -374,7 +375,7 @@ select {
 .checkbox-grid,
 .detail-list {
   display: grid;
-  gap: 16px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -391,8 +392,11 @@ select {
 }
 
 .column-row {
-  grid-template-columns: minmax(56px, 72px) minmax(0, 1fr);
-  align-items: start;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface);
   min-width: 0;
 }
 
@@ -403,13 +407,21 @@ select {
   gap: 10px;
 }
 
+.checkbox-field {
+  align-self: stretch;
+  padding-right: 6px;
+  color: var(--muted);
+}
+
 .checkbox-line span {
   min-width: 0;
 }
 
 .column-edit {
   display: grid;
-  gap: 10px;
+  grid-template-columns: minmax(96px, 0.65fr) minmax(120px, 1fr);
+  align-items: center;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -419,6 +431,12 @@ select {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.column-edit input {
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 12px;
 }
 
 .danger-text-button {
@@ -466,7 +484,14 @@ select {
   gap: 16px;
   align-content: start;
   min-width: 0;
-  overflow: auto;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.preview-card {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .muted-chip {
@@ -480,7 +505,8 @@ select {
 
 .table-shell {
   margin-top: 8px;
-  max-height: 100%;
+  max-width: 100%;
+  max-height: min(58vh, 680px);
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -488,8 +514,10 @@ select {
 
 .preview-table {
   width: 100%;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
+  table-layout: fixed;
 }
 
 .preview-table thead th {
@@ -516,6 +544,7 @@ select {
 
 .json-shell {
   margin-top: 8px;
+  max-width: 100%;
   max-height: 420px;
   overflow: auto;
   border: 1px solid var(--border);
@@ -542,18 +571,25 @@ select {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--muted);
+  min-height: 46px;
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .toolbar-select span {
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .toolbar-section {
+  grid-area: toolbar;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 16px 20px;
   padding: 16px 18px;
+  position: sticky;
+  top: 0;
+  z-index: 3;
 }
 
 .toolbar-group,
@@ -569,14 +605,25 @@ select {
 }
 
 .toolbar-select {
-  padding: 10px 12px;
+  padding: 0;
   border: 1px solid var(--border);
-  border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border-radius: 14px;
+  background: white;
+  overflow: hidden;
 }
 
 .toolbar-select select {
-  min-width: 240px;
+  min-width: 170px;
+  min-height: 44px;
+  padding: 10px 42px 10px 14px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  background: #f8fafc;
+}
+
+.toolbar-select span {
+  padding-left: 14px;
+  padding-right: 12px;
 }
 
 .compact-list {
@@ -632,6 +679,7 @@ select {
 
   .app-layout {
     grid-template-areas:
+      "toolbar"
       "panel"
       "preview";
   }
@@ -651,12 +699,16 @@ select {
     overflow-x: auto;
   }
 
-  .toolbar-section,
   .panel-footer,
   .inline-actions,
   .toggle-row {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .toolbar-section {
+    grid-template-columns: 1fr;
+    align-items: stretch;
   }
 
   .toolbar-section button,
@@ -674,6 +726,7 @@ select {
 
   .toolbar-select {
     width: 100%;
+    justify-content: space-between;
   }
 
   .toolbar-select select {

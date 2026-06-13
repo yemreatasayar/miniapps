@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import { createNewDraft, qrTypeMeta } from "./lib/defaults";
 import { buildQrPayload, getQrWarnings, qrColorOptions, typeLabel } from "./lib/qr";
 import { clearDraft, clearHistory, loadDraft, loadHistory, saveDraft, saveHistory } from "./lib/storage";
+import { trackAppEvent, trackProcessSuccess } from "./lib/analytics";
 import type {
   ErrorCorrectionLevel,
   LocationMode,
@@ -565,6 +566,7 @@ function App() {
 
     setExportError(null);
     const baseName = (draft.name || "qr-generator").toLowerCase().replace(/\s+/g, "-");
+    const startedAt = performance.now();
 
     try {
       if (exportFormat === "svg") {
@@ -589,10 +591,24 @@ function App() {
         await composeVectorPdf(draft, payload, `${baseName}.pdf`);
       }
 
+      trackProcessSuccess({
+        process_type: "generate",
+        duration_ms: Math.round(performance.now() - startedAt),
+        input_size_kb: Math.max(1, Math.round(new Blob([payload]).size / 1024)),
+      });
+      trackAppEvent("export_download", {
+        export_format: exportFormat,
+        file_count: 1,
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error("[export error]", error);
       setExportError(message);
+      trackAppEvent("process_error", {
+        process_type: "generate",
+        error_code: "internal",
+        error_stage: "export",
+      });
     }
   }
 

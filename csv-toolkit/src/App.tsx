@@ -8,6 +8,7 @@ import MergePanel from "./components/MergePanel";
 import TablePreview from "./components/TablePreview";
 import Toast from "./components/Toast";
 import Toolbar from "./components/Toolbar";
+import { trackAppEvent, trackProcessSuccess } from "./lib/analytics";
 import {
   applyColumns,
   applyDedupe,
@@ -82,6 +83,7 @@ export default function App() {
   }, [columns, filteredData]);
 
   async function handleFileSelected(file: File) {
+    const startedAt = performance.now();
     try {
       if (file.size > 50 * 1024 * 1024) {
         setToast("50 MB üzeri CSV dosyalarında tarayıcı belleği zorlanabilir.");
@@ -103,8 +105,18 @@ export default function App() {
       setDedupeKeys(data.headers.map((_, index) => ({ columnIndex: index, enabled: false })));
       setLastDedupeResult(null);
       setActiveTab("columns");
+      trackProcessSuccess({
+        process_type: "parse",
+        duration_ms: Math.round(performance.now() - startedAt),
+        input_size_kb: Math.max(1, Math.round(file.size / 1024)),
+      });
     } catch (error) {
       setToast(error instanceof Error ? error.message : "CSV dosyası okunamadı.");
+      trackAppEvent("process_error", {
+        process_type: "parse",
+        error_code: "invalid_input",
+        error_stage: "parse",
+      });
     } finally {
       setBusy(false);
     }
@@ -115,6 +127,7 @@ export default function App() {
     const updated = applyReplace(csvData, replaceRules);
     setCsvData(updated);
     setToast("Değiştirme uygulandı.");
+    trackProcessSuccess({ process_type: "replace" });
   }
 
   function handleApplyDedupe() {
@@ -123,6 +136,7 @@ export default function App() {
     setCsvData(updated);
     setLastDedupeResult(removedCount);
     setToast(removedCount > 0 ? `${removedCount} tekrarlı satır silindi.` : "Tekrarlı satır bulunamadı.");
+    trackProcessSuccess({ process_type: "dedupe" });
   }
 
   function handleDownload() {
@@ -130,6 +144,10 @@ export default function App() {
     const csvText = exportCsv(processedData, outputDelimiter);
     const baseName = csvData.fileName.replace(/\.[^.]+$/, "");
     downloadCsv(csvText, `${baseName}_processed.csv`);
+    trackAppEvent("export_download", {
+      export_format: "csv",
+      file_count: 1,
+    });
   }
 
   function handleDownloadJson() {
@@ -137,6 +155,10 @@ export default function App() {
     const jsonText = exportJson(processedData);
     const baseName = csvData.fileName.replace(/\.[^.]+$/, "");
     downloadJson(jsonText, `${baseName}_processed.json`);
+    trackAppEvent("export_download", {
+      export_format: "json",
+      file_count: 1,
+    });
   }
 
   function handleMerge(result: CsvData) {
@@ -155,6 +177,7 @@ export default function App() {
     setLastDedupeResult(null);
     setActiveTab("columns");
     setToast(`Birleştirme tamamlandı: ${result.rows.length} satır, ${result.headers.length} sütun.`);
+    trackProcessSuccess({ process_type: "merge" });
   }
 
   function handleReset() {
@@ -179,6 +202,15 @@ export default function App() {
         <DropZone onFileSelected={handleFileSelected} encoding={encoding} onEncodingChange={setEncoding} />
       ) : (
         <div className="app-layout">
+          <Toolbar
+            hasData={!!csvData}
+            busy={busy}
+            outputDelimiter={outputDelimiter}
+            onOutputDelimiterChange={setOutputDelimiter}
+            onDownload={handleDownload}
+            onDownloadJson={handleDownloadJson}
+            onReset={handleReset}
+          />
           <section className="panel-column">
             <div className="panel-workbench">
               <nav className="tab-nav">
@@ -239,15 +271,6 @@ export default function App() {
           <div className="preview-section">
             <TablePreview data={processedData} />
             <JsonPreview data={processedData} />
-            <Toolbar
-              hasData={!!csvData}
-              busy={busy}
-              outputDelimiter={outputDelimiter}
-              onOutputDelimiterChange={setOutputDelimiter}
-              onDownload={handleDownload}
-              onDownloadJson={handleDownloadJson}
-              onReset={handleReset}
-            />
           </div>
         </div>
       )}
