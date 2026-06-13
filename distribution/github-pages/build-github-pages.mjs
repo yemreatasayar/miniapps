@@ -1446,6 +1446,10 @@ function injectSeoMeta(htmlPath, { title, description, lang, canonicalUrl }) {
     html = html.replace("</body>", `  <noscript><h1>${t}</h1><p>${d}</p></noscript>\n  </body>`);
   }
 
+  if (!html.includes("googletagmanager.com/gtag/js")) {
+    html = html.replace("</head>", `    ${analyticsSnippet}\n  </head>`);
+  }
+
   writeFileSync(htmlPath, html);
 }
 
