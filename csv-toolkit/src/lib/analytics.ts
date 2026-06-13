@@ -29,6 +29,10 @@ function isLocalHost(): boolean {
   return ["localhost", "127.0.0.1"].includes(window.location.hostname);
 }
 
+function isDebugMode(): boolean {
+  return window.localStorage.getItem("miniapps.gaDebug") === "1";
+}
+
 export function trackAppEvent(eventName: AnalyticsEventName, params: AnalyticsParams = {}): void {
   if (isLocalHost()) return;
 
@@ -44,6 +48,7 @@ export function trackAppEvent(eventName: AnalyticsEventName, params: AnalyticsPa
     shell_version: SHELL_VERSION,
     source: eventSource(),
     page_language: pageLanguage(),
+    ...(isDebugMode() ? { debug_mode: true } : {}),
     ...params,
   });
 }
