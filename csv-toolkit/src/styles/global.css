@@ -364,6 +364,17 @@ select {
   flex: 0 1 auto;
 }
 
+.column-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 420px);
+}
+
+.column-actions button {
+  width: 100%;
+  white-space: nowrap;
+}
+
 .inline-actions button,
 .panel-footer button,
 .toggle-row button,
@@ -704,6 +715,12 @@ select {
   .toggle-row {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .column-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
   }
 
   .toolbar-section {

@@ -24,12 +24,12 @@ export default function ColumnsPanel({ columns, onChange }: ColumnsPanelProps) {
           <h2>Sütunlar</h2>
           <p>Görünürlük, isim ve sıra kontrolü.</p>
         </div>
-        <div className="inline-actions">
+        <div className="inline-actions column-actions">
           <button type="button" onClick={() => onChange(columns.map((column) => ({ ...column, visible: true })))}>
             Tümünü Seç
           </button>
           <button type="button" onClick={() => onChange(columns.map((column) => ({ ...column, visible: false })))}>
-            Hiçbirini Seçme
+            Hiçbirini Seç
           </button>
         </div>
       </div>
