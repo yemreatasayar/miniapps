@@ -5,6 +5,7 @@ import ProgressPanel from "./components/ProgressPanel";
 import ResultPanel from "./components/ResultPanel";
 import Toast from "./components/Toast";
 import { preloadBgAssets, removeBg } from "./lib/bg-service";
+import { trackAppEvent, trackProcessSuccess } from "./lib/analytics";
 import type { LoadedImage, ProcessStatus } from "./lib/types";
 
 function formatBytes(bytes: number): string {
@@ -210,6 +211,11 @@ export default function App() {
           outputSize: blob.size,
         },
       }));
+      trackProcessSuccess({
+        process_type: "background_remove",
+        file_count: 1,
+        output_size_kb: Math.max(1, Math.round(blob.size / 1024)),
+      });
       await new Promise((resolve) => window.setTimeout(resolve, 40));
     } catch (error) {
       const message = error instanceof Error ? error.message : "İşlem başarısız.";
@@ -217,6 +223,11 @@ export default function App() {
         ...current,
         status: { kind: "error", message },
       }));
+      trackAppEvent("process_error", {
+        process_type: "background_remove",
+        error_code: "remove_failed",
+        error_stage: "process",
+      });
       throw error;
     }
   }
@@ -269,6 +280,7 @@ export default function App() {
       const single = ready[0];
       const blob = await fetch(single.status.outputUrl).then((response) => response.blob());
       downloadBlob(blob, `${single.fileName.replace(/\.[^.]+$/, "")}_nobg.png`);
+      trackAppEvent("export_download", { export_format: "png", file_count: 1 });
       return;
     }
 
@@ -280,6 +292,7 @@ export default function App() {
     );
 
     await downloadAsZip(entries, "bg-remover-ciktilar.zip");
+    trackAppEvent("export_download", { export_format: "zip", file_count: entries.length });
   }
 
   const idleCount = images.filter((item) => item.status.kind === "idle").length;

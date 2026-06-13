@@ -6,6 +6,7 @@ import ProgressPanel from "./components/ProgressPanel";
 import ResultPanel from "./components/ResultPanel";
 import Toast from "./components/Toast";
 import { useLang } from "./lib/LangContext";
+import { trackAppEvent, trackProcessSuccess } from "./lib/analytics";
 import { isWebCodecsDebugForced, loadFFmpeg, NativeHelperUnavailableError, processVideo, processVideoWithNativeHelper, terminateFFmpeg, WasmMemoryLimitError } from "./lib/ffmpeg-service";
 import type { LoadedVideo, ProcessSettings, ProcessStatus, VideoFormat } from "./lib/types";
 
@@ -162,6 +163,12 @@ export default function App() {
           );
           const outputUrl = URL.createObjectURL(blob);
           setStatus({ kind: "success", outputUrl, outputFileName: fileName, outputSize: blob.size });
+          trackProcessSuccess({
+            process_type: hasCuts ? "trim_compress" : "compress",
+            export_format: settings.outputFormat,
+            input_size_kb: Math.max(1, Math.round(loadedVideo.fileSize / 1024)),
+            output_size_kb: Math.max(1, Math.round(blob.size / 1024)),
+          });
           return;
         } catch (nativeError) {
           if (!(nativeError instanceof NativeHelperUnavailableError)) {
@@ -181,12 +188,23 @@ export default function App() {
       );
       const outputUrl = URL.createObjectURL(blob);
       setStatus({ kind: "success", outputUrl, outputFileName: fileName, outputSize: blob.size });
+      trackProcessSuccess({
+        process_type: hasCuts ? "trim_compress" : "compress",
+        export_format: settings.outputFormat,
+        input_size_kb: Math.max(1, Math.round(loadedVideo.fileSize / 1024)),
+        output_size_kb: Math.max(1, Math.round(blob.size / 1024)),
+      });
     } catch (error) {
       const message = error instanceof WasmMemoryLimitError
         ? t.memoryError
         : error instanceof Error ? error.message : t.processFailed;
       setStatus({ kind: "error", message });
       setToast(message);
+      trackAppEvent("process_error", {
+        process_type: hasCuts ? "trim_compress" : "compress",
+        error_code: error instanceof WasmMemoryLimitError ? "memory_limit" : "process_failed",
+        error_stage: "process",
+      });
     }
   }
 
@@ -268,6 +286,7 @@ export default function App() {
                   outputFileName={status.outputFileName}
                   outputSize={status.outputSize}
                   originalSize={loadedVideo.fileSize}
+                  onDownload={() => trackAppEvent("export_download", { export_format: settings.outputFormat, file_count: 1 })}
                   onReset={handleReset}
                 />
               ) : null}

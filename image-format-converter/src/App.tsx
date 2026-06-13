@@ -12,6 +12,7 @@ import {
   loadConvertibleImage,
 } from "./lib/image-ops";
 import CropModal from "./components/CropModal";
+import { trackAppEvent, trackProcessSuccess } from "./lib/analytics";
 import type { ConvertibleImage, OutputFormat } from "./lib/types";
 
 function formatCountLabel(count: number, singular: string, plural: string): string {
@@ -93,8 +94,22 @@ export default function App() {
         await downloadAsZip(entries, `converted-${outputFormat}.zip`);
       }
 
+      trackProcessSuccess({
+        process_type: "convert",
+        export_format: outputFormat,
+        file_count: entries.length,
+      });
+      trackAppEvent("export_download", {
+        export_format: entries.length === 1 ? outputFormat : "zip",
+        file_count: entries.length,
+      });
       setToast(`${formatCountLabel(entries.length, "görsel", "görsel")} ${outputFormat.toUpperCase()} olarak hazırlandı.`);
     } catch (error) {
+      trackAppEvent("process_error", {
+        process_type: "convert",
+        error_code: "conversion_failed",
+        error_stage: "export",
+      });
       setToast(error instanceof Error ? error.message : "Dönüştürme tamamlanamadı.");
     } finally {
       setExporting(false);

@@ -6,6 +6,7 @@ type CompressPanelProps = {
   preset: CompressPreset;
   onPresetChange: (preset: CompressPreset) => void;
   onCompress: () => void;
+  onDownload?: () => void;
   loadedPdf: LoadedPdf | null;
 };
 
@@ -29,6 +30,7 @@ export default function CompressPanel({
   preset,
   onPresetChange,
   onCompress,
+  onDownload,
   loadedPdf,
 }: CompressPanelProps) {
   const reduction =
@@ -97,7 +99,7 @@ export default function CompressPanel({
           <strong>
             {formatBytes(status.sizeOriginal)} → {formatBytes(status.sizeResult)} ({reduction}% küçüldü)
           </strong>
-          <a className="download-link" href={status.downloadUrl} download={status.fileName}>
+          <a className="download-link" href={status.downloadUrl} download={status.fileName} onClick={onDownload}>
             İndir
           </a>
           <p>Sonuç PDF içeriğine bağlıdır.</p>

@@ -3,6 +3,7 @@ type ResultPanelProps = {
   outputFileName: string;
   outputSize: number;
   originalSize: number;
+  onDownload?: () => void;
   onReset: () => void;
 };
 
@@ -25,6 +26,7 @@ export default function ResultPanel({
   outputFileName,
   outputSize,
   originalSize,
+  onDownload,
   onReset,
 }: ResultPanelProps) {
   const savedPercent = originalSize > 0 ? Math.round((1 - outputSize / originalSize) * 100) : 0;
@@ -53,7 +55,7 @@ export default function ResultPanel({
       </div>
 
       <div className="action-row">
-        <a className="download-link" href={outputUrl} download={outputFileName}>
+        <a className="download-link" href={outputUrl} download={outputFileName} onClick={onDownload}>
           İndir
         </a>
         <button type="button" onClick={onReset}>

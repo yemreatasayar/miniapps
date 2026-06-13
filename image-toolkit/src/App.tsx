@@ -5,6 +5,7 @@ import ImageGrid from "./components/ImageGrid";
 import SmartCompressPanel from "./components/SmartCompressPanel";
 import Toast from "./components/Toast";
 import Toolbar from "./components/Toolbar";
+import { trackAppEvent, trackProcessSuccess } from "./lib/analytics";
 import { computeNormalizedScores, computeSmartQualities } from "./lib/quality-estimator";
 import {
   downloadAsZip,
@@ -285,8 +286,17 @@ export default function App() {
       );
       setRotations({});
       setFlips({});
+      trackProcessSuccess({
+        process_type: "transform",
+        file_count: processed.length,
+      });
       setToast("Döndürme ve flip işlemleri uygulandı.");
     } catch (error) {
+      trackAppEvent("process_error", {
+        process_type: "transform",
+        error_code: "transform_failed",
+        error_stage: "process",
+      });
       setToast(error instanceof Error ? error.message : "Görseller işlenemedi.");
     } finally {
       setBusy(false);
@@ -338,6 +348,12 @@ export default function App() {
       setBusy(true);
       if (targets.length === 1) {
         await downloadProcessedImages(targets, standardSettings.format, standardSettings.quality, compVariant);
+        trackProcessSuccess({
+          process_type: "standard_compress",
+          export_format: standardSettings.format,
+          file_count: targets.length,
+        });
+        trackAppEvent("export_download", { export_format: standardSettings.format, file_count: targets.length });
         setToast("Görsel indirildi.");
       } else {
         const entries = await Promise.all(
@@ -359,9 +375,20 @@ export default function App() {
           })
         );
         await downloadAsZip(entries, "gorseller-secili.zip");
+        trackProcessSuccess({
+          process_type: "standard_compress",
+          export_format: standardSettings.format,
+          file_count: entries.length,
+        });
+        trackAppEvent("export_download", { export_format: "zip", file_count: entries.length });
         setToast(`${entries.length} görsel ZIP olarak indirildi.`);
       }
     } catch (error) {
+      trackAppEvent("process_error", {
+        process_type: "standard_compress",
+        error_code: "export_failed",
+        error_stage: "export",
+      });
       setToast(error instanceof Error ? error.message : "Seçili görseller indirilemedi.");
     } finally {
       setBusy(false);
@@ -410,8 +437,19 @@ export default function App() {
         })
       );
       await downloadAsZip(entries, zipName);
+      trackProcessSuccess({
+        process_type: "standard_compress",
+        export_format: "zip",
+        file_count: entries.length,
+      });
+      trackAppEvent("export_download", { export_format: "zip", file_count: entries.length });
       setToast(`${entries.length} görsel ZIP olarak indirildi.`);
     } catch (error) {
+      trackAppEvent("process_error", {
+        process_type: "standard_compress",
+        error_code: "zip_failed",
+        error_stage: "export",
+      });
       setToast(error instanceof Error ? error.message : "ZIP oluşturulamadı.");
     } finally {
       setBusy(false);
@@ -426,6 +464,12 @@ export default function App() {
       setBusy(true);
       if (images.length === 1) {
         await downloadProcessedImages(images, standardSettings.format, standardSettings.quality, compVariant);
+        trackProcessSuccess({
+          process_type: "standard_compress",
+          export_format: standardSettings.format,
+          file_count: images.length,
+        });
+        trackAppEvent("export_download", { export_format: standardSettings.format, file_count: images.length });
         setToast("Görsel indirildi.");
       } else {
         const entries = await Promise.all(
@@ -447,9 +491,20 @@ export default function App() {
           })
         );
         await downloadAsZip(entries, "gorseller-tumu.zip");
+        trackProcessSuccess({
+          process_type: "standard_compress",
+          export_format: "zip",
+          file_count: entries.length,
+        });
+        trackAppEvent("export_download", { export_format: "zip", file_count: entries.length });
         setToast(`${entries.length} görsel ZIP olarak indirildi.`);
       }
     } catch (error) {
+      trackAppEvent("process_error", {
+        process_type: "standard_compress",
+        error_code: "export_failed",
+        error_stage: "export",
+      });
       setToast(error instanceof Error ? error.message : "Görseller indirilemedi.");
     } finally {
       setBusy(false);
@@ -491,12 +546,29 @@ export default function App() {
         if (entry) {
           downloadBlob(entry.blob, entry.fileName);
         }
+        trackProcessSuccess({
+          process_type: "smart_compress",
+          export_format: smartSettings.format,
+          file_count: entries.length,
+        });
+        trackAppEvent("export_download", { export_format: smartSettings.format, file_count: entries.length });
         setToast("Görsel indirildi.");
       } else {
         await downloadAsZip(entries, "gorseller-smart-compress.zip");
+        trackProcessSuccess({
+          process_type: "smart_compress",
+          export_format: "zip",
+          file_count: entries.length,
+        });
+        trackAppEvent("export_download", { export_format: "zip", file_count: entries.length });
         setToast(`${entries.length} görsel ZIP olarak indirildi.`);
       }
     } catch (error) {
+      trackAppEvent("process_error", {
+        process_type: "smart_compress",
+        error_code: "export_failed",
+        error_stage: "export",
+      });
       setToast(error instanceof Error ? error.message : "Smart compress işlemi başarısız.");
     } finally {
       setBusy(false);

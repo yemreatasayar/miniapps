@@ -5,6 +5,7 @@ type ResultPanelProps = {
   outputFileName: string;
   outputSize: number;
   originalSize: number;
+  onDownload?: () => void;
   onReset: () => void;
 };
 
@@ -25,6 +26,7 @@ export default function ResultPanel({
   outputFileName,
   outputSize,
   originalSize,
+  onDownload,
   onReset,
 }: ResultPanelProps) {
   const { t } = useLang();
@@ -53,7 +55,7 @@ export default function ResultPanel({
       </div>
 
       <div className="action-row">
-        <a className="download-link" href={outputUrl} download={outputFileName}>
+        <a className="download-link" href={outputUrl} download={outputFileName} onClick={onDownload}>
           {t.resultDownload}
         </a>
         <button type="button" onClick={onReset}>

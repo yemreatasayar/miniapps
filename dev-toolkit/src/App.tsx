@@ -13,6 +13,7 @@ import {
   obfuscateJavaScript,
   verifyBcryptHash,
 } from "./lib/dev-tools";
+import { trackAppEvent, trackProcessSuccess } from "./lib/analytics";
 
 type ToolId = "json-ts" | "jwt" | "base64" | "hash" | "aes" | "bcrypt" | "obfuscate" | "sql";
 type HashAlgorithm = "SHA-1" | "SHA-256" | "SHA-384" | "SHA-512";
@@ -137,20 +138,28 @@ export default function App() {
   async function handleCopy(value: string, label: string) {
     if (!value) return;
     await navigator.clipboard.writeText(value);
+    trackAppEvent("export_download", { export_format: "clipboard", file_count: 1, process_type: activeTool });
     setToast(`${label} panoya kopyalandı.`);
   }
 
   function handleEncodeBase64() {
     setBase64Error(null);
     setBase64Encoded(encodeBase64Unicode(base64Plain));
+    trackProcessSuccess({ process_type: "base64_encode" });
   }
 
   function handleDecodeBase64() {
     try {
       setBase64Error(null);
       setBase64Plain(decodeBase64Unicode(base64Encoded));
+      trackProcessSuccess({ process_type: "base64_decode" });
     } catch (error) {
       setBase64Error(error instanceof Error ? error.message : "Base64 çözümlenemedi.");
+      trackAppEvent("process_error", {
+        process_type: "base64_decode",
+        error_code: "decode_failed",
+        error_stage: "process",
+      });
     }
   }
 
@@ -160,8 +169,14 @@ export default function App() {
       const payload = await encryptAesText(aesPlainText, aesPassphrase);
       setAesPayload(payload);
       setToast("AES payload hazır.");
+      trackProcessSuccess({ process_type: "aes_encrypt" });
     } catch (error) {
       setAesError(error instanceof Error ? error.message : "Şifreleme tamamlanamadı.");
+      trackAppEvent("process_error", {
+        process_type: "aes_encrypt",
+        error_code: "encrypt_failed",
+        error_stage: "process",
+      });
     }
   }
 
@@ -171,8 +186,14 @@ export default function App() {
       const plainText = await decryptAesText(aesPayload, aesPassphrase);
       setAesPlainText(plainText);
       setToast("AES payload çözüldü.");
+      trackProcessSuccess({ process_type: "aes_decrypt" });
     } catch (error) {
       setAesError(error instanceof Error ? error.message : "AES payload çözülemedi.");
+      trackAppEvent("process_error", {
+        process_type: "aes_decrypt",
+        error_code: "decrypt_failed",
+        error_stage: "process",
+      });
     }
   }
 
@@ -181,11 +202,13 @@ export default function App() {
     setBcryptDigest(digest);
     setBcryptVerifyResult(null);
     setToast("Bcrypt hash hazır.");
+    trackProcessSuccess({ process_type: "bcrypt_hash" });
   }
 
   async function handleVerifyBcrypt() {
     const isValid = await verifyBcryptHash(bcryptVerifyInput, bcryptDigest);
     setBcryptVerifyResult(isValid ? "Hash ile eşleşiyor." : "Hash ile eşleşmiyor.");
+    trackProcessSuccess({ process_type: "bcrypt_verify" });
   }
 
   function handleObfuscate() {
@@ -193,8 +216,14 @@ export default function App() {
       setObfuscateError(null);
       setObfuscateOutput(obfuscateJavaScript(obfuscateInput));
       setToast("Obfuscation tamamlandı.");
+      trackProcessSuccess({ process_type: "js_obfuscate" });
     } catch (error) {
       setObfuscateError(error instanceof Error ? error.message : "Kod karmaşıklaştırılamadı.");
+      trackAppEvent("process_error", {
+        process_type: "js_obfuscate",
+        error_code: "obfuscate_failed",
+        error_stage: "process",
+      });
     }
   }
 

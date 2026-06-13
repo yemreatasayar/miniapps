@@ -5,6 +5,7 @@ import ProgressPanel from "./components/ProgressPanel";
 import ResultPanel from "./components/ResultPanel";
 import Toast from "./components/Toast";
 import { extractAudio, loadFFmpeg, terminateFFmpeg } from "./lib/ffmpeg-service";
+import { trackAppEvent, trackProcessSuccess } from "./lib/analytics";
 import type { AudioSettings, LoadedVideo, ProcessStatus } from "./lib/types";
 
 const SETTINGS_KEY = "video-to-audio.settings";
@@ -106,10 +107,21 @@ export default function App() {
         outputFileName: fileName,
         outputSize: blob.size,
       });
+      trackProcessSuccess({
+        process_type: "extract_audio",
+        export_format: settings.format,
+        input_size_kb: Math.max(1, Math.round(loadedVideo.fileSize / 1024)),
+        output_size_kb: Math.max(1, Math.round(blob.size / 1024)),
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Dönüştürme başarısız.";
       setStatus({ kind: "error", message });
       setToast(message);
+      trackAppEvent("process_error", {
+        process_type: "extract_audio",
+        error_code: "conversion_failed",
+        error_stage: "process",
+      });
     }
   }
 
@@ -218,6 +230,7 @@ export default function App() {
                   outputFileName={status.outputFileName}
                   outputSize={status.outputSize}
                   originalSize={loadedVideo.fileSize}
+                  onDownload={() => trackAppEvent("export_download", { export_format: settings.format, file_count: 1 })}
                   onReset={handleReset}
                 />
               ) : null}

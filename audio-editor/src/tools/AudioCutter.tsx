@@ -4,6 +4,7 @@ import ProgressPanel from "../components/ProgressPanel";
 import ResultPanel from "../components/ResultPanel";
 import Waveform from "../components/Waveform";
 import { loadFFmpeg, terminateFFmpeg, trimAudio } from "../lib/ffmpeg-service";
+import { trackAppEvent, trackProcessSuccess } from "../lib/analytics";
 import type { CutterSelection, LoadedAudio, ProcessStatus } from "../lib/types";
 import { decodeAudioFile, formatTime } from "../lib/waveform";
 
@@ -209,10 +210,21 @@ export default function AudioCutter({ onToast }: AudioCutterProps) {
         outputFileName: fileName,
         outputSize: blob.size,
       });
+      trackProcessSuccess({
+        process_type: "audio_cut",
+        file_count: 1,
+        input_size_kb: Math.max(1, Math.round(audio.fileSize / 1024)),
+        output_size_kb: Math.max(1, Math.round(blob.size / 1024)),
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Kesme işlemi başarısız.";
       setStatus({ kind: "error", message });
       onToast(message);
+      trackAppEvent("process_error", {
+        process_type: "audio_cut",
+        error_code: "cut_failed",
+        error_stage: "process",
+      });
     }
   }
 
@@ -355,6 +367,7 @@ export default function AudioCutter({ onToast }: AudioCutterProps) {
               outputFileName={status.outputFileName}
               outputSize={status.outputSize}
               originalSize={audio.fileSize}
+              onDownload={() => trackAppEvent("export_download", { export_format: "audio", file_count: 1 })}
               onReset={handleReset}
             />
           ) : null}

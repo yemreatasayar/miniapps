@@ -11,6 +11,7 @@ import {
   loadSanitizableImage,
   sanitizeImage,
 } from "./lib/image-ops";
+import { trackAppEvent, trackProcessSuccess } from "./lib/analytics";
 import type { OutputFormat, SanitizableImage } from "./lib/types";
 
 function formatCountLabel(count: number, singular: string, plural: string): string {
@@ -75,8 +76,22 @@ export default function App() {
         await downloadAsZip(entries, "clean-images.zip");
       }
 
+      trackProcessSuccess({
+        process_type: "metadata_clean",
+        export_format: entries.length === 1 ? outputFormat : "zip",
+        file_count: entries.length,
+      });
+      trackAppEvent("export_download", {
+        export_format: entries.length === 1 ? outputFormat : "zip",
+        file_count: entries.length,
+      });
       setToast(`${formatCountLabel(entries.length, "görsel", "görsel")} için temiz kopya hazırlandı.`);
     } catch (error) {
+      trackAppEvent("process_error", {
+        process_type: "metadata_clean",
+        error_code: "clean_failed",
+        error_stage: "export",
+      });
       setToast(error instanceof Error ? error.message : "Temiz kopyalar indirilemedi.");
     } finally {
       setExporting(false);

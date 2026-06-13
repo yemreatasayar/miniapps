@@ -15,6 +15,7 @@ import {
   formatDuration,
   loadTrack,
 } from "./lib/audio";
+import { trackAppEvent, trackProcessSuccess } from "./lib/analytics";
 import type { LoadedTrack } from "./lib/audio";
 
 type Status = "idle" | "loading" | "ready" | "processing" | "done" | "error";
@@ -209,16 +210,27 @@ export default function App() {
               instrumental: resolveDownloadUrl(job.downloads.instrumental),
             });
             setStatus("done");
+            trackProcessSuccess({ process_type: "stem_split", export_format: "wav", file_count: 2 });
           }
 
           if (job.status === "error") {
             setOperationError(job.error ?? "Stem separation başarısız oldu.");
             setStatus("error");
+            trackAppEvent("process_error", {
+              process_type: "stem_split",
+              error_code: "job_failed",
+              error_stage: "process",
+            });
           }
         })
         .catch((error) => {
           setOperationError(formatApiError(error));
           setStatus("error");
+          trackAppEvent("process_error", {
+            process_type: "stem_split",
+            error_code: "poll_failed",
+            error_stage: "process",
+          });
         });
     }, 1500);
 
@@ -269,6 +281,11 @@ export default function App() {
       setTrack(null);
       setStatus("error");
       setOperationError(formatApiError(error));
+      trackAppEvent("process_error", {
+        process_type: "stem_load",
+        error_code: "load_failed",
+        error_stage: "input",
+      });
     }
   }
 
@@ -291,6 +308,11 @@ export default function App() {
     } catch (error) {
       setStatus("error");
       setOperationError(formatApiError(error));
+      trackAppEvent("process_error", {
+        process_type: "stem_split",
+        error_code: "start_failed",
+        error_stage: "process",
+      });
     }
   }
 
@@ -550,7 +572,12 @@ export default function App() {
                     <strong>Vocals</strong>
                     <span>Ayrılmış vokal stem'i</span>
                   </div>
-                  <a className={`download-link${downloads ? "" : " is-disabled"}`} href={downloads?.vocals ?? undefined} download>
+                  <a
+                    className={`download-link${downloads ? "" : " is-disabled"}`}
+                    href={downloads?.vocals ?? undefined}
+                    download
+                    onClick={() => downloads && trackAppEvent("export_download", { export_format: "wav", file_count: 1, stem_type: "vocals" })}
+                  >
                     İndir
                   </a>
                 </div>
@@ -560,7 +587,12 @@ export default function App() {
                     <strong>Instrumental</strong>
                     <span>Vokalsiz stem çıktısı</span>
                   </div>
-                  <a className={`download-link${downloads ? "" : " is-disabled"}`} href={downloads?.instrumental ?? undefined} download>
+                  <a
+                    className={`download-link${downloads ? "" : " is-disabled"}`}
+                    href={downloads?.instrumental ?? undefined}
+                    download
+                    onClick={() => downloads && trackAppEvent("export_download", { export_format: "wav", file_count: 1, stem_type: "instrumental" })}
+                  >
                     İndir
                   </a>
                 </div>
