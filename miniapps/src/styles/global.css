@@ -752,6 +752,13 @@ button {
   transition-delay: 1s;
 }
 
+@media (hover: none), (pointer: coarse), (max-width: 760px) {
+  .miniapps-shell.is-distribution .app-card-link::after {
+    display: none;
+    content: none;
+  }
+}
+
 .miniapps-shell.is-distribution .app-card-art {
   width: clamp(118px, 9.5vw, 170px);
   max-width: 100%;
