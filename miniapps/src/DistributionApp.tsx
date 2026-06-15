@@ -25,7 +25,8 @@ function trackMiniappsEvent(eventName: string, params: Record<string, string | n
 }
 
 function assetUrl(fileName: string): string {
-  return `${import.meta.env.BASE_URL}assets/${fileName}`;
+  const url = `${import.meta.env.BASE_URL}assets/${fileName}`;
+  return fileName.endsWith("-card.svg") ? `${url}?v=${DEFAULT_PACK_VERSION}` : url;
 }
 
 const OFFLINE_READY_APPS_STORAGE_KEY = "miniapps.distribution.offlineReadyApps";
