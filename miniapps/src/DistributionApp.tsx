@@ -31,7 +31,7 @@ function assetUrl(fileName: string): string {
 const OFFLINE_READY_APPS_STORAGE_KEY = "miniapps.distribution.offlineReadyApps";
 const SHELL_LANGUAGE_STORAGE_KEY = "miniapps.distribution.language";
 const DEFAULT_PACK_LABEL = "miniapps pack";
-const DEFAULT_PACK_VERSION = "2026.1.1";
+const DEFAULT_PACK_VERSION = "2026.2.0";
 const DEFAULT_AUTHOR_LABEL = "by y.e.a.";
 
 const defaultApps: MiniApp[] = [
@@ -62,6 +62,39 @@ const shellCopy = {
     manifestoLabel: "Manifesto",
   },
 } satisfies Record<ShellLanguage, { appOpenSuffix: string; languageLabel: string; manifestoLabel: string }>;
+
+const appDescriptions = {
+  tr: {
+    "pdf-toolkit": "PDF sıkıştır, böl, birleştir ve düzenle.",
+    "csv-toolkit": "CSV dosyalarını temizle, filtrele ve dışa aktar.",
+    "qr-generator": "Link, Wi-Fi ve iletişim için QR kod oluştur.",
+    "image-toolkit": "Görselleri yeniden boyutlandır ve optimize et.",
+    "exif-cleaner": "Fotoğraflardaki EXIF verilerini temizle.",
+    "image-format-converter": "Görselleri JPG, PNG ve WebP formatlarına çevir.",
+    "bg-remover": "Görsel arka planlarını hızlıca kaldır.",
+    "video-to-audio": "Videolardan ses dosyası çıkar.",
+    "video-compressor": "Videoları sıkıştır, kes ve düzenle.",
+    "audio-editor": "Ses dosyalarını kırp, dönüştür ve dışa aktar.",
+    "stem-splitter": "Vokali ayır ve ses parçalarını çıkar.",
+    "dev-toolkit": "Geliştirici araçlarını tek yerde kullan.",
+    "ga-report-bridge": "GA4 raporlarını arşivle ve analiz et.",
+  },
+  en: {
+    "pdf-toolkit": "Compress, split, merge and edit PDF files.",
+    "csv-toolkit": "Clean, filter and export CSV files.",
+    "qr-generator": "Create QR codes for links, Wi-Fi and contacts.",
+    "image-toolkit": "Resize and optimize images in your browser.",
+    "exif-cleaner": "Remove EXIF metadata from photos.",
+    "image-format-converter": "Convert images to JPG, PNG and WebP.",
+    "bg-remover": "Remove image backgrounds quickly.",
+    "video-to-audio": "Extract audio files from videos.",
+    "video-compressor": "Compress, trim and edit videos.",
+    "audio-editor": "Trim, convert and export audio files.",
+    "stem-splitter": "Separate vocals and extract audio stems.",
+    "dev-toolkit": "Use developer utilities in one place.",
+    "ga-report-bridge": "Archive and analyze GA4 reports.",
+  },
+} satisfies Record<ShellLanguage, Record<string, string>>;
 
 function readStoredValue<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -172,6 +205,7 @@ export default function DistributionApp() {
   );
   const distributionAuthorLine = distributionConfig?.authorLabel ?? DEFAULT_AUTHOR_LABEL;
   const manifestoUrl = shellLanguage === "en" ? "./manifesto-en/" : "./manifesto/";
+  const descriptions: Record<string, string> = appDescriptions[shellLanguage];
 
   useEffect(() => {
     let cancelled = false;
@@ -251,6 +285,14 @@ export default function DistributionApp() {
     }
   }
 
+  function handleTooltipMove(event: MouseEvent<HTMLAnchorElement>) {
+    const shouldOpenLeft = event.clientX > window.innerWidth - 280;
+
+    event.currentTarget.style.setProperty("--tooltip-x", `${event.clientX}px`);
+    event.currentTarget.style.setProperty("--tooltip-y", `${event.clientY}px`);
+    event.currentTarget.style.setProperty("--tooltip-offset-x", shouldOpenLeft ? "calc(-100% - 14px)" : "14px");
+  }
+
   return (
     <main className="miniapps-shell is-distribution">
       <section className="workspace distribution-workspace">
@@ -263,7 +305,8 @@ export default function DistributionApp() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`${app.name} ${copy.appOpenSuffix}`}
-                title={`${app.name}`}
+                data-tooltip={descriptions[app.id] ?? app.name}
+                onMouseMove={handleTooltipMove}
                 onClick={(event) => handleLaunchApp(event, app)}
               >
                 {renderAppCardArt(app, shellLanguage)}

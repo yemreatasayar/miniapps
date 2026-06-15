@@ -672,6 +672,94 @@ button {
   transform: translateY(-2px);
 }
 
+.miniapps-shell.is-distribution .distribution-workspace {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(28px, 5vh, 64px) clamp(32px, 5vw, 78px);
+}
+
+.miniapps-shell.is-distribution .distribution-workspace .app-grid {
+  width: min(100%, 1320px);
+  max-width: 1320px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: center;
+  justify-items: center;
+  align-content: center;
+  gap: clamp(48px, 8vh, 84px) clamp(28px, 4vw, 58px);
+  margin: 0 auto;
+}
+
+.miniapps-shell.is-distribution .app-card {
+  width: 100%;
+  min-width: 0;
+  justify-self: stretch;
+  aspect-ratio: auto;
+  min-height: clamp(142px, 22vh, 206px);
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.miniapps-shell.is-distribution .app-card:hover {
+  transform: none;
+}
+
+.miniapps-shell.is-distribution .app-card-link {
+  width: 100%;
+  min-height: 100%;
+  padding: 8px 10px;
+  outline-offset: 10px;
+}
+
+.miniapps-shell.is-distribution .app-card-link::after {
+  content: attr(data-tooltip);
+  position: fixed;
+  left: var(--tooltip-x, 50%);
+  top: var(--tooltip-y, 50%);
+  z-index: 6;
+  width: max-content;
+  max-width: min(240px, 72vw);
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: #050505;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(var(--tooltip-offset-x, 14px), 14px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.miniapps-shell.is-distribution .app-card-link:hover::after,
+.miniapps-shell.is-distribution .app-card-link:focus-visible::after {
+  opacity: 1;
+  transform: translate(var(--tooltip-offset-x, 14px), 10px);
+  transition-delay: 1s;
+}
+
+.miniapps-shell.is-distribution .app-card-link:focus-visible::after {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 12px);
+  transform: translate(-50%, 0);
+  transition-delay: 1s;
+}
+
+.miniapps-shell.is-distribution .app-card-art {
+  width: clamp(118px, 9.5vw, 170px);
+  max-width: 100%;
+  height: auto;
+  max-height: 188px;
+  object-fit: contain;
+}
+
 @media (max-width: 1600px) {
   .app-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -754,8 +842,13 @@ button {
     flex-wrap: wrap;
   }
 
-  .distribution-workspace .app-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  .miniapps-shell.is-distribution .distribution-workspace {
+    align-items: flex-start;
+  }
+
+  .miniapps-shell.is-distribution .distribution-workspace .app-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 40px 28px;
   }
 }
 
@@ -794,9 +887,9 @@ button {
     padding-left: 18px;
   }
 
-  .distribution-workspace .app-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
+  .miniapps-shell.is-distribution .distribution-workspace .app-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 34px 22px;
   }
 
   .app-grid {
@@ -917,13 +1010,22 @@ button {
     max-width: 100%;
   }
 
-  .distribution-workspace .app-grid {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
-    gap: 14px;
+  .miniapps-shell.is-distribution .distribution-workspace .app-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 30px 18px;
   }
 
-  .app-card {
+  .miniapps-shell:not(.is-distribution) .app-card {
     width: 100%;
+  }
+
+  .miniapps-shell.is-distribution .app-card {
+    min-height: 132px;
+  }
+
+  .miniapps-shell.is-distribution .app-card-art {
+    width: clamp(108px, 34vw, 138px);
+    max-height: 150px;
   }
 
   .distribution-version span:first-child {
