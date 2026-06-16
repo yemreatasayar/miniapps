@@ -1771,11 +1771,11 @@ function buildManifestoPageHtml(language) {
 
       @media (max-width: 760px) {
         :root {
-          --distribution-footer-height: 138px;
+          --distribution-footer-height: 96px;
         }
 
         .manifesto-shell {
-          padding: 20px 16px 174px;
+          padding: 20px 16px 132px;
         }
 
         .manifesto-card {
@@ -1788,45 +1788,52 @@ function buildManifestoPageHtml(language) {
           font-size: 16px;
         }
 
-        .distribution-version span:first-child {
-          font-size: 12px;
+        .distribution-version {
+          display: none;
         }
 
-        .distribution-author-link {
-          font-size: 11px;
+        .distribution-link-button {
+          min-height: 34px;
+          padding: 0 12px;
+          font-size: 13px;
+        }
+
+        .language-switch-button {
+          min-width: 54px;
+          min-height: 34px;
+          padding: 0 10px;
+          font-size: 13px;
+        }
+
+        .distribution-language-group {
+          gap: 4px;
+          padding: 4px;
         }
       }
 
       @media (max-width: 560px) {
         :root {
-          --distribution-footer-height: 176px;
+          --distribution-footer-height: 122px;
         }
 
         .manifesto-shell {
-          padding: 20px 16px 212px;
+          padding: 20px 16px 158px;
         }
 
         .distribution-header {
           grid-template-columns: 1fr;
           grid-template-areas:
             "brand"
-            "version"
             "controls";
           justify-items: stretch;
           text-align: left;
-          padding: 18px 16px;
+          padding: 16px;
         }
 
         .distribution-brand {
           justify-self: center;
           justify-content: center;
           width: 100%;
-        }
-
-        .distribution-version {
-          justify-self: center;
-          justify-items: center;
-          text-align: center;
         }
 
         .distribution-controls {
@@ -1839,11 +1846,11 @@ function buildManifestoPageHtml(language) {
         }
 
         .language-switch-button {
-          min-width: 84px;
+          min-width: 54px;
         }
 
         .distribution-link-button {
-          min-width: 148px;
+          min-width: 120px;
         }
 
         .distribution-language-group {
