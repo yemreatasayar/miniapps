@@ -49,6 +49,7 @@ tek kaynak kod:**
 
 - **Yeni app eklemek = TEK yer yetmez.** Local shell'de kart görünmesi için `miniapps/src/App.tsx`'te **5 yer** güncellenmeli: (1) URL sabiti, (2) `INTERNAL_APPS`, (3) `SHARED_APP_DISPLAY_ORDER`, (4) `DEFAULT_AUTO_ATTACH_APP_IDS`, (5) `initialCustomerApps` içindeki **her müşteri**. Ayrıca: `miniapps/public/distribution-config.json` (`visibleAppIds` + `launchUrlOverrides`), `miniapps/src/DistributionApp.tsx` (`defaultApps` + `renderAppCardArt`), `local-runtime/launcher-config.json` (yeni port). (Kart çıkmıyorsa: müşteri ataması unutulmuştur.)
 - **Yeni port seçerken** önce `lsof -i :PORT` ile boş olduğunu doğrula (çakışma yaşandı).
+- **Public footer (`.distribution-header`) sabit konumlu** (`position: fixed; bottom: 0`); yüksekliği `--distribution-footer-height` CSS değişkeniyle workspace'e boşluk olarak rezerve edilir. Footer içeriğini değiştirince (satır ekle/çıkar) bu değişkeni **her breakpoint'te** (980/760/560px) güncelle, yoksa alt grid'de boşluk/üst üste binme olur. Mobilde (≤760px) sürüm metni (`.distribution-version` = "miniapps pack … by y.e.a.") `display:none` ile gizli; Manifesto + TR/ENG butonları küçültülmüş.
 
 ## Güncel durum
 
