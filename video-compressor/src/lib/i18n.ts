@@ -61,6 +61,8 @@ export type Strings = {
   cutTitle: string;
   cutDescEdited: (n: number, dur: string) => string;
   cutDescIdle: string;
+  cutUndo: string;
+  cutRedo: string;
   cutSplit: string;
   cutDelete: string;
   cutReset: string;
@@ -152,6 +154,8 @@ export const strings: Record<Lang, Strings> = {
     cutTitle: "Segment Yönetimi",
     cutDescEdited: (n, dur) => `${n} parça · ${dur} kalacak`,
     cutDescIdle: "Videoda kalacak bölgeleri belirleyin.",
+    cutUndo: "Geri Al",
+    cutRedo: "İleri Al",
     cutSplit: "Böl",
     cutDelete: "Sil",
     cutReset: "Sıfırla",
@@ -241,6 +245,8 @@ export const strings: Record<Lang, Strings> = {
     cutTitle: "Segment Editor",
     cutDescEdited: (n, dur) => `${n} segment${n > 1 ? "s" : ""} · ${dur} remaining`,
     cutDescIdle: "Define the regions to keep in the output.",
+    cutUndo: "Undo",
+    cutRedo: "Redo",
     cutSplit: "Split",
     cutDelete: "Delete",
     cutReset: "Reset",

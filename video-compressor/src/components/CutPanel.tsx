@@ -13,6 +13,8 @@ type DragState =
   | { kind: "seek" }
   | { kind: "trim"; segId: string; edge: "start" | "end" };
 
+const HISTORY_LIMIT = 5;
+
 function fmt(s: number): string {
   const m = Math.floor(s / 60);
   const sec = (s % 60).toFixed(1);
@@ -75,6 +77,23 @@ function playableToSourceTime(segments: Segment[], playableTime: number): number
   return segments[segments.length - 1].end;
 }
 
+function cloneSegments(segments: Segment[]): Segment[] {
+  return segments.map((segment) => ({ ...segment }));
+}
+
+function areSegmentsEqual(a: Segment[], b: Segment[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((segment, index) => {
+    const other = b[index];
+    return (
+      other &&
+      segment.id === other.id &&
+      segment.start === other.start &&
+      segment.end === other.end
+    );
+  });
+}
+
 export default function CutPanel({ video, settings, onSettingsChange, disabled }: Props) {
   const { t } = useLang();
   const duration = video.duration;
@@ -87,11 +106,14 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
   settingsRef.current = settings;
   const onChangeRef = useRef(onSettingsChange);
   onChangeRef.current = onSettingsChange;
+  const dragStartSegmentsRef = useRef<Segment[] | null>(null);
 
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [selectedSegId, setSelectedSegId] = useState<string | null>(null);
+  const [undoStack, setUndoStack] = useState<Segment[][]>([]);
+  const [redoStack, setRedoStack] = useState<Segment[][]>([]);
   const minimumSegmentDuration = 0.12;
 
   const sortedSegs = [...segments].sort((a, b) => a.start - b.start);
@@ -100,6 +122,42 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
     (segments.length === 1 && (segments[0].start > 0.1 || segments[0].end < duration - 0.1));
   const keptDuration = segments.reduce((a, s) => a + (s.end - s.start), 0);
   const currentPlayableTime = sourceToPlayableTime(sortedSegs, currentTime);
+
+  function rememberSegments(previousSegments: Segment[]): void {
+    setUndoStack((history) => [...history, cloneSegments(previousSegments)].slice(-HISTORY_LIMIT));
+    setRedoStack([]);
+  }
+
+  function applySegments(nextSegments: Segment[], options: { remember?: boolean } = { remember: true }): void {
+    const cur = settingsRef.current;
+    if (areSegmentsEqual(cur.segments, nextSegments)) return;
+    if (options.remember !== false) rememberSegments(cur.segments);
+    onChangeRef.current({ ...cur, segments: cloneSegments(nextSegments) });
+  }
+
+  function undoSegments(): void {
+    if (disabled || undoStack.length === 0) return;
+    const previous = undoStack[undoStack.length - 1];
+    const cur = settingsRef.current;
+    setUndoStack((history) => history.slice(0, -1));
+    setRedoStack((history) => [...history, cloneSegments(cur.segments)].slice(-HISTORY_LIMIT));
+    onChangeRef.current({ ...cur, segments: cloneSegments(previous) });
+    if (!previous.some((segment) => segment.id === selectedSegId)) {
+      setSelectedSegId(null);
+    }
+  }
+
+  function redoSegments(): void {
+    if (disabled || redoStack.length === 0) return;
+    const next = redoStack[redoStack.length - 1];
+    const cur = settingsRef.current;
+    setRedoStack((history) => history.slice(0, -1));
+    setUndoStack((history) => [...history, cloneSegments(cur.segments)].slice(-HISTORY_LIMIT));
+    onChangeRef.current({ ...cur, segments: cloneSegments(next) });
+    if (!next.some((segment) => segment.id === selectedSegId)) {
+      setSelectedSegId(null);
+    }
+  }
 
   // Deleted regions between kept segments
   const gaps: { start: number; end: number }[] = [];
@@ -181,6 +239,13 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
     };
   }, []);
 
+  useEffect(() => {
+    setUndoStack([]);
+    setRedoStack([]);
+    dragStartSegmentsRef.current = null;
+    setSelectedSegId(null);
+  }, [video.previewUrl]);
+
   // ── Space bar: play/pause ──────────────────────────────────────────────
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -209,10 +274,7 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
     const left: Segment = { id: crypto.randomUUID(), start: target.start, end: t };
     const right: Segment = { id: crypto.randomUUID(), start: t, end: target.end };
 
-    onChangeRef.current({
-      ...cur,
-      segments: cur.segments.flatMap((segment) => (segment.id === target.id ? [left, right] : [segment])),
-    });
+    applySegments(cur.segments.flatMap((segment) => (segment.id === target.id ? [left, right] : [segment])));
     setSelectedSegId(left.id);
   }
 
@@ -230,10 +292,7 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
     const nextSelected = sorted[targetIndex - 1] ?? sorted[targetIndex + 1] ?? null;
     const nextTime = nextSelected ? nextSelected.start : 0;
 
-    onChangeRef.current({
-      ...cur,
-      segments: cur.segments.filter((segment) => segment.id !== id),
-    });
+    applySegments(cur.segments.filter((segment) => segment.id !== id));
     setSelectedSegId(nextSelected?.id ?? null);
 
     const el = videoRef.current;
@@ -253,6 +312,19 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
         return;
       }
 
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) redoSegments();
+        else undoSegments();
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        redoSegments();
+        return;
+      }
+
       if (e.key.toLowerCase() === "s") {
         e.preventDefault();
         splitAtPlayhead();
@@ -260,7 +332,7 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [currentTime, selectedSegId]);
+  }, [currentTime, selectedSegId, undoStack, redoStack, disabled]);
 
   // ── Global mouse during drag ───────────────────────────────────────────
   useEffect(() => {
@@ -303,7 +375,17 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
       onChangeRef.current({ ...cur, segments: cur.segments.map(s => s.id === ds.segId ? newSeg : s) });
     }
 
-    function onUp() { setDragState(null); }
+    function onUp() {
+      if (ds.kind === "trim" && dragStartSegmentsRef.current) {
+        const before = dragStartSegmentsRef.current;
+        const after = settingsRef.current.segments;
+        if (!areSegmentsEqual(before, after)) {
+          rememberSegments(before);
+        }
+      }
+      dragStartSegmentsRef.current = null;
+      setDragState(null);
+    }
 
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
@@ -346,6 +428,7 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
     if (disabled) return;
     e.stopPropagation();
     e.preventDefault();
+    dragStartSegmentsRef.current = cloneSegments(settingsRef.current.segments);
     setDragState({ kind: "trim", segId, edge });
   }
 
@@ -357,7 +440,7 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
   }
 
   function reset() {
-    onSettingsChange({ ...settings, segments: [{ id: crypto.randomUUID(), start: 0, end: duration }] });
+    applySegments([{ id: crypto.randomUUID(), start: 0, end: duration }]);
     setSelectedSegId(null);
   }
 
@@ -395,6 +478,8 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
   const tlCursor = !dragState ? "default" : dragState.kind === "seek" ? "col-resize" : "default";
   const canSplit = segments.some((segment) => currentTime > segment.start + minimumSegmentDuration && currentTime < segment.end - minimumSegmentDuration);
   const canDeleteSelected = Boolean(selectedSegId) && segments.length > 1;
+  const canUndo = undoStack.length > 0;
+  const canRedo = redoStack.length > 0;
   const transportPct = keptDuration > 0 ? (currentPlayableTime / keptDuration) * 100 : 0;
 
   return (
@@ -409,6 +494,12 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
           </p>
         </div>
         <div className="cut-actions">
+          <button type="button" className="cut-action-btn" onClick={undoSegments} disabled={disabled || !canUndo}>
+            {t.cutUndo}
+          </button>
+          <button type="button" className="cut-action-btn" onClick={redoSegments} disabled={disabled || !canRedo}>
+            {t.cutRedo}
+          </button>
           <button type="button" className="cut-action-btn" onClick={splitAtPlayhead} disabled={disabled || !canSplit}>
             {t.cutSplit}
           </button>
