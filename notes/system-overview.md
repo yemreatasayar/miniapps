@@ -239,6 +239,7 @@ git commit && git push
 - **Dil:** `LangContext.tsx` + `i18n.ts` — URL path'e göre auto-detect, toggle yok
 - **Footer logo:** `isDistribution` guard arkasında — sadece `miniapps.tr` hostname'inde görünür
 - **`miniapps-logo-dark.svg`:** `video-compressor/public/assets/` içinde bulunması gerekir (build script kopyalar)
+- **Segment geçmişi:** `CutPanel.tsx` sadece `settings.segments` için 5 adımlık undo/redo tutar. `Böl`, `Sil`, `Sıfırla` ve segment kenarı trim hareketleri geçmişe girer; oynatma/scrub hareketleri geçmişi kirletmez. Trim sürükleme boyunca anlık UI güncellenir, `mouseup` sonrası tek hareket olarak kaydedilir.
 
 ---
 
