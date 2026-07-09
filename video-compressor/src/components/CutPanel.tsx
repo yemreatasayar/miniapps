@@ -14,6 +14,8 @@ type DragState =
   | { kind: "trim"; segId: string; edge: "start" | "end" };
 
 const HISTORY_LIMIT = 5;
+const KEYBOARD_NUDGE_SECONDS = 0.1;
+const KEYBOARD_NUDGE_FAST_SECONDS = 1;
 
 function fmt(s: number): string {
   const m = Math.floor(s / 60);
@@ -405,6 +407,7 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
   function handleBgDown(e: React.MouseEvent) {
     if (disabled) return;
     e.preventDefault();
+    timelineRef.current?.focus();
     setSelectedSegId(null);
     const t = clampToPlayableTime(sortedSegs, tlGetT(e));
     const el = videoRef.current;
@@ -417,6 +420,7 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
     if (disabled) return;
     e.stopPropagation();
     e.preventDefault();
+    timelineRef.current?.focus();
     setSelectedSegId(seg.id);
     const t = clampToPlayableTime(sortedSegs, tlGetT(e));
     const el = videoRef.current;
@@ -428,6 +432,7 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
     if (disabled) return;
     e.stopPropagation();
     e.preventDefault();
+    timelineRef.current?.focus();
     dragStartSegmentsRef.current = cloneSegments(settingsRef.current.segments);
     setDragState({ kind: "trim", segId, edge });
   }
@@ -436,7 +441,25 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
     if (disabled) return;
     e.stopPropagation();
     e.preventDefault();
+    timelineRef.current?.focus();
     setDragState({ kind: "seek" });
+  }
+
+  function movePlayheadBy(deltaSeconds: number) {
+    if (disabled) return;
+    const nextTime = clampToPlayableTime(sortedSegs, currentTime + deltaSeconds);
+    const el = videoRef.current;
+    if (el) {
+      el.currentTime = nextTime;
+    }
+    setCurrentTime(nextTime);
+  }
+
+  function handleTimelineKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    const step = e.shiftKey ? KEYBOARD_NUDGE_FAST_SECONDS : KEYBOARD_NUDGE_SECONDS;
+    movePlayheadBy(e.key === "ArrowRight" ? step : -step);
   }
 
   function reset() {
@@ -539,7 +562,14 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
         <div
           ref={timelineRef}
           className={`timeline-track${disabled ? " tl-disabled" : ""}`}
+          tabIndex={disabled ? -1 : 0}
+          role="slider"
+          aria-label={t.cutPlayheadTitle}
+          aria-valuemin={0}
+          aria-valuemax={Math.max(0, duration)}
+          aria-valuenow={currentTime}
           onMouseDown={handleBgDown}
+          onKeyDown={handleTimelineKeyDown}
           style={{ cursor: tlCursor }}
         >
           {/* Deleted regions */}
