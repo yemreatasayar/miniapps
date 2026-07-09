@@ -1,8 +1,8 @@
 import { PDFDocument } from "pdf-lib";
-import { isPdfHelperDisabled } from "./compress-client";
 import { getPdfLocale, pdfCopy } from "./i18n";
 
 const PDF_HELPER_SERVER = "http://127.0.0.1:4184";
+const OFFICE_HELPER_DISABLED = import.meta.env.VITE_MINIAPPS_DISABLE_PDF_HELPER === "true";
 
 const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
 const OFFICE_EXTENSIONS = new Set([
@@ -175,7 +175,7 @@ export async function convertImagesToPdf(files: File[]): Promise<ConvertResult> 
 }
 
 export async function checkConvertHelperStatus(): Promise<ConvertHelperStatus> {
-  if (isPdfHelperDisabled()) {
+  if (OFFICE_HELPER_DISABLED) {
     return { helperDisabled: true, officeAvailable: false, version: null };
   }
 
@@ -198,7 +198,7 @@ export async function checkConvertHelperStatus(): Promise<ConvertHelperStatus> {
 }
 
 export async function convertOfficeToPdf(file: File): Promise<ConvertResult> {
-  if (isPdfHelperDisabled()) {
+  if (OFFICE_HELPER_DISABLED) {
     return { ok: false, message: clientCopy().helperDisabled };
   }
 

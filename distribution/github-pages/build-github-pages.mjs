@@ -1144,7 +1144,7 @@ function runBuild(cwd, script, outDir) {
     MINIAPPS_BASE: "./",
     MINIAPPS_OUT_DIR: outDir,
     VITE_MINIAPPS_WEB_DEPLOYMENT: "true",
-    VITE_MINIAPPS_DISABLE_PDF_HELPER: "true",
+    VITE_MINIAPPS_DISABLE_PDF_HELPER: "false",
   };
 
   if (path.basename(cwd) === "stem-splitter") {
@@ -1171,7 +1171,7 @@ function runShellBuild(outDir) {
     MINIAPPS_OUT_DIR: outDir,
     VITE_MINIAPPS_ENABLE_PWA: "true",
     VITE_MINIAPPS_WEB_DEPLOYMENT: "true",
-    VITE_MINIAPPS_DISABLE_PDF_HELPER: "true",
+    VITE_MINIAPPS_DISABLE_PDF_HELPER: "false",
   };
 
   const result = spawnSync(npmCmd, ["run", "build:distribution"], {

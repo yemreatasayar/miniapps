@@ -29,6 +29,10 @@ const ALLOWED_CONVERT_EXTENSIONS = new Set([
   ".ppsx",
   ".odp",
 ]);
+const ALLOWED_BROWSER_ORIGINS = new Set([
+  "https://miniapps.tr",
+  "https://www.miniapps.tr",
+]);
 
 const COMMON_ARGS = [
   "-dCompatibilityLevel=1.4",
@@ -82,8 +86,14 @@ function isLocalOrigin(origin) {
   }
 }
 
+function isAllowedBrowserOrigin(origin) {
+  if (!origin) return false;
+  if (ALLOWED_BROWSER_ORIGINS.has(origin)) return true;
+  return isLocalOrigin(origin);
+}
+
 function buildCorsHeaders(origin) {
-  const allowedOrigin = isLocalOrigin(origin) ? origin : "http://127.0.0.1:4313";
+  const allowedOrigin = isAllowedBrowserOrigin(origin) ? origin : "http://127.0.0.1:4313";
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
