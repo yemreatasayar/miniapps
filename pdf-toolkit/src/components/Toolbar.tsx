@@ -1,4 +1,5 @@
 import type { ImageExportFormat, LoadedPdf, PdfPage } from "../lib/types";
+import { pdfCopy, type PdfLocale } from "../lib/i18n";
 
 type ToolbarProps = {
   loadedPdf: LoadedPdf | null;
@@ -19,6 +20,7 @@ type ToolbarProps = {
   onImageExportFormatChange: (format: ImageExportFormat) => void;
   onExportImages: () => void;
   busy?: boolean;
+  locale: PdfLocale;
 };
 
 export default function Toolbar({
@@ -40,34 +42,36 @@ export default function Toolbar({
   onImageExportFormatChange,
   onExportImages,
   busy = false,
+  locale,
 }: ToolbarProps) {
   const hasPdf = Boolean(loadedPdf);
   const hasSelection = selectedPages.size > 0;
   const hasRotations = pages.some((page) => page.rotation !== 0);
+  const copy = pdfCopy[locale].toolbar;
 
   return (
     <div className="toolbar">
       <div className="toolbar-main-group">
         <button type="button" className="toolbar-primary" onClick={onLoadNew} disabled={busy}>
-          Yeni PDF Yükle
+          {copy.loadNew}
         </button>
         <button type="button" onClick={onSplit} disabled={!hasPdf || busy}>
-          Böl
+          {copy.split}
         </button>
         <button type="button" onClick={onMerge} disabled={!hasPdf || busy}>
-          Birleştir
+          {copy.merge}
         </button>
         <button type="button" onClick={onDeleteSelected} disabled={!hasSelection || busy}>
-          Sil
+          {copy.delete}
         </button>
         <button type="button" onClick={onApplyRotations} disabled={!hasRotations || busy}>
-          Rotasyonu Uygula
+          {copy.applyRotations}
         </button>
         <button type="button" onClick={onUndo} disabled={!canUndo || busy}>
-          Geri Al
+          {copy.undo}
         </button>
         <button type="button" onClick={onRedo} disabled={!canRedo || busy}>
-          İleri Al
+          {copy.redo}
         </button>
       </div>
 
@@ -77,14 +81,14 @@ export default function Toolbar({
             value={imageExportFormat}
             onChange={(event) => onImageExportFormatChange(event.target.value as ImageExportFormat)}
             disabled={!hasPdf || busy}
-            aria-label="Dışa aktarma formatı"
+            aria-label={copy.exportFormatLabel}
           >
             <option value="png">PNG</option>
             <option value="jpg">JPG</option>
             <option value="pdf">PDF</option>
           </select>
           <button type="button" onClick={onExportImages} disabled={!hasPdf || busy}>
-            Dışarı Aktar
+            {copy.export}
           </button>
         </div>
         {compressAvailable === true ? (
@@ -93,9 +97,9 @@ export default function Toolbar({
             className="toolbar-repair"
             onClick={onRepair}
             disabled={!hasPdf || busy}
-            title="Acrobat uyumluluğu için Ghostscript ile PDF yapısını onar"
+            title={copy.repairTitle}
           >
-            Acrobat Onar
+            {copy.repair}
           </button>
         ) : null}
       </div>

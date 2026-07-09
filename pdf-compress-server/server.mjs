@@ -4,15 +4,31 @@ import fs from "node:fs/promises";
 import { existsSync } from "node:fs";
 import http from "node:http";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = "127.0.0.1";
 const PORT = Number.parseInt(process.env.MINIAPPS_PDF_HELPER_PORT || "4184", 10);
 const MAX_PDF_FILE_BYTES = 100 * 1024 * 1024;
-const MAX_MULTIPART_BODY_BYTES = MAX_PDF_FILE_BYTES + 2 * 1024 * 1024;
+const MAX_CONVERT_FILE_BYTES = 150 * 1024 * 1024;
+const MAX_MULTIPART_BODY_BYTES = Math.max(MAX_PDF_FILE_BYTES, MAX_CONVERT_FILE_BYTES) + 2 * 1024 * 1024;
 const ALLOWED_PDF_MIME_TYPES = new Set(["application/pdf", "application/x-pdf", ""]);
+const ALLOWED_CONVERT_EXTENSIONS = new Set([
+  ".doc",
+  ".docx",
+  ".odt",
+  ".rtf",
+  ".txt",
+  ".xls",
+  ".xlsx",
+  ".ods",
+  ".ppt",
+  ".pptx",
+  ".pps",
+  ".ppsx",
+  ".odp",
+]);
 
 const COMMON_ARGS = [
   "-dCompatibilityLevel=1.4",
@@ -149,6 +165,76 @@ function detectGhostscript() {
 
 let ghostscript = detectGhostscript();
 
+function buildLibreOfficeCandidates() {
+  const candidates = [];
+
+  if (process.env.MINIAPPS_LIBREOFFICE_PATH) {
+    candidates.push(
+      process.env.MINIAPPS_LIBREOFFICE_PATH.startsWith(".")
+        ? join(__dirname, process.env.MINIAPPS_LIBREOFFICE_PATH)
+        : process.env.MINIAPPS_LIBREOFFICE_PATH
+    );
+  }
+
+  if (process.platform === "darwin") {
+    candidates.push(
+      "/Applications/LibreOffice.app/Contents/MacOS/soffice",
+      "/Applications/LibreOffice.app/Contents/MacOS/libreoffice",
+      "/Applications/LibreOfficeDev.app/Contents/MacOS/soffice",
+      "/opt/homebrew/bin/soffice",
+      "/usr/local/bin/soffice"
+    );
+
+    if (process.env.HOME) {
+      candidates.push(
+        join(
+          process.env.HOME,
+          ".cache/codex-runtimes/codex-primary-runtime/dependencies/native/libreoffice-headless/libreoffice/LibreOfficeDev.app/Contents/MacOS/soffice"
+        )
+      );
+    }
+  } else if (process.platform === "win32") {
+    candidates.push(
+      "C:\\Program Files\\LibreOffice\\program\\soffice.exe",
+      "C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe"
+    );
+  }
+
+  candidates.push("soffice", "libreoffice");
+  return [...new Set(candidates)];
+}
+
+function detectLibreOffice() {
+  for (const candidate of buildLibreOfficeCandidates()) {
+    const isLocalFile = candidate.includes("/") || candidate.includes("\\");
+    if (isLocalFile && !existsSync(candidate)) {
+      continue;
+    }
+
+    const probe = spawnSync(candidate, ["--version"], {
+      encoding: "utf8",
+      shell: false,
+      timeout: 5000,
+    });
+
+    if (probe.status === 0) {
+      return {
+        available: true,
+        command: candidate,
+        version: (probe.stdout || probe.stderr).trim().split(/\r?\n/)[0] || "unknown",
+      };
+    }
+  }
+
+  return {
+    available: false,
+    command: null,
+    version: null,
+  };
+}
+
+let libreOffice = detectLibreOffice();
+
 async function safeUnlink(filePath) {
   try {
     await fs.unlink(filePath);
@@ -161,6 +247,10 @@ function isPdfFile(file) {
   const lowerName = file.name.toLowerCase();
   const mimeType = (file.type || "").toLowerCase();
   return lowerName.endsWith(".pdf") && ALLOWED_PDF_MIME_TYPES.has(mimeType);
+}
+
+function getConvertExtension(file) {
+  return extname(file?.name || "").toLowerCase();
 }
 
 function validatePdfFile(file) {
@@ -181,6 +271,27 @@ function validatePdfFile(file) {
   }
 
   return { ok: true, file };
+}
+
+function validateConvertFile(file) {
+  if (!file || !Buffer.isBuffer(file.bytes)) {
+    return { ok: false, message: "Missing file." };
+  }
+
+  const extension = getConvertExtension(file);
+  if (!ALLOWED_CONVERT_EXTENSIONS.has(extension)) {
+    return { ok: false, message: "This file type cannot be converted to PDF." };
+  }
+
+  if (file.size <= 0) {
+    return { ok: false, message: "Empty files cannot be converted." };
+  }
+
+  if (file.size > MAX_CONVERT_FILE_BYTES) {
+    return { ok: false, message: "File size exceeds the conversion limit." };
+  }
+
+  return { ok: true, file, extension };
 }
 
 function sendJson(response, statusCode, data, origin) {
@@ -346,6 +457,67 @@ async function processPdfThroughGhostscript(file, args) {
   }
 }
 
+function safeDownloadFileName(fileName) {
+  return basename(fileName)
+    .replace(/[^\w.\-() ]+/g, "-")
+    .replace(/\s+/g, " ")
+    .trim() || "converted.pdf";
+}
+
+async function convertDocumentThroughLibreOffice(file, extension) {
+  const workDir = await fs.mkdtemp(join(tmpdir(), "miniapps-pdf-convert-"));
+  const outputDir = join(workDir, "out");
+  const inputBaseName = `input-${randomUUID()}${extension}`;
+  const inputPath = join(workDir, inputBaseName);
+
+  try {
+    await fs.mkdir(outputDir, { recursive: true });
+    await fs.writeFile(inputPath, file.bytes);
+
+    const result = spawnSync(
+      libreOffice.command,
+      [
+        "--headless",
+        "--nologo",
+        "--nofirststartwizard",
+        "--nodefault",
+        "--nolockcheck",
+        "--norestore",
+        "--convert-to",
+        "pdf",
+        "--outdir",
+        outputDir,
+        inputPath,
+      ],
+      {
+        encoding: "utf8",
+        shell: false,
+        timeout: 180000,
+        maxBuffer: 10 * 1024 * 1024,
+      }
+    );
+
+    if (result.status !== 0) {
+      throw new Error(result.stderr?.trim() || result.stdout?.trim() || "LibreOffice conversion failed.");
+    }
+
+    const expectedOutputPath = join(outputDir, inputBaseName.replace(/\.[^.]+$/i, ".pdf"));
+    if (existsSync(expectedOutputPath)) {
+      return await fs.readFile(expectedOutputPath);
+    }
+
+    const generatedFiles = await fs.readdir(outputDir);
+    const generatedPdf = generatedFiles.find((entry) => entry.toLowerCase().endsWith(".pdf"));
+    if (!generatedPdf) {
+      throw new Error("LibreOffice did not create a PDF output.");
+    }
+
+    return await fs.readFile(join(outputDir, generatedPdf));
+  } finally {
+    await fs.rm(workDir, { recursive: true, force: true });
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   const origin = Array.isArray(req.headers.origin) ? req.headers.origin[0] : req.headers.origin;
 
@@ -359,6 +531,7 @@ const server = http.createServer(async (req, res) => {
 
   if (url.pathname === "/health" && req.method === "GET") {
     ghostscript = detectGhostscript();
+    libreOffice = detectLibreOffice();
     sendJson(
       res,
       200,
@@ -368,6 +541,9 @@ const server = http.createServer(async (req, res) => {
         command: ghostscript.command,
         bundled: ghostscript.bundled,
         version: ghostscript.version,
+        libreOffice: libreOffice.available,
+        libreOfficeCommand: libreOffice.command,
+        libreOfficeVersion: libreOffice.version,
         platform: `${process.platform}-${process.arch}`,
       },
       origin
@@ -375,7 +551,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (url.pathname !== "/repair" && url.pathname !== "/compress") {
+  if (url.pathname !== "/repair" && url.pathname !== "/compress" && url.pathname !== "/convert") {
     sendText(res, 404, "Not found.", origin);
     return;
   }
@@ -385,15 +561,45 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  ghostscript = detectGhostscript();
-  if (!ghostscript.available) {
-    sendText(res, 503, "Ghostscript is unavailable on this device.", origin);
-    return;
-  }
-
   try {
     const body = await readRequestBody(req, MAX_MULTIPART_BODY_BYTES);
     const { fields, file } = parseMultipartForm(req, body);
+
+    if (url.pathname === "/convert") {
+      libreOffice = detectLibreOffice();
+      if (!libreOffice.available) {
+        sendText(res, 503, "LibreOffice is unavailable on this device.", origin);
+        return;
+      }
+
+      const validation = validateConvertFile(file);
+      if (!validation.ok) {
+        sendText(res, 400, validation.message, origin);
+        return;
+      }
+
+      const outputBytes = await convertDocumentThroughLibreOffice(validation.file, validation.extension);
+      const outputName = safeDownloadFileName(validation.file.name.replace(/\.[^.]+$/i, ".pdf"));
+
+      sendBuffer(
+        res,
+        200,
+        outputBytes,
+        {
+          "Content-Disposition": `attachment; filename="${outputName}"`,
+          "Content-Type": "application/pdf",
+        },
+        origin
+      );
+      return;
+    }
+
+    ghostscript = detectGhostscript();
+    if (!ghostscript.available) {
+      sendText(res, 503, "Ghostscript is unavailable on this device.", origin);
+      return;
+    }
+
     const validation = validatePdfFile(file);
 
     if (!validation.ok) {
@@ -433,8 +639,12 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   ghostscript = detectGhostscript();
+  libreOffice = detectLibreOffice();
   console.log(`pdf-compress-server listening on http://${HOST}:${PORT}`);
   console.log(
     `Ghostscript: ${ghostscript.available ? `${ghostscript.command} (${ghostscript.version})` : "unavailable"}`
+  );
+  console.log(
+    `LibreOffice: ${libreOffice.available ? `${libreOffice.command} (${libreOffice.version})` : "unavailable"}`
   );
 });

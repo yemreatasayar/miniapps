@@ -28,7 +28,7 @@ export type CompressStatus =
   | { kind: "unavailable" }
   | { kind: "web-disabled"; message: string };
 
-export type ActiveTab = "edit" | "text" | "table" | "compress" | "watermark";
+export type ActiveTab = "edit" | "convert" | "text" | "table" | "compress" | "watermark";
 export type TextExtractMode = "text-layer" | "ocr";
 
 export type ExtractedTextBlockKind = "heading" | "subheading" | "body";

@@ -15,14 +15,16 @@ export default function WatermarkPreview({
   settings,
   selectedPages,
 }: WatermarkPreviewProps) {
-  const [previewThumbs, setPreviewThumbs] = useState<string[]>([]);
+  const [previewThumbsByPage, setPreviewThumbsByPage] = useState<Record<number, string>>({});
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadPreview() {
       if (!fileBytes || pages.length === 0) {
-        setPreviewThumbs([]);
+        setPreviewThumbsByPage({});
+        setPreviewError(null);
         return;
       }
 
@@ -30,7 +32,8 @@ export default function WatermarkPreview({
         settings.type === "text" ? settings.text.trim().length > 0 : settings.imageDataUrl !== null;
 
       if (!hasRenderableWatermark) {
-        setPreviewThumbs([]);
+        setPreviewThumbsByPage({});
+        setPreviewError(null);
         return;
       }
 
@@ -40,19 +43,24 @@ export default function WatermarkPreview({
           : pages.map((page) => page.pageIndex);
 
       try {
+        const previewPageIndices = pages.map((page) => page.pageIndex);
         const thumbs = await renderWatermarkPreviewPages(
           fileBytes,
           settings,
           targetPageIndices,
-          pages.map((page) => page.pageIndex),
+          previewPageIndices,
         );
 
         if (!cancelled) {
-          setPreviewThumbs(thumbs);
+          setPreviewThumbsByPage(
+            Object.fromEntries(previewPageIndices.map((pageIndex, index) => [pageIndex, thumbs[index]]))
+          );
+          setPreviewError(null);
         }
       } catch {
         if (!cancelled) {
-          setPreviewThumbs([]);
+          setPreviewThumbsByPage({});
+          setPreviewError("Önizleme hazırlanamadı. Filigran yine de uygulanabilir.");
         }
       }
     }
@@ -75,11 +83,12 @@ export default function WatermarkPreview({
   return (
     <div className="watermark-preview-pane">
       <p className="watermark-preview-label">Önizleme</p>
+      {previewError ? <p className="watermark-preview-error">{previewError}</p> : null}
       <div className="watermark-preview-grid">
         {pages.map((page, i) => (
           <div key={page.pageIndex} className="watermark-preview-card">
             <img
-              src={previewThumbs[i] ?? page.thumbnail}
+              src={previewThumbsByPage[page.pageIndex] ?? page.thumbnail}
               alt={`Watermark önizleme sayfa ${i + 1}`}
               className="watermark-preview-canvas"
             />

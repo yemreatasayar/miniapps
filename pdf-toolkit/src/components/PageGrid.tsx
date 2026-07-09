@@ -65,10 +65,20 @@ export default function PageGrid({
               <span>Seç</span>
             </label>
             <div className="page-rotate-actions">
-              <button type="button" onClick={() => onRotate(page.pageIndex, "ccw")}>
+              <button
+                type="button"
+                onClick={() => onRotate(page.pageIndex, "ccw")}
+                aria-label={`Sayfa ${visibleIndex + 1} sola döndür`}
+                title="Sola döndür"
+              >
                 ↺
               </button>
-              <button type="button" onClick={() => onRotate(page.pageIndex, "cw")}>
+              <button
+                type="button"
+                onClick={() => onRotate(page.pageIndex, "cw")}
+                aria-label={`Sayfa ${visibleIndex + 1} sağa döndür`}
+                title="Sağa döndür"
+              >
                 ↻
               </button>
             </div>

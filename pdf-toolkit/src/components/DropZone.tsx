@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { getPdfLocale, pdfCopy } from "../lib/i18n";
 
 type DropZoneProps = {
   onFileSelected: (file: File) => void;
@@ -8,6 +9,7 @@ type DropZoneProps = {
 export default function DropZone({ onFileSelected, loading = false }: DropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const copy = pdfCopy[getPdfLocale()].dropZone;
 
   function pickFile(fileList: FileList | null) {
     const file = fileList?.[0];
@@ -51,8 +53,8 @@ export default function DropZone({ onFileSelected, loading = false }: DropZonePr
         }}
       />
       <div className="drop-zone-inner">
-        <strong>{loading ? "PDF yükleniyor..." : "PDF'ini buraya sürükle veya tıkla"}</strong>
-        <span>Tek PDF yükleyebilir, sonra sayfaları bölebilir, birleştirebilir, silebilir veya döndürebilirsin.</span>
+        <strong>{loading ? copy.loading : copy.title}</strong>
+        <span>{copy.description}</span>
       </div>
     </button>
   );

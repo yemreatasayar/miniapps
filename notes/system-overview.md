@@ -230,6 +230,18 @@ git commit && git push
 
 ---
 
+## pdf-toolkit Özel Notlar
+
+- **Dil:** Yeni PDF dönüşüm ve yükleme kopyaları `pdf-toolkit/src/lib/i18n.ts` üzerinden TR/EN çalışır. EN algısı public app yolundaki `/apps-en/` veya `document.documentElement.lang === "en"` ile yapılır.
+- **PDF'e Dönüştür:** `ConvertPanel.tsx` landing ekranında ve PDF açıkken `Dönüştür` sekmesinde kullanılır.
+- **Dönüştürme akışı:** Dosya seçmek dönüşümü veya indirmeyi otomatik başlatmaz. Kullanıcı önce `PDF'e Dönüştür`, çıktı hazır olunca ayrıca `PDF'i indir` der.
+- **Görsel → PDF:** JPG/PNG/WebP dönüşümü tarayıcıda `pdf-lib` ile yapılır; dosya sunucuya gitmez.
+- **Office → PDF:** DOC/DOCX/ODT/RTF/TXT/XLS/XLSX/ODS/PPT/PPTX/PPS/PPSX/ODP dönüşümü sadece local helper üzerinden çalışır. `pdf-compress-server` içindeki `/convert` endpoint'i LibreOffice/soffice algılar ve `--headless --convert-to pdf` ile çıktı üretir. PPTX içinde EMF/Office ikonları varsa çıktı sadakati LibreOffice motoruyla sınırlı olabilir; stabil LibreOffice, bundled LibreOfficeDev'e göre tercih edilir.
+- **Public web sınırı:** `miniapps.tr` tarafında helper kapalı olduğu için Office dönüşümü local-only kalır; görsel dönüşümü web'de de çalışır.
+- **Helper health:** `/health` artık Ghostscript yanında `libreOffice`, `libreOfficeCommand`, `libreOfficeVersion` alanlarını döner.
+
+---
+
 ## video-compressor Özel Notlar
 
 - **FFmpeg:** `@ffmpeg/ffmpeg` WASM v0.12 — COOP/COEP header'ları zorunlu (SharedArrayBuffer için)

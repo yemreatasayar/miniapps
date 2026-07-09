@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import CompressPanel from "./components/CompressPanel";
+import ConvertPanel from "./components/ConvertPanel";
 import DropZone from "./components/DropZone";
 import PageGrid from "./components/PageGrid";
 import TableExtractPanel from "./components/TableExtractPanel";
@@ -36,6 +37,16 @@ import {
   zipFileName,
 } from "./lib/pdf-ops";
 import { buildDocxBlobFromExtractedText } from "./lib/text-docx";
+import {
+  checkConvertHelperStatus,
+  convertImagesToPdf,
+  convertOfficeToPdf,
+  getFileExtension,
+  isSupportedImageFile,
+  isSupportedOfficeFile,
+} from "./lib/convert-client";
+import type { ConvertHelperStatus } from "./lib/convert-client";
+import { getPdfLocale, pdfCopy } from "./lib/i18n";
 import type {
   ActiveTab,
   CompressPreset,
@@ -93,7 +104,14 @@ function buildTableExtractionContextKey(loadedPdf: LoadedPdf | null, selectedPag
 
 const isDistribution = window.location.hostname === "miniapps.tr";
 
+type ConvertedPdfState = {
+  fileName: string;
+  fileBytes: Uint8Array;
+  sourceFormat: string;
+};
+
 export default function App() {
+  const copy = pdfCopy[getPdfLocale()];
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => readStoredValue(ACTIVE_TAB_KEY, "edit"));
   const [loadedPdf, setLoadedPdf] = useState<LoadedPdf | null>(null);
   const [pages, setPages] = useState<PdfPage[]>([]);
@@ -112,6 +130,10 @@ export default function App() {
   );
   const [compressStatus, setCompressStatus] = useState<CompressStatus>({ kind: "idle" });
   const [compressAvailable, setCompressAvailable] = useState<boolean | null>(null);
+  const [convertHelperStatus, setConvertHelperStatus] = useState<ConvertHelperStatus | null>(null);
+  const [convertSelection, setConvertSelection] = useState<File[]>([]);
+  const [convertedPdf, setConvertedPdf] = useState<ConvertedPdfState | null>(null);
+  const [convertStatusMessage, setConvertStatusMessage] = useState<string | null>(null);
   const [extractedText, setExtractedText] = useState<ExtractedTextDocument | null>(null);
   const [extractedTables, setExtractedTables] = useState<ExtractedTableDocument | null>(null);
   const [tableExtractionContextKey, setTableExtractionContextKey] = useState<string | null>(null);
@@ -133,6 +155,7 @@ export default function App() {
         setCompressStatus({ kind: "unavailable" });
       }
     });
+    checkConvertHelperStatus().then(setConvertHelperStatus);
   }, []);
 
   useEffect(() => {
@@ -253,6 +276,9 @@ export default function App() {
       setTablePreviewPageNumber(null);
       setActiveTab("edit");
       setCompressStatus({ kind: "idle" });
+      setConvertSelection([]);
+      setConvertedPdf(null);
+      setConvertStatusMessage(null);
       setToast(`${file.name} yüklendi.`);
     } catch (error) {
       setToast(error instanceof Error ? error.message : "PDF yüklenemedi.");
@@ -300,6 +326,24 @@ export default function App() {
     setPages(nextLoadedPdf.pages);
     setSelectedPages(new Set());
     if (message) setToast(message);
+  }
+
+  async function loadConvertedPdf(fileName: string, fileBytes: Uint8Array, message: string, nextTab: ActiveTab = "convert") {
+    const nextLoadedPdf = await loadPdfFromBytes(fileName, fileBytes);
+    setLoadedPdf(nextLoadedPdf);
+    setPages(nextLoadedPdf.pages);
+    setSelectedPages(new Set());
+    setUndoStack([]);
+    setRedoStack([]);
+    setExtractedText(null);
+    setExtractedTables(null);
+    setTableExtractionContextKey(null);
+    setTextExtractStatus(null);
+    setTableExtractStatus(null);
+    setTablePreviewPageNumber(null);
+    setActiveTab(nextTab);
+    setCompressStatus({ kind: "idle" });
+    setToast(message);
   }
 
   async function replaceLoadedPdfWithHistory(fileName: string, fileBytes: Uint8Array, message?: string) {
@@ -669,6 +713,84 @@ export default function App() {
     }
   }
 
+  function handleConvertSelection(files: File[]) {
+    setConvertSelection(files);
+    setConvertedPdf(null);
+    setConvertStatusMessage(null);
+  }
+
+  function handleDownloadConvertedPdf() {
+    if (!convertedPdf) return;
+    downloadBytes(convertedPdf.fileBytes, convertedPdf.fileName);
+    trackAppEvent("export_download", { export_format: "pdf", file_count: 1 });
+  }
+
+  async function handleConvertFiles() {
+    const files = convertSelection;
+    if (files.length === 0) return;
+
+    const imageFiles = files.filter(isSupportedImageFile);
+    const officeFiles = files.filter(isSupportedOfficeFile);
+    const unsupportedFiles = files.filter((file) => !isSupportedImageFile(file) && !isSupportedOfficeFile(file));
+
+    if (unsupportedFiles.length > 0) {
+      setToast(copy.status.unsupportedFile(unsupportedFiles[0]?.name ?? ""));
+      return;
+    }
+
+    if (imageFiles.length > 0 && officeFiles.length > 0) {
+      setToast(copy.status.mixedGroups);
+      return;
+    }
+
+    if (officeFiles.length > 1) {
+      setToast(copy.status.singleOfficeOnly);
+      return;
+    }
+
+    try {
+      setBusy(true);
+      setConvertStatusMessage(copy.status.preparingConvert);
+
+      const result =
+        imageFiles.length > 0
+          ? await convertImagesToPdf(imageFiles)
+          : await convertOfficeToPdf(officeFiles[0] as File);
+
+      if (!result.ok) {
+        setConvertStatusMessage(result.message);
+        setToast(result.message);
+        trackAppEvent("process_error", {
+          process_type: "convert_to_pdf",
+          error_code: "convert_failed",
+          error_stage: "process",
+        });
+        return;
+      }
+
+      setConvertedPdf({ fileName: result.fileName, fileBytes: result.bytes, sourceFormat: result.sourceFormat });
+      await loadConvertedPdf(result.fileName, result.bytes, copy.status.convertedToast);
+      setConvertStatusMessage(copy.status.convertedReady);
+      trackProcessSuccess({
+        process_type: "convert_to_pdf",
+        export_format: "pdf",
+        file_count: files.length,
+        source_format: result.sourceFormat || getFileExtension(files[0]?.name || ""),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : copy.status.convertFailed;
+      setConvertStatusMessage(message);
+      setToast(message);
+      trackAppEvent("process_error", {
+        process_type: "convert_to_pdf",
+        error_code: "convert_failed",
+        error_stage: "process",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleApplyWatermark() {
     const hasWatermarkContent =
       watermarkSettings.type === "text"
@@ -866,6 +988,9 @@ export default function App() {
     setTableExtractStatus(null);
     setTablePreviewPageNumber(null);
     setCompressStatus({ kind: "idle" });
+    setConvertSelection([]);
+    setConvertedPdf(null);
+    setConvertStatusMessage(null);
     setActiveTab("edit");
     setBusy(false);
   }
@@ -875,15 +1000,6 @@ export default function App() {
       <header className="app-header">
         <div className="brand-block">
           <img src={assetUrl("pdf-toolkit-logo-dis.svg")} alt="PDF Toolkit" />
-        </div>
-        <div className="header-actions">
-          <button
-            type="button"
-            className="header-back-button"
-            onClick={loadedPdf ? handleBack : () => loadInputRef.current?.click()}
-          >
-            {loadedPdf ? "Geri" : "PDF Yükle"}
-          </button>
         </div>
       </header>
 
@@ -914,7 +1030,19 @@ export default function App() {
       />
 
       {!loadedPdf ? (
-        <DropZone onFileSelected={(file) => void handleFileSelected(file)} loading={busy} />
+        <div className="landing-workspace">
+          <DropZone onFileSelected={(file) => void handleFileSelected(file)} loading={busy} />
+          <ConvertPanel
+            helperStatus={convertHelperStatus}
+            selectedFiles={convertSelection}
+            convertedFileName={convertedPdf?.fileName ?? null}
+            statusMessage={convertStatusMessage}
+            busy={busy}
+            onFilesSelected={handleConvertSelection}
+            onConvert={() => void handleConvertFiles()}
+            onDownload={handleDownloadConvertedPdf}
+          />
+        </div>
       ) : (
         <div
           className={`loaded-pdf-shell ${isReplacingPdf ? "is-dragging" : ""}`}
@@ -937,43 +1065,55 @@ export default function App() {
             handleDroppedPdf(event.dataTransfer.files);
           }}
         >
-          <nav className="tab-row">
-            <button
-              type="button"
-              className={activeTab === "edit" ? "is-active" : ""}
-              onClick={() => setActiveTab("edit")}
-            >
-              Edit
+          <div className="loaded-pdf-topbar">
+            <nav className="tab-row">
+              <button
+                type="button"
+                className={activeTab === "edit" ? "is-active" : ""}
+                onClick={() => setActiveTab("edit")}
+              >
+                {copy.tabs.edit}
+              </button>
+              <button
+                type="button"
+                className={activeTab === "convert" ? "is-active" : ""}
+                onClick={() => setActiveTab("convert")}
+              >
+                {copy.tabs.convert}
+              </button>
+              <button
+                type="button"
+                className={activeTab === "text" ? "is-active" : ""}
+                onClick={() => setActiveTab("text")}
+              >
+                {copy.tabs.text}
+              </button>
+              <button
+                type="button"
+                className={activeTab === "table" ? "is-active" : ""}
+                onClick={() => setActiveTab("table")}
+              >
+                {copy.tabs.table}
+              </button>
+              <button
+                type="button"
+                className={activeTab === "compress" ? "is-active" : ""}
+                onClick={() => setActiveTab("compress")}
+              >
+                {copy.tabs.compress}
+              </button>
+              <button
+                type="button"
+                className={activeTab === "watermark" ? "is-active" : ""}
+                onClick={() => setActiveTab("watermark")}
+              >
+                {copy.tabs.watermark}
+              </button>
+            </nav>
+            <button type="button" className="header-back-button" onClick={handleBack}>
+              {copy.back}
             </button>
-            <button
-              type="button"
-              className={activeTab === "text" ? "is-active" : ""}
-              onClick={() => setActiveTab("text")}
-            >
-              Text
-            </button>
-            <button
-              type="button"
-              className={activeTab === "table" ? "is-active" : ""}
-              onClick={() => setActiveTab("table")}
-            >
-              CSV / Excel
-            </button>
-            <button
-              type="button"
-              className={activeTab === "compress" ? "is-active" : ""}
-              onClick={() => setActiveTab("compress")}
-            >
-              Compress
-            </button>
-            <button
-              type="button"
-              className={activeTab === "watermark" ? "is-active" : ""}
-              onClick={() => setActiveTab("watermark")}
-            >
-              Watermark
-            </button>
-          </nav>
+          </div>
 
           {activeTab === "watermark" ? (
             <WatermarkPanel
@@ -984,6 +1124,17 @@ export default function App() {
               onSettingsChange={setWatermarkSettings}
               onApply={() => void handleApplyWatermark()}
               busy={busy}
+            />
+          ) : activeTab === "convert" ? (
+            <ConvertPanel
+              helperStatus={convertHelperStatus}
+              selectedFiles={convertSelection}
+              convertedFileName={convertedPdf?.fileName ?? null}
+              statusMessage={convertStatusMessage}
+              busy={busy}
+              onFilesSelected={handleConvertSelection}
+              onConvert={() => void handleConvertFiles()}
+              onDownload={handleDownloadConvertedPdf}
             />
           ) : activeTab === "text" ? (
             <TextExtractPanel
@@ -1034,9 +1185,10 @@ export default function App() {
                 canUndo={undoStack.length > 0}
                 canRedo={redoStack.length > 0}
                 busy={busy}
+                locale={getPdfLocale()}
               />
 
-              {busy ? <div className="loading-banner">PDF işleniyor...</div> : null}
+              {busy ? <div className="loading-banner">{copy.status.loadingPdf}</div> : null}
 
               <PageGrid
                 pages={pages}
@@ -1057,7 +1209,7 @@ export default function App() {
               loadedPdf={loadedPdf}
             />
           )}
-          <div className="loaded-pdf-drop-hint">PDF eklemek ve birleştirmek için dosyayı buraya bırak</div>
+          <div className="loaded-pdf-drop-hint">{copy.status.mergeDropHint}</div>
         </div>
       )}
 
