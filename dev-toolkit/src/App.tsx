@@ -25,14 +25,14 @@ type Tool = {
 };
 
 const TOOLS: Tool[] = [
-  { id: "json-ts", label: "JSON -> TS", blurb: "JSON örneğinden tip çıkar." },
-  { id: "jwt", label: "JWT", blurb: "Header ve payload'ı yerelde çöz." },
-  { id: "base64", label: "Base64", blurb: "Encode ve decode et." },
-  { id: "hash", label: "Hash", blurb: "SHA digest üret." },
-  { id: "aes", label: "AES", blurb: "Şifreyle encrypt / decrypt et." },
-  { id: "bcrypt", label: "Bcrypt", blurb: "Hash üret ve doğrula." },
-  { id: "obfuscate", label: "Obfuscate", blurb: "JavaScript kodunu karmaşıklaştır." },
-  { id: "sql", label: "SQL", blurb: "Sorguyu okunur biçimde düzenle." },
+  { id: "json-ts", label: "JSON -> TS", blurb: "Tip çıkar." },
+  { id: "jwt", label: "JWT", blurb: "Payload çöz." },
+  { id: "base64", label: "Base64", blurb: "Encode / decode." },
+  { id: "hash", label: "Hash", blurb: "Digest üret." },
+  { id: "aes", label: "AES", blurb: "Şifrele / çöz." },
+  { id: "bcrypt", label: "Bcrypt", blurb: "Hash doğrula." },
+  { id: "obfuscate", label: "Obfuscate", blurb: "JS gizle." },
+  { id: "sql", label: "SQL", blurb: "Formatla." },
 ];
 
 const DEFAULT_JSON = `{
@@ -237,7 +237,7 @@ export default function App() {
         <aside className="tool-sidebar">
           <div className="tool-sidebar-copy">
             <h2>Toolset</h2>
-            <p>Metin, token, şema ve sorgu işlemlerini tek panelde topla.</p>
+            <p>Metin, token ve sorgu araçları.</p>
           </div>
 
           <div className="tool-list">
@@ -257,7 +257,7 @@ export default function App() {
 
         <section className="tool-stage">
           {activeTool === "json-ts" ? (
-            <PanelFrame title="JSON -> TypeScript" description="JSON örneğini parse edip kullanılabilir TS tiplerine çevirir.">
+            <PanelFrame title="JSON -> TypeScript" description="JSON örneğinden TS tipi üret.">
               <div className="field-row">
                 <label className="field">
                   <span>Root type adı</span>
@@ -282,7 +282,7 @@ export default function App() {
           ) : null}
 
           {activeTool === "jwt" ? (
-            <PanelFrame title="JWT Decoder" description="Token imzasını doğrulamaz; header ve payload'ı tarayıcı içinde çözümler.">
+            <PanelFrame title="JWT Decoder" description="Header ve payload'ı çöz. İmza doğrulamaz.">
               <label className="editor-panel">
                 <span>JWT</span>
                 <textarea value={jwtInput} onChange={(event) => setJwtInput(event.target.value)} spellCheck={false} />
@@ -317,7 +317,7 @@ export default function App() {
           ) : null}
 
           {activeTool === "base64" ? (
-            <PanelFrame title="Base64 Encoder / Decoder" description="Unicode destekli encode ve decode akışı.">
+            <PanelFrame title="Base64 Encoder / Decoder" description="Unicode destekli dönüştürme.">
               <div className="action-row">
                 <button type="button" className="ghost-button" onClick={handleEncodeBase64}>
                   Text to Base64
@@ -346,7 +346,7 @@ export default function App() {
           ) : null}
 
           {activeTool === "hash" ? (
-            <PanelFrame title="Hash Generator" description="Web Crypto ile SHA tabanlı digest üretir.">
+            <PanelFrame title="Hash Generator" description="SHA digest üret.">
               <div className="field-row">
                 <label className="field">
                   <span>Algoritma</span>
@@ -381,7 +381,7 @@ export default function App() {
           ) : null}
 
           {activeTool === "aes" ? (
-            <PanelFrame title="AES Encrypt / Decrypt" description="Passphrase tabanlı AES-GCM şifreleme ve çözme akışı.">
+            <PanelFrame title="AES Encrypt / Decrypt" description="AES-GCM ile şifrele veya çöz.">
               <div className="field-row">
                 <label className="field">
                   <span>Şifre</span>
@@ -416,7 +416,7 @@ export default function App() {
           ) : null}
 
           {activeTool === "bcrypt" ? (
-            <PanelFrame title="Bcrypt Helper" description="Hash üretir ve mevcut hash ile düz metni doğrular.">
+            <PanelFrame title="Bcrypt Helper" description="Hash üret ve doğrula.">
               <div className="field-row field-row-wide">
                 <label className="field">
                   <span>Salt rounds</span>
@@ -466,7 +466,7 @@ export default function App() {
           ) : null}
 
           {activeTool === "obfuscate" ? (
-            <PanelFrame title="JavaScript Obfuscator" description="Kaynak kodu yerelde karmaşıklaştırır; hızlı kopyalama için uygun çıktı üretir.">
+            <PanelFrame title="JavaScript Obfuscator" description="JS kodunu karmaşıklaştır.">
               <div className="action-row action-row-inline">
                 <button type="button" className="ghost-button" onClick={handleObfuscate}>
                   Obfuscate
@@ -492,7 +492,7 @@ export default function App() {
           ) : null}
 
           {activeTool === "sql" ? (
-            <PanelFrame title="SQL Formatter" description="Sorguyu hızlı okunur hale getiren hafif bir yerel formatter.">
+            <PanelFrame title="SQL Formatter" description="Sorguyu okunur hale getir.">
               <div className="action-row">
                 <button type="button" className="ghost-button" onClick={() => void handleCopy(sqlOutput, "SQL çıktısı")}>
                   SQL Kopyala

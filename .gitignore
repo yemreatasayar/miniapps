@@ -36,3 +36,7 @@ distribution/github-pages/site/downloads/
 .env
 .env.*
 !.env.example
+
+# Local helper data
+.data/
+**/.data/

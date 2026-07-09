@@ -248,10 +248,9 @@ export default function AudioCutter({ onToast }: AudioCutterProps) {
       {!audio ? (
         <section className="hero-panel">
           <div className="hero-copy">
-            <h1>Ses dosyasını kes ve kırp.</h1>
+            <h1>Ses dosyasını kes.</h1>
             <p className="hero-description">
-              Dalga formu üzerinde başlangıç ve bitiş noktasını sürükle, istediğin bölümü tek
-              tıkla dışa aktar.
+              Başlangıç ve bitişi seç, istediğin bölümü indir.
             </p>
           </div>
 
@@ -306,7 +305,7 @@ export default function AudioCutter({ onToast }: AudioCutterProps) {
             <div className="section-header">
               <div>
                 <h2>Dalga Formu</h2>
-                <p>Başlangıç ve bitiş noktalarını sürükle veya aşağıdaki alanlardan gir.</p>
+                <p>Noktaları sürükle veya değer gir.</p>
               </div>
             </div>
 

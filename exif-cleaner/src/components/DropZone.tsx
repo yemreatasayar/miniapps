@@ -63,11 +63,11 @@ export default function DropZone({ busy, compact = false, onFilesSelected }: Dro
       <div className="dropzone-icon" aria-hidden="true">
         <span>+</span>
       </div>
-      <strong>{busy ? "Dosyalar hazırlanıyor..." : compact ? "Daha fazla fotoğraf ekle" : "Fotoğrafları bırak, metadata temiz kopyalarını indir"}</strong>
+      <strong>{busy ? "Dosyalar hazırlanıyor..." : compact ? "Daha fazla fotoğraf ekle" : "Fotoğrafları seç veya sürükle"}</strong>
       <span>
         {compact
-          ? "JPG, PNG, WebP ve HEIC dosyalarını aynı çalışma alanına ekleyebilirsin."
-          : "EXIF, GPS ve benzeri gömülü alanlar tarayıcı içinde sıfırlanır. Dosyaların cihazından çıkmaz."}
+          ? "JPG, PNG, WebP, HEIC."
+          : "EXIF ve GPS izlerini temiz kopyadan kaldır."}
       </span>
     </div>
   );

@@ -16,7 +16,7 @@ export default function JsonPreview({ data, maxRows = 30 }: JsonPreviewProps) {
       <div className="panel-heading">
         <div>
           <h2>JSON Önizleme</h2>
-          <p>Alias ve görünür sütunlara göre üretilen çıktı</p>
+          <p>Görünür sütunlarla oluşan çıktı</p>
         </div>
         <span className="muted-chip">{previewData.length} kayıt</span>
       </div>

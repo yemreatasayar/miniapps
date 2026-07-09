@@ -45,7 +45,7 @@ export default function FilterPanel({
       <div className="panel-heading">
         <div>
           <h2>Filtrele</h2>
-          <p>Kuralları VE / VEYA mantığıyla uygula.</p>
+          <p>Kuralları birlikte uygula.</p>
         </div>
       </div>
 

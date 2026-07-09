@@ -69,8 +69,9 @@ export default function PreviewDocument({ document, layout }: PreviewDocumentPro
       const entry = entries[0];
       if (!entry) return;
       const fittedWidth = Math.max(220, entry.contentRect.width - 8);
-      const nextScale = Math.min(0.84, Math.max(0.2, fittedWidth / layout.width));
-      setScale(nextScale);
+      const rawScale = Math.min(0.84, Math.max(0.2, fittedWidth / layout.width));
+      const nextScale = Math.round(rawScale * 1000) / 1000;
+      setScale((currentScale) => (Math.abs(currentScale - nextScale) < 0.001 ? currentScale : nextScale));
     });
 
     observer.observe(element);
@@ -119,6 +120,8 @@ export default function PreviewDocument({ document, layout }: PreviewDocumentPro
               className="preview-header-logo"
               src="/assets/header-logo.svg"
               alt="Filtre logosu"
+              decoding="sync"
+              loading="eager"
               style={{
                 left: layout.headerLogo.x,
                 top: layout.headerLogo.y,
@@ -140,6 +143,8 @@ export default function PreviewDocument({ document, layout }: PreviewDocumentPro
                       className="preview-image"
                       src={image.dataUrl}
                       alt={itemLayout.title.text}
+                      decoding="sync"
+                      loading="eager"
                       style={{
                         left: itemLayout.imageRect.x,
                         top: itemLayout.imageRect.y,
@@ -205,6 +210,8 @@ export default function PreviewDocument({ document, layout }: PreviewDocumentPro
                 className="preview-footer-logo"
                 src="/assets/footer-logo.svg"
                 alt="Alt logo"
+                decoding="sync"
+                loading="eager"
                 style={{
                   left: layout.footerLogo.x,
                   top: layout.footerLogo.y,

@@ -1,4 +1,5 @@
 import type { CompressPreset, CompressStatus } from "./types";
+import { getPdfLocale, pdfCopy } from "./i18n";
 
 const COMPRESS_SERVER = "http://127.0.0.1:4184";
 const PDF_HELPER_DISABLED =
@@ -7,6 +8,10 @@ const PDF_HELPER_DISABLED =
 
 export function isPdfHelperDisabled(): boolean {
   return PDF_HELPER_DISABLED;
+}
+
+function runtimeErrors() {
+  return pdfCopy[getPdfLocale()].runtimeErrors;
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -49,14 +54,14 @@ export async function repairPdf(
     const res = await fetch(`${COMPRESS_SERVER}/repair`, { method: "POST", body: formData });
 
     if (!res.ok) {
-      return { ok: false, message: (await res.text()) || "Sunucu hatası." };
+      return { ok: false, message: (await res.text()) || runtimeErrors().serverError };
     }
 
     const resultBlob = await res.blob();
     const baseName = fileName.replace(/\.pdf$/i, "");
     return { ok: true, bytes: new Uint8Array(await resultBlob.arrayBuffer()), fileName: `${baseName}-repaired.pdf` };
   } catch (err) {
-    return { ok: false, message: err instanceof Error ? err.message : "Bilinmeyen hata." };
+    return { ok: false, message: err instanceof Error ? err.message : runtimeErrors().unknownError };
   }
 }
 
@@ -83,7 +88,7 @@ export async function compressPdf(
 
     if (!res.ok) {
       const text = await res.text();
-      return { kind: "error", message: text || "Sunucu hatası." };
+      return { kind: "error", message: text || runtimeErrors().serverError };
     }
 
     const resultBlob = await res.blob();
@@ -100,7 +105,7 @@ export async function compressPdf(
   } catch (error) {
     return {
       kind: "error",
-      message: error instanceof Error ? error.message : "Bilinmeyen hata.",
+      message: error instanceof Error ? error.message : runtimeErrors().unknownError,
     };
   }
 }

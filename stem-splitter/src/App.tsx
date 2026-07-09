@@ -53,7 +53,7 @@ function getHelperViewState(backendHealth: BackendHealth | null, backendError: s
       return {
         kind: "offline",
         title: "Vocal Remover hazır değil",
-        description: "Bu araç local helper ile çalışır. Ses dosyan cihazında işlenir; server'a yüklenmez.",
+        description: "Local helper gerekir. Dosya cihazında işlenir.",
         detail: backendError,
       };
     }
@@ -61,7 +61,7 @@ function getHelperViewState(backendHealth: BackendHealth | null, backendError: s
     return {
       kind: "checking",
       title: "Local helper kontrol ediliyor",
-      description: "Cihazındaki stem engine aranıyor. Bu işlem birkaç saniye sürebilir.",
+      description: "Cihazındaki stem engine aranıyor.",
     };
   }
 
@@ -69,7 +69,7 @@ function getHelperViewState(backendHealth: BackendHealth | null, backendError: s
     return {
       kind: "issue",
       title: "Python runtime hazır değil",
-      description: "Helper çalışıyor ama paketlenmiş veya yapılandırılmış Python runtime bulunamadı.",
+      description: "Python runtime bulunamadı.",
       detail: backendHealth.pythonBin,
     };
   }
@@ -78,7 +78,7 @@ function getHelperViewState(backendHealth: BackendHealth | null, backendError: s
     return {
       kind: "issue",
       title: "FFmpeg runtime hazır değil",
-      description: "Helper çalışıyor ama ses işleme için gereken ffmpeg binary'si bulunamadı.",
+      description: "FFmpeg binary'si bulunamadı.",
       detail: backendHealth.ffmpegBin,
     };
   }
@@ -87,7 +87,7 @@ function getHelperViewState(backendHealth: BackendHealth | null, backendError: s
     return {
       kind: "issue",
       title: "Local helper çalışıyor ama hazır değil",
-      description: "Model warm-up tamamlanamadı. Runtime path'leri veya model kurulumu kontrol edilmeli.",
+      description: "Model warm-up tamamlanamadı.",
       detail: backendHealth.warmup.message,
     };
   }
@@ -96,7 +96,7 @@ function getHelperViewState(backendHealth: BackendHealth | null, backendError: s
     return {
       kind: "warmup",
       title: "Model hazırlanıyor",
-      description: "İlk açılışta helper modeli ısıtıyor. Bu sırada track seçebilirsin; split hazır olduğunda başlayacak.",
+      description: "Model ısınıyor. Track seçebilirsin.",
       detail: backendHealth.warmup.message,
     };
   }
@@ -104,7 +104,7 @@ function getHelperViewState(backendHealth: BackendHealth | null, backendError: s
   return {
     kind: "ready",
     title: "Local helper hazır",
-    description: "Dosyan cihazında kalır, split işlemi local helper üzerinden yürür.",
+    description: "Dosya cihazında kalır.",
     detail: backendHealth.warmup.message,
   };
 }
@@ -339,10 +339,9 @@ export default function App() {
       {!track ? (
         <section className="hero-panel">
           <div className="hero-copy">
-            <h2>Vocals ve instrumental stem'lerini yerelde ayır.</h2>
+            <h2>Vocal ve instrumental ayır.</h2>
             <p>
-              Yerel worker gerçek model tabanlı `Demucs` akışını kullanır. İlk kurulumdan sonra model warm-up ile hazır
-              tutulur, split işlemi cihazında çalışır.
+              Local helper ile stem çıktıları üret.
             </p>
 
             <div className="helper-summary-card">
@@ -395,12 +394,12 @@ export default function App() {
                 <p>
                   {helperViewState.kind === "warmup"
                     ? helperViewState.detail ?? helperViewState.description
-                    : "MP3, WAV, M4A, AAC, OGG veya FLAC yükleyebilirsin."}
+                    : "MP3, WAV, M4A, AAC, OGG, FLAC."}
                 </p>
                 <div className="drop-zone-action">
                   <span className="primary-pill">Dosya Seç</span>
                   <span className="muted-copy">
-                    {helperViewState.kind === "warmup" ? "helper hazır olunca split başlayabilir" : "veya sürükle bırak"}
+                    {helperViewState.kind === "warmup" ? "helper hazır olunca başlar" : "veya sürükle bırak"}
                   </span>
                 </div>
               </div>
@@ -464,10 +463,9 @@ export default function App() {
         <section ref={workspaceRef} className="workspace-shell">
           <div className="workspace-toolbar">
             <div className="workspace-toolbar-copy">
-              <h2>Track hazır, stem separation başlat.</h2>
+              <h2>Track hazır.</h2>
               <p>
-                Güvenli worker akışı dosyayı temp klasörde işler, `Demucs` ile iki stem üretir ve indirme sonrası
-                otomatik temizler.
+                Stem separation başlat ve çıktıları indir.
               </p>
 
               <div className="workspace-summary">
@@ -563,14 +561,14 @@ export default function App() {
             <article className="surface-card">
               <div className="section-copy">
                 <h3>Çıktılar</h3>
-                <p>{downloads ? "Stem dosyaları hazır." : "Stem separation henüz başlatılmadı."}</p>
+                <p>{downloads ? "Stem dosyaları hazır." : "Henüz başlatılmadı."}</p>
               </div>
 
               <div className="result-list">
                 <div className="result-item">
                   <div className="result-item-meta">
                     <strong>Vocals</strong>
-                    <span>Ayrılmış vokal stem'i</span>
+                    <span>Ayrılmış vokal</span>
                   </div>
                   <a
                     className={`download-link${downloads ? "" : " is-disabled"}`}
@@ -585,7 +583,7 @@ export default function App() {
                 <div className="result-item">
                   <div className="result-item-meta">
                     <strong>Instrumental</strong>
-                    <span>Vokalsiz stem çıktısı</span>
+                    <span>Vokalsiz çıktı</span>
                   </div>
                   <a
                     className={`download-link${downloads ? "" : " is-disabled"}`}

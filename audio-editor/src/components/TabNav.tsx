@@ -1,9 +1,9 @@
 import type { Tab } from "../lib/types";
 
 const TABS: { id: Tab; label: string; desc: string }[] = [
-  { id: "cutter", label: "Audio Cutter", desc: "Kes & Kırp" },
-  { id: "normalizer", label: "Normalizer", desc: "Ses Seviyesi" },
-  { id: "converter", label: "Converter", desc: "Format Dönüştür" },
+  { id: "cutter", label: "Kes", desc: "Kırp" },
+  { id: "normalizer", label: "Normalize", desc: "Ses seviyesi" },
+  { id: "converter", label: "Dönüştür", desc: "Format" },
 ];
 
 type TabNavProps = {

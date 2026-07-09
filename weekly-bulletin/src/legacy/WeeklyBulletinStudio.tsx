@@ -324,7 +324,7 @@ export default function WeeklyBulletinStudio() {
           <div className="section-heading">
             <div>
               <h1>Filtre Haftalık Bülten</h1>
-              <p>Tek uzun tasarım, lokal Excel içe aktarımı, tıklanabilir PDF dışa aktarımı.</p>
+              <p>Excel'den bülten üret, PDF olarak dışa aktar.</p>
             </div>
           </div>
 
@@ -348,7 +348,7 @@ export default function WeeklyBulletinStudio() {
           <div className="section-heading">
             <div>
               <h3>Belge Ayarları</h3>
-              <p>Üst ve alt sabit alanları burada düzenleyebilirsin.</p>
+              <p>Sabit alanları düzenle.</p>
             </div>
           </div>
 
@@ -389,7 +389,7 @@ export default function WeeklyBulletinStudio() {
           <div className="section-heading">
             <div>
               <h3>Excel ve Görsel İçe Aktarım</h3>
-              <p>Excel ile haberleri çek, görselleri toplu yükle ve birebir isimle eşleştir.</p>
+              <p>Haberleri ve görselleri içe aktar.</p>
             </div>
           </div>
 
@@ -429,7 +429,7 @@ export default function WeeklyBulletinStudio() {
           <div className="section-heading">
             <div>
               <h3>Haberler</h3>
-              <p>Elle düzenle, sil, sırala ve tek tek görsel bağla.</p>
+              <p>Düzenle, sırala ve görsel bağla.</p>
             </div>
             <button
               type="button"

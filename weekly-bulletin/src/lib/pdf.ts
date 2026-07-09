@@ -1,15 +1,34 @@
 import fontkit from "@pdf-lib/fontkit";
-import { PDFArray, PDFDocument, PDFName, PDFNumber, PDFString, rgb } from "pdf-lib";
+import {
+  PDFArray,
+  PDFDocument,
+  PDFFont,
+  PDFName,
+  PDFNumber,
+  PDFString,
+  rgb,
+} from "pdf-lib";
 import { buildBulletinLayout, createCanvasTextMeasurer } from "./layout";
 import { dataUrlToUint8Array } from "./images";
 import { resolveImage } from "./format";
 import { BulletinDocument, BulletinLayout, LayoutRect, LayoutTextBlock, LayoutTextStyle } from "./types";
 
 const PX_TO_PT = 0.75;
-const OVERLAY_SCALE = 2;
+const PDF_BACKGROUND_COLOR = "#0000ee";
 const LOGO_SCALE = 4;
-const IMAGE_SCALE = 1.4;
-const IMAGE_QUALITY = 0.8;
+const IMAGE_SCALE = 1.15;
+const IMAGE_QUALITY = 0.76;
+
+// Montserrat ağırlık -> gömülecek TTF. (Italic TTF yok; içe aktarılan özetlerde
+// italik olmaz, yalnızca manuel formatlamada nadiren çıkar ve düz çizilir.)
+const FONT_FILES: Record<number, string> = {
+  500: "/fonts/Montserrat-Medium.ttf",
+  600: "/fonts/Montserrat-SemiBold.ttf",
+  800: "/fonts/Montserrat-ExtraBold.ttf",
+};
+
+type FontEntry = { font: PDFFont; ascentRatio: number };
+type FontRegistry = Map<number, FontEntry>;
 
 function px(value: number): number {
   return value * PX_TO_PT;
@@ -30,42 +49,20 @@ function hexToRgb(hex: string): [number, number, number] {
   return [values[0], values[1], values[2]];
 }
 
-function interpolateColor(start: [number, number, number], end: [number, number, number], progress: number): [number, number, number] {
-  return [
-    start[0] + (end[0] - start[0]) * progress,
-    start[1] + (end[1] - start[1]) * progress,
-    start[2] + (end[2] - start[2]) * progress,
-  ];
+function colorOf(hex?: string) {
+  return rgb(...hexToRgb(hex ?? "#111111"));
 }
 
 function drawVerticalBackground(page: any, layout: BulletinLayout): void {
-  const topColor = hexToRgb("#0000ee");
-  const bottomColor = hexToRgb("#230bad");
-  const solidHeight = layout.height * 0.62;
-  const gradientHeight = Math.max(1, layout.height - solidHeight);
-  const steps = 420;
-
+  // Acrobat uzun tek sayfalarda gradient/shading'i bazen geç rasterize ediyor.
+  // Tek RGB dolgu en stabil render yolu; preview ile export aynı renkte kalır.
   page.drawRectangle({
     x: 0,
-    y: px(layout.height - solidHeight),
+    y: 0,
     width: px(layout.width),
-    height: px(solidHeight),
-    color: rgb(...topColor),
+    height: px(layout.height),
+    color: colorOf(PDF_BACKGROUND_COLOR),
   });
-
-  for (let index = 0; index < steps; index += 1) {
-    const startY = solidHeight + (gradientHeight * index) / steps;
-    const segmentHeight = gradientHeight / steps;
-    const color = interpolateColor(topColor, bottomColor, index / Math.max(1, steps - 1));
-
-    page.drawRectangle({
-      x: 0,
-      y: px(layout.height - startY - segmentHeight),
-      width: px(layout.width),
-      height: Math.max(px(segmentHeight), 0.75),
-      color: rgb(...color),
-    });
-  }
 }
 
 function addLinkAnnotation(page: any, layout: BulletinLayout, x: number, y: number, width: number, height: number, url: string): void {
@@ -92,88 +89,149 @@ function addLinkAnnotation(page: any, layout: BulletinLayout, x: number, y: numb
   page.node.set(PDFName.of("Annots"), annots);
 }
 
-function buildCanvasFont(style: LayoutTextStyle): string {
-  return `${style.fontStyle ?? "normal"} ${style.fontWeight} ${style.fontSize}px "${style.fontFamily}", sans-serif`;
+// --- Font yükleme ---------------------------------------------------------
+
+async function loadFonts(pdfDoc: PDFDocument): Promise<FontRegistry> {
+  const registry: FontRegistry = new Map();
+
+  await Promise.all(
+    Object.entries(FONT_FILES).map(async ([weight, url]) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Font yüklenemedi: ${url}`);
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      // subset:false (tam gömme) — Montserrat ~200KB/ağırlık; eski tam-sayfa
+      // PNG'ye kıyasla yine çok küçük ve subset hatası riski olmadan kurşun
+      // geçirmez. Türkçe glifler garanti.
+      const font = await pdfDoc.embedFont(bytes, { subset: false });
+      const metrics = fontkit.create(bytes) as { ascent: number; unitsPerEm: number };
+      const ascentRatio = metrics.unitsPerEm > 0 ? metrics.ascent / metrics.unitsPerEm : 0.96;
+      registry.set(Number(weight), { font, ascentRatio });
+    })
+  );
+
+  return registry;
 }
 
-function drawRoundedRect(ctx: CanvasRenderingContext2D, rect: LayoutRect): void {
-  const radius = Math.max(0, Math.min(rect.radius ?? 0, rect.width / 2, rect.height / 2));
+function pickWeight(weight: number): number {
+  if (weight >= 700) return 800;
+  if (weight >= 600) return 600;
+  return 500;
+}
 
-  ctx.beginPath();
-  if (radius === 0) {
-    ctx.rect(rect.x, rect.y, rect.width, rect.height);
-  } else {
-    ctx.moveTo(rect.x + radius, rect.y);
-    ctx.lineTo(rect.x + rect.width - radius, rect.y);
-    ctx.arcTo(rect.x + rect.width, rect.y, rect.x + rect.width, rect.y + radius, radius);
-    ctx.lineTo(rect.x + rect.width, rect.y + rect.height - radius);
-    ctx.arcTo(rect.x + rect.width, rect.y + rect.height, rect.x + rect.width - radius, rect.y + rect.height, radius);
-    ctx.lineTo(rect.x + radius, rect.y + rect.height);
-    ctx.arcTo(rect.x, rect.y + rect.height, rect.x, rect.y + rect.height - radius, radius);
-    ctx.lineTo(rect.x, rect.y + radius);
-    ctx.arcTo(rect.x, rect.y, rect.x + radius, rect.y, radius);
+function fontFor(fonts: FontRegistry, weight: number): FontEntry {
+  return fonts.get(pickWeight(weight)) ?? fonts.get(500)!;
+}
+
+// --- Vektör çizim yardımcıları (canvas yerine pdf-lib) --------------------
+
+// Yuvarlak köşeli dikdörtgen; köşeler cubic-bezier (arc-sweep belirsizliğinden
+// kaçınmak için). Koordinatlar nokta (pt) ve y-aşağı; drawSvgPath translate+
+// scale(1,-1) uyguladığı için anchor = dikdörtgenin PDF üst kenarıdır.
+function roundedRectPath(w: number, h: number, r: number): string {
+  if (r <= 0) {
+    return `M 0 0 H ${w} V ${h} H 0 Z`;
   }
-  ctx.closePath();
+  const c = r * 0.5523; // çeyrek daire bezier kontrol mesafesi
+  return [
+    `M ${r} 0`,
+    `H ${w - r}`,
+    `C ${w - r + c} 0 ${w} ${r - c} ${w} ${r}`,
+    `V ${h - r}`,
+    `C ${w} ${h - r + c} ${w - r + c} ${h} ${w - r} ${h}`,
+    `H ${r}`,
+    `C ${r - c} ${h} 0 ${h - r + c} 0 ${h - r}`,
+    `V ${r}`,
+    `C 0 ${r - c} ${r - c} 0 ${r} 0`,
+    `Z`,
+  ].join(" ");
+}
 
-  if (rect.fill !== "transparent") {
-    ctx.fillStyle = rect.fill;
-    ctx.fill();
+function drawRect(page: any, layout: BulletinLayout, rect: LayoutRect): void {
+  const wPt = px(rect.width);
+  const hPt = px(rect.height);
+  const rPt = Math.max(0, Math.min(px(rect.radius ?? 0), wPt / 2, hPt / 2));
+  const path = roundedRectPath(wPt, hPt, rPt);
+
+  const options: Record<string, unknown> = {
+    x: px(rect.x),
+    y: px(layout.height - rect.y),
+    scale: 1,
+  };
+  if (rect.fill && rect.fill !== "transparent") {
+    options.color = colorOf(rect.fill);
   }
-
   if (rect.stroke && rect.strokeWidth) {
-    ctx.strokeStyle = rect.stroke;
-    ctx.lineWidth = rect.strokeWidth;
-    ctx.stroke();
+    options.borderColor = colorOf(rect.stroke);
+    options.borderWidth = px(rect.strokeWidth);
   }
+
+  page.drawSvgPath(path, options);
 }
 
-function drawTextBlock(ctx: CanvasRenderingContext2D, block: LayoutTextBlock): void {
-  ctx.save();
-  ctx.font = buildCanvasFont(block.style);
-  ctx.fillStyle = block.style.color ?? "#111111";
-  ctx.textBaseline = "top";
-  ctx.textAlign = block.style.textAlign ?? "left";
+function drawDivider(page: any, layout: BulletinLayout, rect: LayoutRect): void {
+  page.drawRectangle({
+    x: px(rect.x),
+    y: px(layout.height - rect.y - rect.height),
+    width: px(rect.width),
+    height: Math.max(px(rect.height), 0.75),
+    color: colorOf(rect.fill),
+  });
+}
 
-  const anchorX =
-    block.style.textAlign === "center"
-      ? block.x + block.width / 2
-      : block.style.textAlign === "right"
-        ? block.x + block.width
-        : block.x;
+function alignedX(blockXPt: number, blockWidthPt: number, lineWidthPt: number, align?: string): number {
+  if (align === "center") return blockXPt + (blockWidthPt - lineWidthPt) / 2;
+  if (align === "right") return blockXPt + blockWidthPt - lineWidthPt;
+  return blockXPt;
+}
+
+function drawTextBlock(page: any, fonts: FontRegistry, layout: BulletinLayout, block: LayoutTextBlock): void {
+  const style = block.style;
+  const entry = fontFor(fonts, style.fontWeight);
+  const size = px(style.fontSize);
+  const color = colorOf(style.color);
+  const ascentPx = style.fontSize * entry.ascentRatio;
+  const blockXPt = px(block.x);
+  const blockWidthPt = px(block.width);
 
   block.wrapped.lines.forEach((line, index) => {
-    ctx.fillText(line, anchorX, block.y + index * block.style.lineHeight);
+    if (!line) return;
+    const topPx = block.y + index * style.lineHeight;
+    const lineWidthPt = entry.font.widthOfTextAtSize(line, size);
+    const xPt = alignedX(blockXPt, blockWidthPt, lineWidthPt, style.textAlign);
+    const baselinePx = topPx + ascentPx;
+    page.drawText(line, {
+      x: xPt,
+      y: px(layout.height - baselinePx),
+      size,
+      font: entry.font,
+      color,
+    });
   });
-  ctx.restore();
 }
 
-function createCanvas(width: number, height: number, scale: number): CanvasRenderingContext2D {
-  const canvas = globalThis.document.createElement("canvas");
-  canvas.width = Math.round(width * scale);
-  canvas.height = Math.round(height * scale);
-  const ctx = canvas.getContext("2d");
+function drawCenteredSingleLineText(
+  page: any,
+  fonts: FontRegistry,
+  layout: BulletinLayout,
+  block: LayoutTextBlock,
+  rect: LayoutRect
+): void {
+  const style = block.style;
+  const entry = fontFor(fonts, style.fontWeight);
+  const size = px(style.fontSize);
+  const text = block.wrapped.lines[0] || block.text;
+  if (!text) return;
 
-  if (!ctx) {
-    throw new Error("Canvas bağlamı oluşturulamadı.");
-  }
+  const lineWidthPt = entry.font.widthOfTextAtSize(text, size);
+  const xPt = alignedX(px(block.x), px(block.width), lineWidthPt, style.textAlign);
+  const baselinePx = rect.y + (rect.height - style.lineHeight) / 2 + style.fontSize * entry.ascentRatio;
 
-  ctx.scale(scale, scale);
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  return ctx;
-}
-
-function canvasToDataUrl(ctx: CanvasRenderingContext2D, mimeType: string, quality?: number): string {
-  const canvas = ctx.canvas as HTMLCanvasElement;
-  return canvas.toDataURL(mimeType, quality);
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Görsel yüklenemedi."));
-    image.src = src;
+  page.drawText(text, {
+    x: xPt,
+    y: px(layout.height - baselinePx),
+    size,
+    font: entry.font,
+    color: colorOf(style.color),
   });
 }
 
@@ -187,7 +245,7 @@ function parseHtmlParagraphs(html: string, baseFontSize: number): ParsedParagrap
 
   function extractRuns(node: Node, ctx: { bold: boolean; italic: boolean; fontSize: number }): InlineRun[] {
     if (node.nodeType === Node.TEXT_NODE) {
-      const text = (node.textContent ?? "").replace(/\u00a0/g, " ");
+      const text = (node.textContent ?? "").replace(/ /g, " ");
       return text ? [{ ...ctx, text }] : [];
     }
     if (node.nodeType !== Node.ELEMENT_NODE) return [];
@@ -228,112 +286,132 @@ function parseHtmlParagraphs(html: string, baseFontSize: number): ParsedParagrap
         if (runs.length) { paragraphs.push({ runs, align: "left" }); hasBlock = true; }
       }
     } else if (child.nodeType === Node.TEXT_NODE) {
-      const text = (child.textContent ?? "").replace(/\u00a0/g, " ").trim();
+      const text = (child.textContent ?? "").replace(/ /g, " ").trim();
       if (text) { paragraphs.push({ runs: [{ text, bold: false, italic: false, fontSize: baseFontSize }], align: "left" }); hasBlock = true; }
     }
   }
 
   if (!hasBlock) {
-    const text = (div.textContent ?? "").replace(/\u00a0/g, " ").trim();
+    const text = (div.textContent ?? "").replace(/ /g, " ").trim();
     if (text) paragraphs.push({ runs: [{ text, bold: false, italic: false, fontSize: baseFontSize }], align: "left" });
   }
 
   return paragraphs;
 }
 
-function drawHtmlTextOnCanvas(ctx: CanvasRenderingContext2D, block: LayoutTextBlock): void {
-  if (!block.html) { drawTextBlock(ctx, block); return; }
+// Zengin metin (özet) — paragraf bazında tek stil (canvas davranışıyla birebir):
+// paragrafta herhangi bir run bold ise tüm paragraf bold çizilir.
+function drawRichTextBlock(page: any, fonts: FontRegistry, layout: BulletinLayout, block: LayoutTextBlock): void {
+  if (!block.html) {
+    drawTextBlock(page, fonts, layout, block);
+    return;
+  }
 
   const paragraphs = parseHtmlParagraphs(block.html, block.style.fontSize);
-  const { fontFamily, lineHeight: baseLineHeight, color, fontWeight: baseWeight } = block.style;
-  const maxWidth = block.width;
-  let y = block.y;
+  const baseSize = block.style.fontSize;
+  const baseLineHeight = block.style.lineHeight;
+  const color = colorOf(block.style.color);
+  const blockXPt = px(block.x);
+  const maxWidthPt = px(block.width);
   const paraGap = Math.round(baseLineHeight * 0.95);
 
-  for (let pi = 0; pi < paragraphs.length; pi++) {
+  let yTop = block.y;
+
+  for (let pi = 0; pi < paragraphs.length; pi += 1) {
     const para = paragraphs[pi];
     const isLast = pi === paragraphs.length - 1;
 
-    if (!para.runs.length) { y += paraGap; continue; }
+    if (!para.runs.length) { yTop += paraGap; continue; }
 
-    const fullText = para.runs.map((r) => r.text).join("");
+    const fullText = para.runs.map((run) => run.text).join("");
     const lineSegments = fullText.split("\n");
-    const hasBold = para.runs.some((r) => r.bold);
-    const hasItalic = para.runs.some((r) => r.italic);
-    const maxFontSize = Math.max(...para.runs.map((r) => r.fontSize));
-    const fontStyle = hasItalic ? "italic" : "normal";
-    const fontWeight = hasBold ? 800 : baseWeight;
-    const lineH = Math.round((baseLineHeight * maxFontSize) / block.style.fontSize);
-
-    ctx.save();
-    ctx.font = `${fontStyle} ${fontWeight} ${maxFontSize}px "${fontFamily}", sans-serif`;
-    ctx.fillStyle = color ?? "#111111";
-    ctx.textBaseline = "top";
-    ctx.textAlign = para.align;
-    const anchorX =
-      para.align === "center" ? block.x + maxWidth / 2 :
-      para.align === "right" ? block.x + maxWidth : block.x;
+    const hasBold = para.runs.some((run) => run.bold);
+    const maxFontSize = Math.max(...para.runs.map((run) => run.fontSize));
+    const entry = fontFor(fonts, hasBold ? 800 : block.style.fontWeight);
+    const size = px(maxFontSize);
+    const ascentPx = maxFontSize * entry.ascentRatio;
+    const lineH = Math.round((baseLineHeight * maxFontSize) / baseSize);
 
     for (const segment of lineSegments) {
       const words = segment.split(/\s+/).filter(Boolean);
-      if (!words.length) { y += lineH; continue; }
+      if (!words.length) { yTop += lineH; continue; }
+
       const lines: string[] = [];
       let current = "";
       for (const word of words) {
         const candidate = current ? `${current} ${word}` : word;
-        if (ctx.measureText(candidate).width <= maxWidth) { current = candidate; }
-        else { if (current) lines.push(current); current = word; }
+        if (entry.font.widthOfTextAtSize(candidate, size) <= maxWidthPt) {
+          current = candidate;
+        } else {
+          if (current) lines.push(current);
+          current = word;
+        }
       }
       if (current) lines.push(current);
-      for (const line of lines) { ctx.fillText(line, anchorX, y); y += lineH; }
+
+      for (const line of lines) {
+        const lineWidthPt = entry.font.widthOfTextAtSize(line, size);
+        const xPt = alignedX(blockXPt, maxWidthPt, lineWidthPt, para.align);
+        page.drawText(line, {
+          x: xPt,
+          y: px(layout.height - (yTop + ascentPx)),
+          size,
+          font: entry.font,
+          color,
+        });
+        yTop += lineH;
+      }
     }
-    ctx.restore();
-    if (!isLast) y += paraGap;
+
+    if (!isLast) yTop += paraGap;
   }
 }
 
-async function createOverlayLayerDataUrl(bulletin: BulletinDocument, layout: BulletinLayout): Promise<string> {
-  const ctx = createCanvas(layout.width, layout.height, OVERLAY_SCALE);
+function drawPlaceholderImage(page: any, fonts: FontRegistry, layout: BulletinLayout, rect: LayoutRect): void {
+  drawRect(page, layout, rect);
+  const entry = fontFor(fonts, 600);
+  const size = px(22);
+  // canvas'taki textBaseline:"middle" karşılığı (yaklaşık).
+  const baselinePx = rect.y + rect.height / 2 + 22 * 0.34;
+  page.drawText("Görsel yok", {
+    x: px(rect.x + 28),
+    y: px(layout.height - baselinePx),
+    size,
+    font: entry.font,
+    color: colorOf("#5c6376"),
+  });
+}
 
-  if ("fonts" in globalThis.document) {
-    await globalThis.document.fonts.ready;
+// --- Raster yardımcıları (yalnızca fotoğraflar ve logo için) --------------
+
+function createCanvas(width: number, height: number, scale: number): CanvasRenderingContext2D {
+  const canvas = globalThis.document.createElement("canvas");
+  canvas.width = Math.round(width * scale);
+  canvas.height = Math.round(height * scale);
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) {
+    throw new Error("Canvas bağlamı oluşturulamadı.");
   }
 
-  drawRoundedRect(ctx, layout.whitePanel);
-  drawRoundedRect(ctx, layout.headerBadge);
-  drawTextBlock(ctx, layout.intro);
+  ctx.scale(scale, scale);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  return ctx;
+}
 
-  for (const itemLayout of layout.newsLayouts) {
-    drawTextBlock(ctx, itemLayout.title);
-    drawTextBlock(ctx, itemLayout.meta);
-    drawTextBlock(ctx, itemLayout.date);
+function canvasToDataUrl(ctx: CanvasRenderingContext2D, mimeType: string, quality?: number): string {
+  const canvas = ctx.canvas as HTMLCanvasElement;
+  return canvas.toDataURL(mimeType, quality);
+}
 
-    ctx.save();
-    ctx.fillStyle = itemLayout.divider.fill;
-    ctx.fillRect(itemLayout.divider.x, itemLayout.divider.y, itemLayout.divider.width, itemLayout.divider.height);
-    ctx.restore();
-
-    drawHtmlTextOnCanvas(ctx, itemLayout.summary);
-    drawRoundedRect(ctx, itemLayout.linkRect);
-    drawTextBlock(ctx, itemLayout.linkText);
-
-    if (!resolveImage(bulletin, itemLayout.imageName)) {
-      drawRoundedRect(ctx, itemLayout.imageRect);
-      ctx.save();
-      ctx.font = '600 22px "Montserrat", sans-serif';
-      ctx.fillStyle = "#5c6376";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      ctx.fillText(
-        "Görsel yok",
-        itemLayout.imageRect.x + 28,
-        itemLayout.imageRect.y + itemLayout.imageRect.height / 2
-      );
-      ctx.restore();
-    }
-  }
-
-  return canvasToDataUrl(ctx, "image/png");
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Görsel yüklenemedi."));
+    image.src = src;
+  });
 }
 
 async function createHighResLogoDataUrl(assetUrl: string, width: number, height: number): Promise<string> {
@@ -353,6 +431,9 @@ async function createCroppedImageDataUrl(assetDataUrl: string, targetWidth: numb
   const drawY = (targetHeight - drawHeight) / 2;
 
   ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+  // Acrobat tek-uzun sayfada büyük PNG/JPEG resimleri hareket sırasında
+  // düşük çözünürlüklü cache'den gösterebiliyor. Orta ölçekli baseline JPEG,
+  // hem dosyayı küçültür hem de ilk render yükünü azaltır.
   return canvasToDataUrl(ctx, "image/jpeg", IMAGE_QUALITY);
 }
 
@@ -364,43 +445,32 @@ async function embedImage(pdfDoc: PDFDocument, dataUrl: string) {
   return pdfDoc.embedPng(bytes);
 }
 
+// --- Dışa aktarım ---------------------------------------------------------
+
 export async function exportDocumentPdf(bulletin: BulletinDocument): Promise<Blob> {
-  const measure = createCanvasTextMeasurer();
-  const layout = buildBulletinLayout(bulletin, measure);
-  const pdfDoc = await PDFDocument.create();
-  pdfDoc.registerFontkit(fontkit);
-
-  const page = pdfDoc.addPage([px(layout.width), px(layout.height)]);
-  drawVerticalBackground(page, layout);
-
-  const overlayLayerDataUrl = await createOverlayLayerDataUrl(bulletin, layout);
-  const overlayLayerImage = await embedImage(pdfDoc, overlayLayerDataUrl);
-  page.drawImage(overlayLayerImage, {
-    x: 0,
-    y: 0,
-    width: px(layout.width),
-    height: px(layout.height),
-  });
-
-  for (const itemLayout of layout.newsLayouts) {
-    const asset = resolveImage(bulletin, itemLayout.imageName);
-    if (!asset) continue;
-
-    const croppedImageDataUrl = await createCroppedImageDataUrl(
-      asset.dataUrl,
-      itemLayout.imageRect.width,
-      itemLayout.imageRect.height
-    );
-    const croppedImage = await embedImage(pdfDoc, croppedImageDataUrl);
-
-    page.drawImage(croppedImage, {
-      x: px(itemLayout.imageRect.x),
-      y: px(layout.height - itemLayout.imageRect.y - itemLayout.imageRect.height),
-      width: px(itemLayout.imageRect.width),
-      height: px(itemLayout.imageRect.height),
-    });
+  // Ölçüm fontları YÜKLENDİKTEN sonra yapılmalı; yoksa layout fallback font
+  // metrikleriyle kurulur ve metin/link kutuları kayar (deterministik olmayan
+  // "bazen kırık link / tekrar render düzeltiyor" sorunu).
+  if ("fonts" in globalThis.document) {
+    await globalThis.document.fonts.ready;
   }
 
+  const measure = createCanvasTextMeasurer();
+  const layout = buildBulletinLayout(bulletin, measure);
+
+  const pdfDoc = await PDFDocument.create();
+  pdfDoc.registerFontkit(fontkit);
+  const fonts = await loadFonts(pdfDoc);
+
+  const page = pdfDoc.addPage([px(layout.width), px(layout.height)]);
+
+  // Arka plan (vektör gradyan) + beyaz panel + başlık rozeti (hepsi vektör).
+  drawVerticalBackground(page, layout);
+  drawRect(page, layout, layout.whitePanel);
+  drawRect(page, layout, layout.headerBadge);
+  drawTextBlock(page, fonts, layout, layout.intro);
+
+  // Başlık logosu (yüksek çözünürlüklü raster).
   const headerLogoDataUrl = await createHighResLogoDataUrl(
     "/assets/header-logo.svg",
     layout.headerLogo.width,
@@ -414,6 +484,37 @@ export async function exportDocumentPdf(bulletin: BulletinDocument): Promise<Blo
     height: px(layout.headerLogo.height),
   });
 
+  // Haber blokları — metinler vektör, fotoğraflar raster.
+  for (const itemLayout of layout.newsLayouts) {
+    drawTextBlock(page, fonts, layout, itemLayout.title);
+
+    const asset = resolveImage(bulletin, itemLayout.imageName);
+    if (asset) {
+      const croppedImageDataUrl = await createCroppedImageDataUrl(
+        asset.dataUrl,
+        itemLayout.imageRect.width,
+        itemLayout.imageRect.height
+      );
+      const croppedImage = await embedImage(pdfDoc, croppedImageDataUrl);
+      page.drawImage(croppedImage, {
+        x: px(itemLayout.imageRect.x),
+        y: px(layout.height - itemLayout.imageRect.y - itemLayout.imageRect.height),
+        width: px(itemLayout.imageRect.width),
+        height: px(itemLayout.imageRect.height),
+      });
+    } else {
+      drawPlaceholderImage(page, fonts, layout, itemLayout.imageRect);
+    }
+
+    drawTextBlock(page, fonts, layout, itemLayout.meta);
+    drawTextBlock(page, fonts, layout, itemLayout.date);
+    drawDivider(page, layout, itemLayout.divider);
+    drawRichTextBlock(page, fonts, layout, itemLayout.summary);
+    drawRect(page, layout, itemLayout.linkRect);
+    drawCenteredSingleLineText(page, fonts, layout, itemLayout.linkText, itemLayout.linkRect);
+  }
+
+  // Tıklanabilir link annotation'ları.
   for (const itemLayout of layout.newsLayouts) {
     if (itemLayout.link) {
       addLinkAnnotation(

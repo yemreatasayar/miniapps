@@ -12,7 +12,7 @@ export default function AudioSettings({ settings, onSettingsChange, disabled }: 
       <div className="section-header">
         <div>
           <h2>Ses Ayarları</h2>
-          <p>Çıktı formatını ve MP3 kalite seviyesini seç.</p>
+          <p>Format ve kalite seç.</p>
         </div>
       </div>
 
@@ -33,7 +33,7 @@ export default function AudioSettings({ settings, onSettingsChange, disabled }: 
           disabled={disabled}
         >
           <strong>MP3</strong>
-          <span>Evrensel uyumluluk</span>
+          <span>Uyumlu</span>
         </button>
         <button
           type="button"
@@ -42,7 +42,7 @@ export default function AudioSettings({ settings, onSettingsChange, disabled }: 
           disabled={disabled}
         >
           <strong>WAV</strong>
-          <span>Kayıpsız, büyük dosya</span>
+          <span>Kayıpsız</span>
         </button>
       </div>
 

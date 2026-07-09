@@ -22,7 +22,7 @@ export default function ColumnsPanel({ columns, onChange }: ColumnsPanelProps) {
       <div className="panel-heading">
         <div>
           <h2>Sütunlar</h2>
-          <p>Görünürlük, isim ve sıra kontrolü.</p>
+          <p>Görünürlük, isim ve sıra.</p>
         </div>
         <div className="inline-actions column-actions">
           <button type="button" onClick={() => onChange(columns.map((column) => ({ ...column, visible: true })))}>

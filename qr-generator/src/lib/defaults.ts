@@ -5,10 +5,10 @@ export const qrTypeMeta: Array<{ type: QrType; label: string; hint: string }> = 
   { type: "wifi", label: "Wi-Fi", hint: "Ağ bilgisi" },
   { type: "vcard", label: "vCard", hint: "Kişi kartı" },
   { type: "whatsapp", label: "WhatsApp", hint: "Mesaj linki" },
-  { type: "email", label: "E-posta", hint: "Mail oluştur" },
+  { type: "email", label: "E-posta", hint: "Mail hazırla" },
   { type: "phone", label: "Telefon", hint: "Ara" },
   { type: "location", label: "Konum", hint: "Harita / geo" },
-  { type: "text", label: "Metin", hint: "Düz içerik" },
+  { type: "text", label: "Metin", hint: "Düz metin" },
 ];
 
 export const defaultFields: QrFields = {

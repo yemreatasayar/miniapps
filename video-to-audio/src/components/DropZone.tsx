@@ -57,14 +57,14 @@ export default function DropZone({ onFileSelected, loading }: DropZoneProps) {
         }}
       />
       <div className="drop-zone-inner">
-        <strong>{loading ? "Video yükleniyor..." : "Videonu buraya bırak veya dosya seç"}</strong>
+        <strong>{loading ? "Video yükleniyor..." : "Video seç veya sürükle"}</strong>
         <span className="drop-zone-description">
-          MP4, MKV, AVI, MOV, WebM, FLV, TS ve benzeri video formatlarını tek adımda işleyebilirsin.
+          MP4, MOV, WebM, MKV ve benzeri formatlar.
         </span>
 
         <div className="drop-zone-action">
           <span className="drop-zone-button">{loading ? "Yükleniyor..." : "Video Seç"}</span>
-          <span className="drop-zone-meta">Drag &amp; drop da desteklenir</span>
+          <span className="drop-zone-meta">veya sürükle bırak</span>
         </div>
 
         <div className="drop-zone-format-row">

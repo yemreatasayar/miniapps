@@ -88,9 +88,7 @@ select {
 }
 
 .app-header,
-.workspace-shell,
-.panel-frame,
-.tool-sidebar {
+.workspace-shell {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -136,20 +134,22 @@ select {
 
 
 .workspace-shell {
-  padding: 22px;
+  padding: 28px;
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
-  gap: 22px;
+  gap: 32px;
+  align-items: start;
 }
 
 .tool-sidebar {
-  padding: 18px;
+  padding: 6px 0;
   display: grid;
-  gap: 18px;
+  gap: 20px;
   align-content: start;
-  background:
-    radial-gradient(circle at top right, rgba(167, 139, 250, 0.18), transparent 28%),
-    linear-gradient(180deg, #ffffff 0%, #fbf7ff 100%);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .tool-sidebar-copy {
@@ -184,12 +184,17 @@ select {
 
 .tool-stage {
   display: grid;
+  min-width: 0;
 }
 
 .panel-frame {
-  padding: 22px;
+  padding: 6px 0;
   display: grid;
-  gap: 18px;
+  gap: 28px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .panel-copy {

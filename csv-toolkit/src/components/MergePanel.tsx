@@ -65,7 +65,7 @@ export default function MergePanel({ primaryData, onMerge, onToast }: MergePanel
         <div className="panel-heading">
           <div>
             <h2>İkinci Dosya</h2>
-            <p>Birleştirme anahtarını seçip sonuç üret.</p>
+            <p>Anahtarı seç, sonucu üret.</p>
           </div>
         </div>
 
@@ -94,7 +94,7 @@ export default function MergePanel({ primaryData, onMerge, onToast }: MergePanel
             }}
           />
           <strong>{busy ? "Yükleniyor..." : secondaryData ? secondaryData.fileName : "İkinci CSV'yi seç"}</strong>
-          <span>{secondaryData ? `${secondaryData.rows.length} satır, ${secondaryData.headers.length} sütun` : "Birleştirme için ikinci dosya yükle."}</span>
+          <span>{secondaryData ? `${secondaryData.rows.length} satır, ${secondaryData.headers.length} sütun` : "İkinci dosyayı yükle."}</span>
         </label>
 
         {secondaryData ? (

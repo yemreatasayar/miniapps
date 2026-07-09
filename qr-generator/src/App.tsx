@@ -952,7 +952,7 @@ function App() {
           <div className="section-header">
             <div>
               <h2>Stil Ayarları</h2>
-              <p>Renk, margin, boyut ve export güvenliği</p>
+              <p>Renk, boyut ve çıktı ayarları</p>
             </div>
           </div>
 
@@ -1065,7 +1065,7 @@ function App() {
           {history.length === 0 ? (
             <div className="history-empty">
               <strong>Henüz kayıt yok.</strong>
-              <p>Eski tasarımlarını bu alandan görebilirsin.</p>
+              <p>Kaydettiğin QR'lar burada görünür.</p>
             </div>
           ) : (
             <div className="history-list">
@@ -1096,7 +1096,7 @@ function App() {
         <section className="preview-card">
           <div className="section-header">
             <div>
-              <h2>Canlı Preview</h2>
+              <h2>Önizleme</h2>
               <p>{typeLabel(draft.type)} QR</p>
             </div>
             <div className="export-controls">

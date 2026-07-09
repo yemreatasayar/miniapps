@@ -608,14 +608,14 @@ export default function App() {
               className={activeTab === "smart-compress" ? "is-active" : ""}
               onClick={() => setActiveTab("smart-compress")}
             >
-              Smart Compress
+              Akıllı Sıkıştır
             </button>
             <button
               type="button"
               className={activeTab === "compress" ? "is-active" : ""}
               onClick={() => setActiveTab("compress")}
             >
-              Compress
+              Sıkıştır
             </button>
           </nav>
 
@@ -670,7 +670,7 @@ export default function App() {
           {activeTab === "compress" ? (
             <section className="compress-panel">
               <div className="section-header">
-                <div><h2>Compress</h2></div>
+                <div><h2>Sıkıştır</h2></div>
               </div>
 
               <div className="preset-group">
@@ -711,7 +711,7 @@ export default function App() {
               <CompressNameToggle
                 keepOriginalName={keepOriginalName}
                 onChange={setKeepOriginalName}
-                infoText="Aktifken çıktı dosyalarına '.comp' eki eklenmez; orijinal dosya adı korunur."
+                infoText="Aktifken '.comp' eki eklenmez."
               />
 
               <button type="button" className="compress-button" onClick={() => void handleDownloadAll()} disabled={busy}>

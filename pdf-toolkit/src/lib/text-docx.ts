@@ -26,7 +26,8 @@ function mapBlockToParagraph(kind: "heading" | "subheading" | "body", text: stri
 
 export async function buildDocxBlobFromExtractedText(
   extracted: ExtractedTextDocument,
-  title = "PDF Text Extract"
+  title = "PDF Text Extract",
+  emptyText = "Çıkarılabilir metin bulunamadı."
 ): Promise<Blob> {
   const children: Paragraph[] = [];
 
@@ -57,7 +58,7 @@ export async function buildDocxBlobFromExtractedText(
             ? children
             : [
                 new Paragraph({
-                  children: [new TextRun({ text: "Çıkarılabilir metin bulunamadı.", font: "Arial", size: 22 })],
+                  children: [new TextRun({ text: emptyText, font: "Arial", size: 22 })],
                 }),
               ],
       },

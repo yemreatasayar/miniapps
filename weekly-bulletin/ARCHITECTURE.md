@@ -192,16 +192,28 @@ Bu katman klasik browser print kullanmaz.
 Bunun yerine:
 
 - belge için layout üretir
-- arka planı ve bazı görsel katmanları PDF'e çizer
-- overlay katmanını oluşturur
-- haber görsellerini ayrı yerleştirir
+- tek renk mavi arka planı PDF'e çizer
+- beyaz panel, rozet, başlık, tüm metinler ve linkleri **gerçek vektör** olarak çizer (gömülü Montserrat + `pdf-lib drawText`/`drawSvgPath`)
+- haber görsellerini raster (JPEG) olarak ayrı yerleştirir
 - link alanlarını PDF annotation olarak ekler
 
 Bu sayede:
 
 - tek uzun özel boyutlu PDF alınır
+- metin keskin/seçilebilir kalır, dosya küçük kalır
 - linkler tıklanabilir kalır
 - sayfa bazlı A4 kırılması yaşanmaz
+
+#### Geçmiş ve açık işler (2026-06-20)
+
+**Önceki mimari:** Tüm sayfa (beyaz panel + tüm metinler + rozet + ayraç + link butonları) **tek bir tam-sayfa PNG'ye** (`createOverlayLayerDataUrl`, OVERLAY_SCALE=2) rasterize edilip gömülüyordu. Bu; blur (progresif raster), yavaş kaydırma, ve uzun bültende tarayıcı canvas boyut limiti (~16.384px) riski yaratıyordu.
+
+**Yapıldı:** Tam-sayfa PNG kaldırıldı; metin/şekiller pdf-lib vektör'e geçti. Baseline `fontkit` ascent oranıyla (Montserrat 0.968) hesaplanır; yuvarlak köşeler cubic-bezier `drawSvgPath`. Ayrıca: Excel tarih sütunu seri-sayıdan "7 Haziran 2026" Türkçe formatına normalize edilir (`excel.ts normalizeNewsDate`); link'lerden ham boşluk/newline temizlenir (`sanitizeLink` + import); layout ölçümü `document.fonts.ready` SONRASI yapılır (link kutusu hizalama yarışı çözüldü).
+
+**Güncelleme (2026-06-23):**
+- **Arka plan flicker / matlaşma:** 420 vektör dikdörtgen kaldırıldı; kısa süre native PDF axial shading denendi, ancak Acrobat uzun tek sayfada shading'i yine bazen geç rasterize etti. Son karar: arka plan tek solid RGB dolgu (`#0000ee`). Bu görsel olarak daha sade ama Acrobat/mobil önizlemede en stabil yol.
+- **Link chip hizası:** PDF'teki link metni artık `linkRect` içinde dikey merkezli özel baseline hesabıyla çizilir; preview'daki flex-center hizasına yaklaştırıldı.
+- **Görsel blur (progresif yükleme):** Fotoğraflar raster kalır. PNG denemesi dosyayı ~30 MB seviyesine taşıyıp Acrobat cache yükünü artırdı; son karar orta ölçekli baseline JPEG (`IMAGE_SCALE=1.15`, kalite `0.76`). Preview tarafında scale yuvarlama + eager/sync decode + compositor stabilizasyonu eklendi. Devam ederse sıradaki gerçek çözüm çok sayfaya bölme (pagination).
 
 ## 6. Veri Modeli
 

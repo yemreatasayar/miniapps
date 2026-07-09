@@ -54,7 +54,7 @@ tek kaynak kod:**
 ## Güncel durum
 
 - Local + web stabil.
-- **Son değişiklikler** (tarihli, son birkaçı tut): 2026-07-01 — `video-compressor` Segment Yönetimi'ne 5 adımlık Geri Al / İleri Al eklendi ve `miniapps.tr`'ye `ef33694c` ile gönderildi.
+- **Son değişiklikler** (tarihli, son birkaçı tut): 2026-07-09 — toplu text sadeleştirme, PDF Toolkit polish/i18n, Dev Toolkit kutu-içinde-kutu sadeleştirme ve GitHub Pages rebuild deploy edildi.
 - **Bekleyen / sıradaki:** —
 
 ## Çalışma tarzı (kullanıcı tercihleri)

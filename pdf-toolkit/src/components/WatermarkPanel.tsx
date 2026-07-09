@@ -8,6 +8,7 @@ import type {
   WatermarkType,
 } from "../lib/types";
 import WatermarkPreview from "./WatermarkPreview";
+import { getPdfLocale } from "../lib/i18n";
 
 type WatermarkPanelProps = {
   loadedPdf: LoadedPdf | null;
@@ -70,6 +71,51 @@ export default function WatermarkPanel({
   busy,
 }: WatermarkPanelProps) {
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const locale = getPdfLocale();
+  const copy =
+    locale === "en"
+      ? {
+          title: "Watermark",
+          description: "Add text or logo.",
+          text: "Text",
+          image: "Logo / Image",
+          textLabel: "Text",
+          textPlaceholder: "CONFIDENTIAL, DRAFT, COPY...",
+          fontSize: "Font size",
+          color: "Color",
+          file: "File (PNG, JPG, SVG)",
+          chooseFile: "Choose File",
+          selectedLogo: "Selected logo",
+          imageSize: "Size",
+          opacity: "Opacity",
+          rotation: "Rotation",
+          target: "Pages",
+          allPages: "All pages",
+          selectedPages: `Selected (${selectedPages.size})`,
+          apply: "Apply Watermark",
+          applying: "Applying...",
+        }
+      : {
+          title: "Filigran",
+          description: "Metin veya logo ekle.",
+          text: "Metin",
+          image: "Logo / Görsel",
+          textLabel: "Metin",
+          textPlaceholder: "GIZLI, TASLAK, KOPYA...",
+          fontSize: "Font boyutu",
+          color: "Renk",
+          file: "Dosya (PNG, JPG, SVG)",
+          chooseFile: "Dosya Seç",
+          selectedLogo: "Seçili logo",
+          imageSize: "Boyut",
+          opacity: "Opaklık",
+          rotation: "Döndürme",
+          target: "Sayfalar",
+          allPages: "Tüm sayfalar",
+          selectedPages: `Seçili (${selectedPages.size})`,
+          apply: "Filigran Ekle",
+          applying: "Uygulanıyor...",
+        };
 
   function update<K extends keyof WatermarkSettings>(key: K, value: WatermarkSettings[K]) {
     onSettingsChange({ ...settings, [key]: value });
@@ -94,8 +140,8 @@ export default function WatermarkPanel({
   }
 
   const targetLabel: Record<WatermarkTarget, string> = {
-    all: "Tüm sayfalar",
-    selected: `Seçili (${selectedPages.size})`,
+    all: copy.allPages,
+    selected: copy.selectedPages,
   };
 
   const canApply =
@@ -109,8 +155,8 @@ export default function WatermarkPanel({
         <div className="watermark-settings">
           <div className="section-header">
             <div>
-              <h2>Watermark</h2>
-              <p>Metin veya logo filigranı ekle</p>
+              <h2>{copy.title}</h2>
+              <p>{copy.description}</p>
             </div>
           </div>
 
@@ -123,7 +169,7 @@ export default function WatermarkPanel({
                 className={settings.type === t ? "is-active" : ""}
                 onClick={() => setType(t)}
               >
-                {t === "text" ? "Metin" : "Logo / Görsel"}
+                {t === "text" ? copy.text : copy.image}
               </button>
             ))}
           </div>
@@ -132,20 +178,20 @@ export default function WatermarkPanel({
             {settings.type === "text" ? (
               <>
                 <div className="watermark-field">
-                  <label className="watermark-label" htmlFor="wm-text">Metin</label>
+                  <label className="watermark-label" htmlFor="wm-text">{copy.textLabel}</label>
                   <input
                     id="wm-text"
                     type="text"
                     className="watermark-input"
                     value={settings.text}
-                    placeholder="GIZLI, TASLAK, KOPYA..."
+                    placeholder={copy.textPlaceholder}
                     maxLength={60}
                     onChange={(e) => update("text", e.target.value)}
                   />
                 </div>
 
                 <div className="watermark-field">
-                  <label className="watermark-label">Font Boyutu</label>
+                  <label className="watermark-label">{copy.fontSize}</label>
                   <div className="watermark-size-group">
                     {FONT_SIZES.map((size) => (
                       <button
@@ -161,7 +207,7 @@ export default function WatermarkPanel({
                 </div>
 
                 <div className="watermark-field">
-                  <label className="watermark-label">Renk</label>
+                  <label className="watermark-label">{copy.color}</label>
                   <div className="watermark-color-group">
                     {COLOR_OPTIONS.map(({ value, label }) => (
                       <button
@@ -179,7 +225,7 @@ export default function WatermarkPanel({
             ) : (
               <>
                 <div className="watermark-field">
-                  <label className="watermark-label">Dosya (PNG, JPG, SVG)</label>
+                  <label className="watermark-label">{copy.file}</label>
                   <input
                     ref={imageInputRef}
                     type="file"
@@ -196,19 +242,19 @@ export default function WatermarkPanel({
                     className="watermark-upload-btn"
                     onClick={() => imageInputRef.current?.click()}
                   >
-                    {settings.imageFileName ?? "Dosya Seç"}
+                    {settings.imageFileName ?? copy.chooseFile}
                   </button>
                   {settings.imageDataUrl && (
                     <img
                       src={settings.imageDataUrl}
-                      alt="Seçili logo"
+                      alt={copy.selectedLogo}
                       className="watermark-image-thumb"
                     />
                   )}
                 </div>
 
                 <div className="watermark-field">
-                  <label className="watermark-label">Boyut (sayfa genişliğine oranı)</label>
+                  <label className="watermark-label">{copy.imageSize}</label>
                   <div className="watermark-size-group">
                     {IMAGE_SCALES.map((s) => (
                       <button
@@ -228,7 +274,7 @@ export default function WatermarkPanel({
             {/* Ortak ayarlar */}
             <div className="watermark-field">
               <label className="watermark-label" htmlFor="wm-opacity">
-                Opaklık — {Math.round(settings.opacity * 100)}%
+                {copy.opacity} — {Math.round(settings.opacity * 100)}%
               </label>
               <input
                 id="wm-opacity"
@@ -242,7 +288,7 @@ export default function WatermarkPanel({
             </div>
 
             <div className="watermark-field">
-              <label className="watermark-label">Hedef</label>
+              <label className="watermark-label">{copy.target}</label>
               <div className="watermark-target-group">
                 {(["all", "selected"] as WatermarkTarget[]).map((t) => (
                   <button
@@ -265,7 +311,7 @@ export default function WatermarkPanel({
             disabled={!canApply || busy}
             onClick={onApply}
           >
-            {busy ? "Uygulanıyor..." : "Uygula ve İndir"}
+            {busy ? copy.applying : copy.apply}
           </button>
         </div>
 

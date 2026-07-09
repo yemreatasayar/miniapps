@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { renderWatermarkPreviewPages } from "../lib/pdf-ops";
 import type { PdfPage, WatermarkSettings } from "../lib/types";
+import { getPdfLocale } from "../lib/i18n";
 
 type WatermarkPreviewProps = {
   fileBytes: Uint8Array | null;
@@ -17,6 +18,23 @@ export default function WatermarkPreview({
 }: WatermarkPreviewProps) {
   const [previewThumbsByPage, setPreviewThumbsByPage] = useState<Record<number, string>>({});
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const locale = getPdfLocale();
+  const copy =
+    locale === "en"
+      ? {
+          error: "Preview could not be prepared. You can still apply the watermark.",
+          empty: "Preview appears after a PDF is loaded.",
+          label: "Preview",
+          alt: (page: number) => `Watermark preview page ${page}`,
+          page: "Page",
+        }
+      : {
+          error: "Önizleme hazırlanamadı. Filigran yine de uygulanabilir.",
+          empty: "PDF yüklenince önizleme burada görünür.",
+          label: "Önizleme",
+          alt: (page: number) => `Filigran önizleme sayfa ${page}`,
+          page: "Sayfa",
+        };
 
   useEffect(() => {
     let cancelled = false;
@@ -60,7 +78,7 @@ export default function WatermarkPreview({
       } catch {
         if (!cancelled) {
           setPreviewThumbsByPage({});
-          setPreviewError("Önizleme hazırlanamadı. Filigran yine de uygulanabilir.");
+          setPreviewError(copy.error);
         }
       }
     }
@@ -70,29 +88,29 @@ export default function WatermarkPreview({
     return () => {
       cancelled = true;
     };
-  }, [fileBytes, pages, selectedPages, settings]);
+  }, [copy.error, fileBytes, pages, selectedPages, settings]);
 
   if (pages.length === 0) {
     return (
       <div className="watermark-preview-pane">
-        <p className="watermark-preview-empty">PDF yüklenince önizleme burada görünür.</p>
+        <p className="watermark-preview-empty">{copy.empty}</p>
       </div>
     );
   }
 
   return (
     <div className="watermark-preview-pane">
-      <p className="watermark-preview-label">Önizleme</p>
+      <p className="watermark-preview-label">{copy.label}</p>
       {previewError ? <p className="watermark-preview-error">{previewError}</p> : null}
       <div className="watermark-preview-grid">
         {pages.map((page, i) => (
           <div key={page.pageIndex} className="watermark-preview-card">
             <img
               src={previewThumbsByPage[page.pageIndex] ?? page.thumbnail}
-              alt={`Watermark önizleme sayfa ${i + 1}`}
+              alt={copy.alt(i + 1)}
               className="watermark-preview-canvas"
             />
-            <span className="watermark-preview-page-num">Sayfa {i + 1}</span>
+            <span className="watermark-preview-page-num">{copy.page} {i + 1}</span>
           </div>
         ))}
       </div>

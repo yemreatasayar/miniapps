@@ -63,11 +63,11 @@ export default function DropZone({ busy, compact = false, onFilesSelected }: Dro
       <div className="dropzone-icon" aria-hidden="true">
         <span>+</span>
       </div>
-      <strong>{busy ? "Dosyalar hazırlanıyor..." : compact ? "Daha fazla görsel ekle" : "Görselleri bırak, farklı formata dönüştür"}</strong>
+      <strong>{busy ? "Dosyalar hazırlanıyor..." : compact ? "Daha fazla görsel ekle" : "Görselleri seç veya sürükle"}</strong>
       <span>
         {compact
-          ? "JPG, PNG, WebP, GIF, BMP ve HEIC/HEIF dosyalarını aynı çalışma alanına ekleyebilirsin."
-          : "Toplu dönüştürme tarayıcı içinde çalışır. Tek dosyayı doğrudan, çoklu dosyayı zip olarak dışa aktarabilirsin."}
+          ? "JPG, PNG, WebP, GIF, BMP, HEIC/HEIF."
+          : "JPG, PNG, WebP, GIF, BMP, HEIC/HEIF."}
       </span>
     </div>
   );

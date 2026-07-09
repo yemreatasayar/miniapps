@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getPdfLocale } from "../lib/i18n";
 import type { PdfPage } from "../lib/types";
 import PageThumbnail from "./PageThumbnail";
 
@@ -19,6 +20,25 @@ export default function PageGrid({
 }: PageGridProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const locale = getPdfLocale();
+  const copy =
+    locale === "en"
+      ? {
+          select: "Select",
+          page: "Page",
+          rotateLeft: (pageNumber: number) => `Rotate page ${pageNumber} left`,
+          rotateRight: (pageNumber: number) => `Rotate page ${pageNumber} right`,
+          rotateLeftTitle: "Rotate left",
+          rotateRightTitle: "Rotate right",
+        }
+      : {
+          select: "Seç",
+          page: "Sayfa",
+          rotateLeft: (pageNumber: number) => `Sayfa ${pageNumber} sola döndür`,
+          rotateRight: (pageNumber: number) => `Sayfa ${pageNumber} sağa döndür`,
+          rotateLeftTitle: "Sola döndür",
+          rotateRightTitle: "Sağa döndür",
+        };
 
   function handleDrop(targetIndex: number) {
     if (dragIndex === null || dragIndex === targetIndex) {
@@ -62,22 +82,22 @@ export default function PageGrid({
                 checked={selectedPages.has(page.pageIndex)}
                 onChange={(event) => onSelectionChange(page.pageIndex, event.target.checked)}
               />
-              <span>Seç</span>
+              <span>{copy.select}</span>
             </label>
             <div className="page-rotate-actions">
               <button
                 type="button"
                 onClick={() => onRotate(page.pageIndex, "ccw")}
-                aria-label={`Sayfa ${visibleIndex + 1} sola döndür`}
-                title="Sola döndür"
+                aria-label={copy.rotateLeft(visibleIndex + 1)}
+                title={copy.rotateLeftTitle}
               >
                 ↺
               </button>
               <button
                 type="button"
                 onClick={() => onRotate(page.pageIndex, "cw")}
-                aria-label={`Sayfa ${visibleIndex + 1} sağa döndür`}
-                title="Sağa döndür"
+                aria-label={copy.rotateRight(visibleIndex + 1)}
+                title={copy.rotateRightTitle}
               >
                 ↻
               </button>
@@ -88,7 +108,7 @@ export default function PageGrid({
             <PageThumbnail page={page} />
           </div>
           <div className="page-card-meta">
-            <strong>Sayfa {visibleIndex + 1}</strong>
+            <strong>{copy.page} {visibleIndex + 1}</strong>
             {page.rotation !== 0 ? <span>{page.rotation}°</span> : <span>0°</span>}
           </div>
         </article>

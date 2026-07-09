@@ -331,15 +331,14 @@ export default function App() {
       {images.length === 0 ? (
         <section className="hero-panel">
           <div className="hero-copy">
-            <h1>Arka planı kaldır, nesneyi temiz çıkar.</h1>
+            <h1>Arka planı kaldır.</h1>
             <p className="hero-description">
-              Görsellerini tarayıcıda AI ile işle. Dosyaların sunucuya gitmiyor, her şey cihazında
-              çalışıyor.
+              Nesneyi temiz çıkar, şeffaf PNG olarak indir.
             </p>
             <div className="hero-stats">
               <div className="hero-stat">
                 <strong>AI destekli</strong>
-                <span>ONNX Runtime Web</span>
+                <span>Tarayıcıda işler</span>
               </div>
               <div className="hero-stat">
                 <strong>Şeffaf PNG</strong>
@@ -377,7 +376,7 @@ export default function App() {
               <div className="section-header gallery-header">
                 <div>
                   <h2>Görseller</h2>
-                  <p>Yüklenen tüm görseller burada. Tıkla veya bu alana yeni dosya bırak.</p>
+                  <p>Tıkla veya yeni dosya bırak.</p>
                 </div>
               </div>
               <div className="asset-rail asset-rail-panel" role="list" aria-label="Yüklenen görseller">
@@ -458,26 +457,25 @@ export default function App() {
             <section className="workspace-section info-card">
               <div className="section-header">
                 <div>
-                  <h2>Bilgi</h2>
-                  <p>Nasıl çalışır?</p>
+                    <h2>Bilgi</h2>
                 </div>
               </div>
               <div className="tip-list">
                 <div className="tip-item">
                   <strong>İlk kullanım</strong>
-                  <span>Bu araç ilk açılışta model dosyalarını internetten indirir; ilk kurulum tamamlanmadan offline çalışmaz.</span>
+                  <span>Model dosyaları ilk açılışta indirilir.</span>
                 </div>
                 <div className="tip-item">
                   <strong>Sonraki kullanımlar</strong>
-                  <span>Model bir kez cache'e alındıktan sonra aynı cihazda bağlantı olmadan tekrar çalışabilir.</span>
+                  <span>Model cache'e alındıktan sonra daha hızlı açılır.</span>
                 </div>
                 <div className="tip-item">
                   <strong>Gizlilik</strong>
-                  <span>Görsel hiçbir sunucuya gönderilmez, tüm işlem cihazında gerçekleşir.</span>
+                  <span>Görseller cihazında işlenir.</span>
                 </div>
                 <div className="tip-item">
                   <strong>Model kaynağı</strong>
-                  <span>Şu an model verisi IMG.LY CDN üzerinden indirilir; işlem yine de tarayıcı içinde yapılır.</span>
+                  <span>Model IMG.LY CDN üzerinden alınır.</span>
                 </div>
               </div>
             </section>

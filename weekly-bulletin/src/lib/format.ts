@@ -99,10 +99,13 @@ export function buildMetaLine(item: NewsItem): string {
 }
 
 export function sanitizeLink(link: string): string {
-  const trimmed = link.trim();
-  if (!trimmed) return "";
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://${trimmed}`;
+  // URL'lerde ham boşluk/satır sonu/tab asla geçerli değildir. Excel hücresi
+  // uzun URL'i satıra sarınca değere gerçek "\n" girebiliyor; bunlar PDF link
+  // annotation'ını bozup linki açılmaz yapıyordu. Tüm iç boşlukları temizle.
+  const cleaned = link.replace(/\s+/g, "");
+  if (!cleaned) return "";
+  if (/^https?:\/\//i.test(cleaned)) return cleaned;
+  return `https://${cleaned}`;
 }
 
 export function reorderNewsItems(

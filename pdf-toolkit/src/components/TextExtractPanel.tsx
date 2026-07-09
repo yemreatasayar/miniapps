@@ -1,4 +1,5 @@
 import type { ExtractedTextDocument, LoadedPdf, TextExtractMode } from "../lib/types";
+import { getPdfLocale } from "../lib/i18n";
 
 type TextExtractPanelProps = {
   loadedPdf: LoadedPdf;
@@ -22,16 +23,55 @@ export default function TextExtractPanel({
   busy = false,
 }: TextExtractPanelProps) {
   const isOcrMode = mode === "ocr";
+  const locale = getPdfLocale();
+  const copy =
+    locale === "en"
+      ? {
+          title: "Text",
+          textLayerDesc: "Extract the PDF text layer and save it as DOCX.",
+          ocrDesc: "Read scanned pages with OCR and save them as DOCX.",
+          textLayer: "Text Layer",
+          ocr: "OCR",
+          buttonText: "Create DOCX",
+          buttonOcr: "Create with OCR",
+          processing: "Processing...",
+          allPages: `${loadedPdf.pages.length} pages`,
+          selectedPages: `${selectedCount} selected pages`,
+          modeText: "DOCX / Text Layer",
+          modeOcr: "DOCX / OCR (TR + EN)",
+          page: "Page",
+          block: "Block",
+          character: "Character",
+          empty: "No extractable text found on this page.",
+        }
+      : {
+          title: "Metin",
+          textLayerDesc: "PDF metin katmanını çıkarıp DOCX olarak kaydeder.",
+          ocrDesc: "Taranmış sayfaları OCR ile okuyup DOCX olarak kaydeder.",
+          textLayer: "Metin Katmanı",
+          ocr: "OCR",
+          buttonText: "DOCX Oluştur",
+          buttonOcr: "OCR ile Oluştur",
+          processing: "İşleniyor...",
+          allPages: `${loadedPdf.pages.length} sayfanın tamamı`,
+          selectedPages: `${selectedCount} seçili sayfa`,
+          modeText: "DOCX / Metin Katmanı",
+          modeOcr: "DOCX / OCR (TR + EN)",
+          page: "Sayfa",
+          block: "Blok",
+          character: "Karakter",
+          empty: "Bu sayfada çıkarılabilir metin bulunamadı.",
+        };
 
   return (
     <section className="text-extract-panel">
       <div className="panel-hero">
         <div className="text-extract-copy">
-          <h2>Text Extractor</h2>
+          <h2>{copy.title}</h2>
           <p>
             {isOcrMode
-              ? "Taranmış PDF sayfalarını OCR ile okuyup düzenlenebilir DOCX çıktısına dönüştürür. İlk kullanımda dil modeli indirilebilir."
-              : "PDF içindeki metin katmanını çıkarır, başlık, alt başlık ve paragraf olarak gruplar; ardından sade bir DOCX belgesi olarak kaydeder."}
+              ? copy.ocrDesc
+              : copy.textLayerDesc}
           </p>
         </div>
 
@@ -40,9 +80,9 @@ export default function TextExtractPanel({
             {loadedPdf.fileName}
           </span>
           <span className="meta-chip">
-            {selectedCount > 0 ? `${selectedCount} seçili sayfa` : `${loadedPdf.pages.length} sayfanın tamamı`}
+            {selectedCount > 0 ? copy.selectedPages : copy.allPages}
           </span>
-          <span className="meta-chip">{isOcrMode ? "DOCX / OCR (TR + EN)" : "DOCX / Metin Katmanı"}</span>
+          <span className="meta-chip">{isOcrMode ? copy.modeOcr : copy.modeText}</span>
         </div>
 
         <div className="panel-action-row">
@@ -53,7 +93,7 @@ export default function TextExtractPanel({
               onClick={() => onModeChange("text-layer")}
               disabled={busy}
             >
-              Metin Katmanı
+              {copy.textLayer}
             </button>
             <button
               type="button"
@@ -61,7 +101,7 @@ export default function TextExtractPanel({
               onClick={() => onModeChange("ocr")}
               disabled={busy}
             >
-              OCR
+              {copy.ocr}
             </button>
           </div>
 
@@ -71,7 +111,7 @@ export default function TextExtractPanel({
             onClick={onGenerate}
             disabled={busy}
           >
-            {busy ? "İşleniyor..." : isOcrMode ? "OCR ile DOCX Oluştur" : "DOCX Oluştur ve İndir"}
+            {busy ? copy.processing : isOcrMode ? copy.buttonOcr : copy.buttonText}
           </button>
         </div>
       </div>
@@ -82,15 +122,15 @@ export default function TextExtractPanel({
         <div className="text-extract-preview">
           <div className="text-extract-summary">
             <div className="text-extract-stat">
-              <span>Sayfa</span>
+              <span>{copy.page}</span>
               <strong>{extractedText.pages.length}</strong>
             </div>
             <div className="text-extract-stat">
-              <span>Blok</span>
+              <span>{copy.block}</span>
               <strong>{extractedText.blockCount}</strong>
             </div>
             <div className="text-extract-stat">
-              <span>Karakter</span>
+              <span>{copy.character}</span>
               <strong>{extractedText.characterCount}</strong>
             </div>
           </div>
@@ -98,7 +138,7 @@ export default function TextExtractPanel({
           <div className="text-extract-pages">
             {extractedText.pages.map((page) => (
               <article key={page.pageNumber} className="text-page-card">
-                <div className="text-page-label">Sayfa {page.pageNumber}</div>
+                <div className="text-page-label">{copy.page} {page.pageNumber}</div>
                 <div className="text-page-blocks">
                   {page.blocks.length > 0 ? (
                     page.blocks.map((block, index) => (
@@ -110,7 +150,7 @@ export default function TextExtractPanel({
                       </p>
                     ))
                   ) : (
-                    <p className="text-block text-block-empty">Bu sayfada çıkarılabilir metin bulunamadı.</p>
+                    <p className="text-block text-block-empty">{copy.empty}</p>
                   )}
                 </div>
               </article>

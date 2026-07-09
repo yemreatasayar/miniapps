@@ -1,4 +1,5 @@
 import type { CompressPreset, CompressStatus } from "./types";
+import { getPdfLocale, pdfCopy } from "./i18n";
 
 const GS_BASE = `${import.meta.env.BASE_URL}ghostscript/`;
 
@@ -14,6 +15,10 @@ const PRESET_FLAGS: Record<CompressPreset, string[]> = {
 };
 
 const COMMON_GS_ARGS = ["-dBATCH", "-dNOPAUSE", "-dQUIET", "-sDEVICE=pdfwrite"];
+
+function runtimeErrors() {
+  return pdfCopy[getPdfLocale()].runtimeErrors;
+}
 
 // Classic worker as a blob so importScripts can load the UMD gs.js without
 // ESM complications. callMain() is synchronous but runs off the main thread.
@@ -85,7 +90,7 @@ function ensureWorker(): Promise<void> {
         return;
       }
       if (d.op === "init-error") {
-        reject(new Error(d.message ?? "Ghostscript WASM başlatılamadı."));
+        reject(new Error(d.message ?? runtimeErrors().ghostscriptInit));
         return;
       }
     };
@@ -106,7 +111,7 @@ function handleWorkerMessage(ev: MessageEvent) {
   if (d.op === "result" && d.output) {
     job.resolve(new Uint8Array(d.output));
   } else {
-    job.reject(d.message ?? "Sıkıştırma başarısız.");
+    job.reject(d.message ?? runtimeErrors().compressFailed);
   }
 }
 
@@ -149,7 +154,7 @@ export async function compressWithWasm(
   } catch (error) {
     return {
       kind: "error",
-      message: error instanceof Error ? error.message : "Sıkıştırma başarısız.",
+      message: error instanceof Error ? error.message : runtimeErrors().compressFailed,
     };
   }
 }
@@ -166,7 +171,7 @@ export async function repairWithWasm(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Repair başarısız.",
+      message: error instanceof Error ? error.message : runtimeErrors().repairFailed,
     };
   }
 }

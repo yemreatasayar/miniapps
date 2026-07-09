@@ -261,7 +261,7 @@ export default function App() {
 
   async function handleFileSelected(file: File) {
     if (!file.name.toLowerCase().endsWith(".pdf")) {
-      setToast("Lütfen bir PDF dosyası seç.");
+      setToast(copy.status.selectPdfFile);
       return;
     }
 
@@ -284,9 +284,9 @@ export default function App() {
       setConvertSelection([]);
       setConvertedPdf(null);
       setConvertStatusMessage(null);
-      setToast(`${file.name} yüklendi.`);
+      setToast(copy.status.pdfLoaded(file.name));
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "PDF yüklenemedi.");
+      setToast(error instanceof Error ? error.message : copy.status.pdfLoadFailed);
     } finally {
       setBusy(false);
     }
@@ -295,7 +295,7 @@ export default function App() {
   function handleDroppedPdf(fileList: FileList | null) {
     const pdfFiles = Array.from(fileList ?? []).filter((entry) => entry.name.toLowerCase().endsWith(".pdf"));
     if (pdfFiles.length === 0) {
-      setToast("Lütfen bir PDF dosyası bırak.");
+      setToast(copy.status.dropPdfFile);
       return;
     }
 
@@ -367,7 +367,7 @@ export default function App() {
       setRedoStack((r) => [...r.slice(-9), { fileName: loadedPdf.fileName, fileBytes: loadedPdf.fileBytes }]);
     }
     setUndoStack((s) => s.slice(0, -1));
-    await replaceLoadedPdf(prev.fileName, prev.fileBytes, "Geri alındı.");
+    await replaceLoadedPdf(prev.fileName, prev.fileBytes, copy.status.undoDone);
   }
 
   async function handleRedo() {
@@ -378,7 +378,7 @@ export default function App() {
       setUndoStack((s) => [...s.slice(-9), { fileName: loadedPdf.fileName, fileBytes: loadedPdf.fileBytes }]);
     }
     setRedoStack((r) => r.slice(0, -1));
-    await replaceLoadedPdf(next.fileName, next.fileBytes, "Yeniden yapıldı.");
+    await replaceLoadedPdf(next.fileName, next.fileBytes, copy.status.redoDone);
   }
 
   async function handleRotate(index: number, direction: "cw" | "ccw") {
@@ -410,7 +410,7 @@ export default function App() {
     try {
       setBusy(true);
       const reorderedBytes = await reorderPages(loadedPdf.fileBytes, newOrder);
-      await replaceLoadedPdfWithHistory(loadedPdf.fileName, reorderedBytes, "Sayfa sırası güncellendi.");
+      await replaceLoadedPdfWithHistory(loadedPdf.fileName, reorderedBytes, copy.status.reorderDone);
       trackProcessSuccess({ process_type: "reorder_pages", file_count: 1 });
     } catch (error) {
       trackAppEvent("process_error", {
@@ -418,7 +418,7 @@ export default function App() {
         error_code: "reorder_failed",
         error_stage: "process",
       });
-      setToast(error instanceof Error ? error.message : "Sayfa sırası güncellenemedi.");
+      setToast(error instanceof Error ? error.message : copy.status.reorderFailed);
     } finally {
       setBusy(false);
     }
@@ -433,7 +433,7 @@ export default function App() {
       return;
     }
 
-    await downloadBytesAsZip(entries, zipFileName(entries[0]?.fileName ?? "pdf-ciktilari"));
+    await downloadBytesAsZip(entries, zipFileName(entries[0]?.fileName ?? copy.fileNames.pdfOutputs));
     trackAppEvent("export_download", { export_format: "zip", file_count: entries.length });
   }
 
@@ -446,7 +446,7 @@ export default function App() {
       return;
     }
 
-    await downloadBlobsAsZip(entries, zipFileName(entries[0]?.fileName ?? "pdf-gorselleri"));
+    await downloadBlobsAsZip(entries, zipFileName(entries[0]?.fileName ?? copy.fileNames.pdfImages));
     trackAppEvent("export_download", { export_format: "zip", file_count: entries.length });
   }
 
@@ -466,7 +466,7 @@ export default function App() {
         bytes,
         fileName: normalizeFileName(
           loadedPdf.fileName,
-          selected.length > 0 ? `-secili-sayfa-${index + 1}` : `-sayfa-${index + 1}`
+          selected.length > 0 ? copy.fileNames.selectedPage(index + 1) : copy.fileNames.page(index + 1)
         ),
       }));
 
@@ -476,21 +476,21 @@ export default function App() {
           const remainderBytes = await extractPages(loadedPdf.fileBytes, remaining);
           downloads.push({
             bytes: remainderBytes,
-            fileName: normalizeFileName(loadedPdf.fileName, "-kalan"),
+            fileName: normalizeFileName(loadedPdf.fileName, copy.fileNames.remainder),
           });
         }
       }
 
       await queueDownloads(downloads);
       trackProcessSuccess({ process_type: "split_pdf", file_count: downloads.length });
-      setToast("Bölme tamamlandı.");
+      setToast(copy.status.splitDone);
     } catch (error) {
       trackAppEvent("process_error", {
         process_type: "split_pdf",
         error_code: "split_failed",
         error_stage: "process",
       });
-      setToast(error instanceof Error ? error.message : "Bölme işlemi başarısız.");
+      setToast(error instanceof Error ? error.message : copy.status.splitFailed);
     } finally {
       setBusy(false);
     }
@@ -509,7 +509,7 @@ export default function App() {
         downloadBytes(mergedBytes, normalizeFileName(loadedPdf.fileName, "-merged"));
         trackAppEvent("export_download", { export_format: "pdf", file_count: 1 });
       }
-      await replaceLoadedPdfWithHistory(loadedPdf.fileName, mergedBytes, "PDF'ler birleştirildi.");
+      await replaceLoadedPdfWithHistory(loadedPdf.fileName, mergedBytes, copy.status.mergeDone);
       trackProcessSuccess({ process_type: "merge_pdf", file_count: files.length + 1 });
     } catch (error) {
       trackAppEvent("process_error", {
@@ -517,7 +517,7 @@ export default function App() {
         error_code: "merge_failed",
         error_stage: "process",
       });
-      setToast(error instanceof Error ? error.message : "Birleştirme işlemi başarısız.");
+      setToast(error instanceof Error ? error.message : copy.status.mergeFailed);
     } finally {
       setBusy(false);
     }
@@ -533,14 +533,14 @@ export default function App() {
       downloadBytes(extractedBytes, normalizeFileName(loadedPdf.fileName, "-extract"));
       trackProcessSuccess({ process_type: "extract_pages", file_count: 1 });
       trackAppEvent("export_download", { export_format: "pdf", file_count: 1 });
-      setToast("Seçili sayfalar indirildi.");
+      setToast(copy.status.extractDownloaded);
     } catch (error) {
       trackAppEvent("process_error", {
         process_type: "extract_pages",
         error_code: "extract_failed",
         error_stage: "process",
       });
-      setToast(error instanceof Error ? error.message : "Çıkarma işlemi başarısız.");
+      setToast(error instanceof Error ? error.message : copy.status.extractFailed);
     } finally {
       setBusy(false);
     }
@@ -558,14 +558,14 @@ export default function App() {
       setSelectedPages(new Set());
       setCompressStatus({ kind: "idle" });
       setActiveTab("edit");
-      setToast("Tüm sayfalar kaldırıldı.");
+      setToast(copy.status.allPagesRemoved);
       return;
     }
 
     try {
       setBusy(true);
       const nextBytes = await extractPages(loadedPdf.fileBytes, remaining);
-      await replaceLoadedPdfWithHistory(loadedPdf.fileName, nextBytes, "Seçili sayfalar kaldırıldı.");
+      await replaceLoadedPdfWithHistory(loadedPdf.fileName, nextBytes, copy.status.selectedPagesRemoved);
       trackProcessSuccess({ process_type: "delete_pages", file_count: 1 });
     } catch (error) {
       trackAppEvent("process_error", {
@@ -573,7 +573,7 @@ export default function App() {
         error_code: "delete_failed",
         error_stage: "process",
       });
-      setToast(error instanceof Error ? error.message : "Silme işlemi başarısız.");
+      setToast(error instanceof Error ? error.message : copy.status.deleteFailed);
     } finally {
       setBusy(false);
     }
@@ -586,7 +586,7 @@ export default function App() {
       downloadBytes(loadedPdf.fileBytes, loadedPdf.fileName);
       trackProcessSuccess({ process_type: "export_pages", export_format: "pdf", file_count: 1 });
       trackAppEvent("export_download", { export_format: "pdf", file_count: 1 });
-      setToast("PDF indirildi.");
+      setToast(copy.status.pdfDownloaded);
       return;
     }
 
@@ -610,7 +610,7 @@ export default function App() {
 
           return {
             blob,
-            fileName: `${baseName}-sayfa-${String(index + 1).padStart(2, "0")}.${imageExportFormat}`,
+            fileName: `${baseName}${copy.fileNames.pageImage(String(index + 1).padStart(2, "0"))}.${imageExportFormat}`,
           };
         })
       );
@@ -621,16 +621,14 @@ export default function App() {
         export_format: imageExportFormat,
         file_count: downloads.length,
       });
-      setToast(
-        `${targets.length} sayfa ${imageExportFormat.toUpperCase()} olarak indirilmeye hazırlandı.`
-      );
+      setToast(copy.status.imageExportReady(targets.length, imageExportFormat));
     } catch (error) {
       trackAppEvent("process_error", {
         process_type: "export_pages",
         error_code: "image_export_failed",
         error_stage: "export",
       });
-      setToast(error instanceof Error ? error.message : "Görsel export işlemi başarısız.");
+      setToast(error instanceof Error ? error.message : copy.status.imageExportFailed);
     } finally {
       setBusy(false);
     }
@@ -644,7 +642,7 @@ export default function App() {
     ) as Record<number, number>;
 
     if (Object.keys(rotations).length === 0) {
-      setToast("Uygulanacak rotasyon yok.");
+      setToast(copy.status.noRotation);
       return;
     }
 
@@ -652,7 +650,7 @@ export default function App() {
       setBusy(true);
       const rotatedBytes = await rotatePages(loadedPdf.fileBytes, rotations);
       downloadBytes(rotatedBytes, normalizeFileName(loadedPdf.fileName, "-rotated"));
-      await replaceLoadedPdfWithHistory(loadedPdf.fileName, rotatedBytes, "Rotasyon PDF'e yazıldı.");
+      await replaceLoadedPdfWithHistory(loadedPdf.fileName, rotatedBytes, copy.status.rotationApplied);
       trackProcessSuccess({ process_type: "rotate_pages", file_count: 1 });
       trackAppEvent("export_download", { export_format: "pdf", file_count: 1 });
     } catch (error) {
@@ -661,7 +659,7 @@ export default function App() {
         error_code: "rotate_failed",
         error_stage: "process",
       });
-      setToast(error instanceof Error ? error.message : "Rotasyon uygulanamadı.");
+      setToast(error instanceof Error ? error.message : copy.status.rotationFailed);
     } finally {
       setBusy(false);
     }
@@ -677,7 +675,7 @@ export default function App() {
         downloadBytes(result.bytes, result.fileName);
         trackProcessSuccess({ process_type: "repair_pdf", file_count: 1 });
         trackAppEvent("export_download", { export_format: "pdf", file_count: 1 });
-        setToast("Onarım tamamlandı — Acrobat uyumlu PDF indirildi.");
+        setToast(copy.status.repairDone);
       } else {
         setToast(result.message);
       }
@@ -687,7 +685,7 @@ export default function App() {
         error_code: "repair_failed",
         error_stage: "process",
       });
-      setToast(error instanceof Error ? error.message : "Onarım başarısız.");
+      setToast(error instanceof Error ? error.message : copy.status.repairFailed);
     } finally {
       setBusy(false);
     }
@@ -793,7 +791,7 @@ export default function App() {
           });
         }
 
-        const zipName = zipFileName(convertedFiles[0]?.fileName ?? "pdf-donusumleri", "pdf-donusumleri");
+        const zipName = zipFileName(convertedFiles[0]?.fileName ?? copy.fileNames.pdfConversions, copy.fileNames.pdfConversions);
         setConvertedPdf({
           fileName: zipName,
           files: convertedFiles.map(({ fileName, bytes }) => ({ fileName, bytes })),
@@ -866,18 +864,18 @@ export default function App() {
       setBusy(true);
       const result = await applyWatermark(loadedPdf.fileBytes, watermarkSettings, targetIndices);
       const suffix =
-        watermarkSettings.target === "selected" ? "-watermark-secili" : "-watermark";
+        watermarkSettings.target === "selected" ? copy.fileNames.selectedWatermark : copy.fileNames.watermark;
       downloadBytes(result, normalizeFileName(loadedPdf.fileName, suffix));
       trackProcessSuccess({ process_type: "watermark_pdf", file_count: 1 });
       trackAppEvent("export_download", { export_format: "pdf", file_count: 1 });
-      setToast("Watermark eklendi, PDF indirildi.");
+      setToast(copy.status.watermarkDone);
     } catch (error) {
       trackAppEvent("process_error", {
         process_type: "watermark_pdf",
         error_code: "watermark_failed",
         error_stage: "process",
       });
-      setToast(error instanceof Error ? error.message : "Watermark eklenemedi.");
+      setToast(error instanceof Error ? error.message : copy.status.watermarkFailed);
     } finally {
       setBusy(false);
     }
@@ -896,12 +894,16 @@ export default function App() {
       setBusy(true);
       setTextExtractStatus(
         textExtractMode === "ocr"
-          ? "OCR hazırlanıyor. İlk kullanım biraz sürebilir."
-          : "Metin katmanı okunuyor."
+          ? copy.status.textOcrPreparing
+          : copy.status.textLayerReading
       );
       const extracted =
         textExtractMode === "ocr"
-          ? await extractStructuredTextWithOcr(loadedPdf.fileBytes, targetPages, rotations, setTextExtractStatus)
+          ? await extractStructuredTextWithOcr(loadedPdf.fileBytes, targetPages, rotations, setTextExtractStatus, {
+              preparing: copy.status.textOcrPreparing,
+              page: copy.status.textOcrProgress,
+              done: copy.status.textOcrDone,
+            })
           : await extractStructuredText(loadedPdf.fileBytes, targetPages);
       setExtractedText(extracted);
 
@@ -909,7 +911,7 @@ export default function App() {
         /\.pdf$/i,
         textExtractMode === "ocr" ? "-ocr.docx" : "-text.docx"
       );
-      const docxBlob = await buildDocxBlobFromExtractedText(extracted, loadedPdf.fileName);
+      const docxBlob = await buildDocxBlobFromExtractedText(extracted, loadedPdf.fileName, copy.status.textEmptyDocument);
       downloadBlob(docxBlob, fileName);
       trackProcessSuccess({
         process_type: textExtractMode === "ocr" ? "ocr_to_docx" : "text_to_docx",
@@ -917,15 +919,15 @@ export default function App() {
         file_count: 1,
       });
       trackAppEvent("export_download", { export_format: "docx", file_count: 1 });
-      setTextExtractStatus(textExtractMode === "ocr" ? "OCR tamamlandı." : "Metin çıkarma tamamlandı.");
-      setToast(textExtractMode === "ocr" ? "OCR ile DOCX hazırlandı ve indirildi." : "DOCX hazırlandı ve indirildi.");
+      setTextExtractStatus(textExtractMode === "ocr" ? copy.status.textOcrDone : copy.status.textLayerDone);
+      setToast(textExtractMode === "ocr" ? copy.status.textOcrDocxReady : copy.status.textDocxReady);
     } catch (error) {
       trackAppEvent("process_error", {
         process_type: textExtractMode === "ocr" ? "ocr_to_docx" : "text_to_docx",
         error_code: "text_extract_failed",
         error_stage: "process",
       });
-      setToast(error instanceof Error ? error.message : "Metin çıkarma başarısız.");
+      setToast(error instanceof Error ? error.message : copy.status.textExtractFailed);
       setTextExtractStatus(null);
     } finally {
       setBusy(false);
@@ -941,19 +943,22 @@ export default function App() {
 
     try {
       setBusy(true);
-      setTableExtractStatus("Tablo yapısı analiz ediliyor.");
-      const extracted = await extractTablesFromPdf(loadedPdf.fileBytes, targetPages, setTableExtractStatus);
+      setTableExtractStatus(copy.status.tableAnalyzing);
+      const extracted = await extractTablesFromPdf(loadedPdf.fileBytes, targetPages, setTableExtractStatus, {
+        page: copy.status.tableProgress,
+        done: copy.status.tableDone,
+      });
       setExtractedTables(extracted);
       setTableExtractionContextKey(nextContextKey);
       setTablePreviewPageNumber(extracted.pages[0]?.pageNumber ?? null);
 
       if (extracted.pages.length === 0) {
-        setToast("Tablo bulunamadı.");
+        setToast(copy.status.tableNotFound);
         return null;
       }
 
       if (options?.announceSuccess !== false) {
-        setToast(`${extracted.pages.length} sayfada tablo çıkarıldı.`);
+        setToast(copy.status.tableExtracted(extracted.pages.length));
       }
       trackProcessSuccess({
         process_type: "extract_tables",
@@ -966,7 +971,7 @@ export default function App() {
         error_code: "table_extract_failed",
         error_stage: "process",
       });
-      setToast(error instanceof Error ? error.message : "Tablo çıkarma başarısız.");
+      setToast(error instanceof Error ? error.message : copy.status.tableExtractFailed);
       setTableExtractStatus(null);
       return null;
     } finally {
@@ -1000,7 +1005,7 @@ export default function App() {
 
     const baseName = loadedPdf.fileName.replace(/\.pdf$/i, "");
     const entries = buildCsvBlobsFromExtractedTables(readyTables).map((entry) => ({
-      fileName: `${baseName}-sayfa-${String(entry.pageNumber).padStart(2, "0")}.csv`,
+      fileName: `${baseName}${copy.fileNames.tablePage(String(entry.pageNumber).padStart(2, "0"))}.csv`,
       blob: entry.blob,
     }));
 
@@ -1013,7 +1018,7 @@ export default function App() {
       await downloadBlobsAsZip(entries, zipFileName(`${baseName}-csv`));
     }
 
-    setToast(entries.length === 1 ? "CSV indirildi." : "CSV dosyaları ZIP olarak indirildi.");
+    setToast(entries.length === 1 ? copy.status.csvDownloaded : copy.status.csvZipDownloaded);
     trackAppEvent("export_download", {
       export_format: entries.length === 1 ? "csv" : "zip",
       file_count: entries.length,
@@ -1027,10 +1032,10 @@ export default function App() {
     if (!readyTables || readyTables.pages.length === 0) return;
 
     const baseName = loadedPdf.fileName.replace(/\.pdf$/i, "");
-    const excelBlob = buildExcelBlobFromExtractedTables(readyTables);
+    const excelBlob = buildExcelBlobFromExtractedTables(readyTables, copy.status.tableSheetPrefix);
     downloadBlob(excelBlob, `${baseName}-tables.xlsx`);
     trackAppEvent("export_download", { export_format: "xlsx", file_count: 1 });
-    setToast("Excel dosyası indirildi.");
+    setToast(copy.status.excelDownloaded);
   }
 
   function handleBack() {

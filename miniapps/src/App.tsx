@@ -37,8 +37,9 @@ const IMAGE_FORMAT_CONVERTER_URL = "http://127.0.0.1:4322/";
 const DEV_TOOLKIT_URL = "http://127.0.0.1:4323/";
 const STEM_SPLITTER_URL = "http://127.0.0.1:4194/";
 const VIDEO_COMPRESSOR_URL = "http://127.0.0.1:4324/";
+const GA_REPORT_BRIDGE_URL = "http://127.0.0.1:4326/";
 const DEFAULT_PACK_LABEL = "miniapps pack";
-const DEFAULT_PACK_VERSION = "2026.1.1";
+const DEFAULT_PACK_VERSION = "2026.2.0";
 const DEFAULT_AUTHOR_LABEL = "by y.e.a.";
 const ADMIN_PIN_HASH = "c90ef8c5f8807ef4756af7a5f02be5fb0444e0ca51728181d4e1c864d2d2e759";
 const SHARED_APP_DISPLAY_ORDER = [
@@ -53,6 +54,7 @@ const SHARED_APP_DISPLAY_ORDER = [
   "video-compressor",
   "audio-editor",
   "stem-splitter",
+  "ga-report-bridge",
   "dev-toolkit",
 ] as const;
 const DEFAULT_AUTO_ATTACH_APP_IDS = [
@@ -64,6 +66,7 @@ const DEFAULT_AUTO_ATTACH_APP_IDS = [
   "csv-toolkit",
   "bg-remover",
   "audio-editor",
+  "ga-report-bridge",
   "exif-cleaner",
   "image-format-converter",
   "dev-toolkit",
@@ -89,6 +92,7 @@ const INTERNAL_APPS: MiniApp[] = [
   { id: "stem-splitter", name: "Stem Splitter", launchUrl: STEM_SPLITTER_URL },
   { id: "dev-toolkit", name: "Dev Toolkit", launchUrl: DEV_TOOLKIT_URL },
   { id: "video-compressor", name: "Video Compressor", launchUrl: VIDEO_COMPRESSOR_URL },
+  { id: "ga-report-bridge", name: "Analytica", launchUrl: GA_REPORT_BRIDGE_URL },
 ];
 
 const initialCustomerApps: CustomerAppMap = {
@@ -99,6 +103,7 @@ const initialCustomerApps: CustomerAppMap = {
     "image-toolkit",
     "video-to-audio",
     "video-compressor",
+    "ga-report-bridge",
     "csv-toolkit",
     "bg-remover",
     "audio-editor",
@@ -113,6 +118,7 @@ const initialCustomerApps: CustomerAppMap = {
     "image-toolkit",
     "video-to-audio",
     "video-compressor",
+    "ga-report-bridge",
     "csv-toolkit",
     "bg-remover",
     "audio-editor",
@@ -128,6 +134,13 @@ type PendingDelete =
   | { kind: "customer"; id: string; name: string }
   | { kind: "app"; id: string; name: string }
   | null;
+
+function trackMiniappsEvent(eventName: string, params: Record<string, string | number | boolean> = {}): void {
+  if (["localhost", "127.0.0.1"].includes(window.location.hostname)) return;
+
+  const gtag = (window as typeof window & { gtag?: (...args: unknown[]) => void }).gtag;
+  gtag?.("event", eventName, params);
+}
 
 async function sha256Hex(value: string): Promise<string> {
   if (!window.crypto?.subtle) {
@@ -163,6 +176,7 @@ function normalizeApps(storedApps: MiniApp[]): MiniApp[] {
   const devToolkit = storedApps.find((app) => app.id === "dev-toolkit");
   const stemSplitter = storedApps.find((app) => app.id === "stem-splitter");
   const videoCompressor = storedApps.find((app) => app.id === "video-compressor");
+  const gaReportBridge = storedApps.find((app) => app.id === "ga-report-bridge");
 
   if (
     !weeklyBulletin &&
@@ -177,7 +191,8 @@ function normalizeApps(storedApps: MiniApp[]): MiniApp[] {
     !imageFormatConverter &&
     !devToolkit &&
     !stemSplitter &&
-    !videoCompressor
+    !videoCompressor &&
+    !gaReportBridge
   )
     return INTERNAL_APPS;
 
@@ -203,6 +218,7 @@ function normalizeApps(storedApps: MiniApp[]): MiniApp[] {
   nextApps.push({ id: "dev-toolkit", name: devToolkit?.name || "Dev Toolkit", launchUrl: devToolkit?.launchUrl || DEV_TOOLKIT_URL });
   nextApps.push({ id: "stem-splitter", name: stemSplitter?.name || "Stem Splitter", launchUrl: stemSplitter?.launchUrl || STEM_SPLITTER_URL });
   nextApps.push({ id: "video-compressor", name: videoCompressor?.name || "Video Compressor", launchUrl: videoCompressor?.launchUrl || VIDEO_COMPRESSOR_URL });
+  nextApps.push({ id: "ga-report-bridge", name: gaReportBridge?.name || "Analytica", launchUrl: gaReportBridge?.launchUrl || GA_REPORT_BRIDGE_URL });
 
   return nextApps;
 }
@@ -458,7 +474,17 @@ export default function App() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`${app.name} uygulamasını yeni sekmede aç`}
-                title={`${app.name} uygulamasını aç`}
+                onClick={() => trackMiniappsEvent("tool_open", {
+                  app_id: app.id,
+                  app_version: DEFAULT_PACK_VERSION,
+                  shell_version: DEFAULT_PACK_VERSION,
+                  source: "home_grid",
+                  page_language: "tr",
+                  tool_id: app.id,
+                  tool_name: app.name,
+                  shell_variant: "local",
+                  workspace_id: selectedCustomer?.id || "default",
+                })}
               >
                 {renderAppCard(app)}
               </a>
@@ -602,6 +628,7 @@ export default function App() {
     if (app.id === "dev-toolkit") return <img className="app-card-art" src={assetUrl("dev-toolkit-card.svg")} alt="Dev Toolkit Kartı" />;
     if (app.id === "stem-splitter") return <img className="app-card-art" src={assetUrl("stem-splitter-card.svg")} alt="Stem Splitter Kartı" />;
     if (app.id === "video-compressor") return <img className="app-card-art" src={assetUrl("video-compressor-card.svg")} alt="Video Compressor Kartı" />;
+    if (app.id === "ga-report-bridge") return <img className="app-card-art" src={assetUrl("ga-report-bridge-card.svg")} alt="Analytica Kartı" />;
 
     return (
       <div className="app-card-fallback">

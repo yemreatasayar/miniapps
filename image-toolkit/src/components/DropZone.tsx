@@ -53,17 +53,14 @@ export default function DropZone({ onFilesSelected, loading }: DropZoneProps) {
       />
       <div className="drop-zone-inner">
         <div className="drop-zone-copy">
-          <strong>{loading ? "Görseller yükleniyor..." : "Görselleri bırak, düzenle ve yeniden indir."}</strong>
-          <span>
-            Toplu görsel düzenleme, yeniden boyutlandırma ve sıkıştırma işlemlerini tek ekrandan hızlıca
-            yapabilirsin.
-          </span>
+          <strong>{loading ? "Görseller yükleniyor..." : "Görselleri seç veya sürükle."}</strong>
+          <span>Boyutlandır, sıkıştır, kırp ve indir.</span>
         </div>
 
         <div className="drop-zone-upload-card">
-          <span className="drop-zone-upload-label">Dosya yükleme</span>
+          <span className="drop-zone-upload-label">Yükle</span>
           <span className="drop-zone-cta">{loading ? "İşleniyor..." : "Görsel Seç"}</span>
-          <p>Sürükle bırak da çalışır. JPG, PNG, WebP, GIF, BMP ve HEIC desteklenir.</p>
+          <p>JPG, PNG, WebP, GIF, BMP, HEIC.</p>
 
           <div className="drop-zone-formats" aria-hidden="true">
             <span>JPG</span>

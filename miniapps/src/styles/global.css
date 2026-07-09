@@ -198,14 +198,13 @@ button {
 }
 
 .customer-create-card {
-  border-radius: 24px;
-}
-
-.customer-create-card {
-  padding: 14px 12px 12px;
-  border: 1px solid #4d4d4d;
+  margin-top: 14px;
+  padding: 0 0 14px;
+  border: 0;
+  border-bottom: 1px solid #4d4d4d;
+  border-radius: 0;
   background: transparent;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  box-shadow: none;
 }
 
 .sidebar-field {
@@ -213,18 +212,18 @@ button {
 }
 
 .sidebar-field + .sidebar-field {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .sidebar-field input {
   width: 100%;
-  min-height: 44px;
-  padding: 0 16px;
+  min-height: 38px;
+  padding: 0 14px;
   border: 0;
-  border-radius: 18px;
+  border-radius: 15px;
   background: #262626;
   color: #f2f2f2;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
   transition: background 140ms ease, transform 140ms ease, box-shadow 140ms ease;
 }
@@ -252,12 +251,12 @@ button {
 
 .create-button {
   width: 100%;
-  min-height: 44px;
-  margin-top: 10px;
-  border-radius: 18px;
+  min-height: 38px;
+  margin-top: 8px;
+  border-radius: 15px;
   background: #f5f5f5;
   color: #111111;
-  font-size: 20px;
+  font-size: 17px;
 }
 
 .create-button:hover,
@@ -670,6 +669,46 @@ button {
 
 .app-card:hover {
   transform: translateY(-2px);
+}
+
+.miniapps-shell:not(.is-distribution) .app-grid {
+  align-items: center;
+  justify-items: center;
+  gap: clamp(30px, 3.2vw, 56px);
+}
+
+.miniapps-shell:not(.is-distribution) .app-card {
+  width: 100%;
+  max-width: 232px;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+}
+
+.miniapps-shell:not(.is-distribution) .app-card-link {
+  padding: clamp(10px, 1.4vw, 18px);
+  border-radius: 24px;
+  outline-offset: 8px;
+}
+
+.miniapps-shell:not(.is-distribution) .app-card-art {
+  width: min(100%, 162px);
+  height: auto;
+  max-height: 169px;
+  object-fit: contain;
+}
+
+.miniapps-shell:not(.is-distribution) .app-card:hover {
+  transform: none;
+}
+
+.miniapps-shell:not(.is-distribution) .app-card-link:hover {
+  background: transparent;
+}
+
+.miniapps-shell:not(.is-distribution) .app-card-link:focus-visible {
+  outline: 3px solid rgba(17, 17, 17, 0.18);
 }
 
 .miniapps-shell.is-distribution .distribution-workspace {

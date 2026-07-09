@@ -77,6 +77,20 @@
       "name": "dev-toolkit",
       "port": 4323,
       "dir": "../dev-toolkit/dist"
+    },
+    {
+      "name": "video-compressor",
+      "port": 4324,
+      "dir": "../video-compressor/dist",
+      "headers": {
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Embedder-Policy": "require-corp"
+      }
+    },
+    {
+      "name": "ga-report-bridge",
+      "port": 4326,
+      "dir": "../ga-report-bridge/dist"
     }
   ],
   "helpers": [
@@ -85,6 +99,23 @@
       "port": 4184,
       "script": "../pdf-compress-server/server.mjs",
       "cwd": "../pdf-compress-server",
+      "waitForPortTimeoutMs": 30000
+    },
+    {
+      "name": "video-compressor-server",
+      "port": 4186,
+      "script": "../video-compressor-server/server.mjs",
+      "cwd": "../video-compressor-server",
+      "waitForPortTimeoutMs": 30000
+    },
+    {
+      "name": "ga-report-bridge-server",
+      "port": 4187,
+      "script": "../ga-report-bridge-server/server.mjs",
+      "cwd": "../ga-report-bridge-server",
+      "env": {
+        "MINIAPPS_GA_BRIDGE_DATA_DIR": "/Users/yusufemreatasayar/miniapps/.data"
+      },
       "waitForPortTimeoutMs": 30000
     }
   ]

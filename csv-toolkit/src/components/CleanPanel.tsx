@@ -38,7 +38,7 @@ export default function CleanPanel({
         <div className="panel-heading">
           <div>
             <h2>Bul &amp; Değiştir</h2>
-            <p>Bu işlem ana veriyi kalıcı olarak günceller. Geri alma yok.</p>
+            <p>Ana veriyi günceller. Geri alma yok.</p>
           </div>
         </div>
 
@@ -143,7 +143,7 @@ export default function CleanPanel({
         <div className="panel-heading">
           <div>
             <h2>Tekilleştir</h2>
-            <p>İlk satır korunur, tekrarlılar silinir. Geri alma yok.</p>
+            <p>İlk satır korunur. Geri alma yok.</p>
           </div>
         </div>
 

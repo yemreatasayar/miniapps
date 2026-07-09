@@ -1,4 +1,5 @@
 import type { CompressPreset, CompressStatus, LoadedPdf } from "../lib/types";
+import { getPdfLocale } from "../lib/i18n";
 
 type CompressPanelProps = {
   available: boolean | null;
@@ -33,6 +34,35 @@ export default function CompressPanel({
   onDownload,
   loadedPdf,
 }: CompressPanelProps) {
+  const locale = getPdfLocale();
+  const copy =
+    locale === "en"
+      ? {
+          title: "Compress",
+          checking: "Checking compress engine...",
+          unavailable: "Compress engine is not running. Start `pdf-compress-server` with Ghostscript ready.",
+          web: "Small file, lower quality",
+          balanced: "Balanced compression",
+          strong: "Stronger compression",
+          compressing: "Compressing...",
+          button: "Compress PDF",
+          download: "Download",
+          resultNote: "Results depend on PDF content.",
+          smaller: "smaller",
+        }
+      : {
+          title: "Sıkıştır",
+          checking: "Sıkıştırma motoru kontrol ediliyor...",
+          unavailable: "Sıkıştırma motoru çalışmıyor. `pdf-compress-server` açık ve Ghostscript hazır olmalı.",
+          web: "Küçük dosya, düşük kalite",
+          balanced: "Dengeli sıkıştırma",
+          strong: "Daha güçlü sıkıştırma",
+          compressing: "Sıkıştırılıyor...",
+          button: "PDF'i Sıkıştır",
+          download: "İndir",
+          resultNote: "Sonuç PDF içeriğine bağlıdır.",
+          smaller: "küçüldü",
+        };
   const reduction =
     status.kind === "success" && status.sizeOriginal > 0
       ? Math.round(((status.sizeOriginal - status.sizeResult) / status.sizeOriginal) * 100)
@@ -41,16 +71,16 @@ export default function CompressPanel({
   return (
     <section className="compress-panel">
       <div className="section-header">
-        <div><h2>Compress</h2></div>
+        <div><h2>{copy.title}</h2></div>
       </div>
 
-      {available === null ? <div className="status-banner">Compress motoru kontrol ediliyor...</div> : null}
+      {available === null ? <div className="status-banner">{copy.checking}</div> : null}
 
       {available === false ? (
         <div className="status-banner is-warning">
           {status.kind === "web-disabled"
             ? status.message
-            : "Compress motoru çalışmıyor. `pdf-compress-server` açık ve Ghostscript hazır olmalı."}
+            : copy.unavailable}
         </div>
       ) : null}
 
@@ -63,7 +93,7 @@ export default function CompressPanel({
               onClick={() => onPresetChange("web")}
             >
               <strong>Web</strong>
-              <span>Küçük dosya, düşük kalite</span>
+              <span>{copy.web}</span>
             </button>
             <button
               type="button"
@@ -71,7 +101,7 @@ export default function CompressPanel({
               onClick={() => onPresetChange("balanced")}
             >
               <strong>Balanced</strong>
-              <span>Dengeli sıkıştırma</span>
+              <span>{copy.balanced}</span>
             </button>
             <button
               type="button"
@@ -79,7 +109,7 @@ export default function CompressPanel({
               onClick={() => onPresetChange("strong")}
             >
               <strong>Strong</strong>
-              <span>Agresif sıkıştırma, kalite düşebilir</span>
+              <span>{copy.strong}</span>
             </button>
           </div>
 
@@ -89,7 +119,7 @@ export default function CompressPanel({
             disabled={!loadedPdf || status.kind === "loading"}
             onClick={onCompress}
           >
-            {status.kind === "loading" ? "Sıkıştırılıyor..." : "PDF'i Sıkıştır"}
+            {status.kind === "loading" ? copy.compressing : copy.button}
           </button>
         </>
       ) : null}
@@ -97,12 +127,12 @@ export default function CompressPanel({
       {status.kind === "success" ? (
         <div className="compress-result">
           <strong>
-            {formatBytes(status.sizeOriginal)} → {formatBytes(status.sizeResult)} ({reduction}% küçüldü)
+            {formatBytes(status.sizeOriginal)} → {formatBytes(status.sizeResult)} ({reduction}% {copy.smaller})
           </strong>
           <a className="download-link" href={status.downloadUrl} download={status.fileName} onClick={onDownload}>
-            İndir
+            {copy.download}
           </a>
-          <p>Sonuç PDF içeriğine bağlıdır.</p>
+          <p>{copy.resultNote}</p>
         </div>
       ) : null}
 

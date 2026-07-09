@@ -11,6 +11,7 @@ const configFile = path.join(__dirname, "launcher-config.json");
 const stateDir = path.join(__dirname, ".state");
 const pidFile = path.join(stateDir, "miniapps-launcher.pid");
 const logFile = path.join(stateDir, "miniapps-launcher.log");
+const HELPER_RESTART_DELAY_MS = 1500;
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -219,6 +220,34 @@ function startHelper(helper) {
   return child;
 }
 
+function startManagedHelper(helper, isShuttingDown) {
+  let child = null;
+  let restartTimer = null;
+
+  const launch = () => {
+    if (isShuttingDown()) return;
+
+    child = startHelper(helper);
+    if (!child) return;
+
+    child.once("exit", () => {
+      if (isShuttingDown()) return;
+
+      appendLog(`helper ${helper.name} yeniden başlatılmak üzere planlandı.`);
+      restartTimer = setTimeout(launch, HELPER_RESTART_DELAY_MS);
+    });
+  };
+
+  launch();
+
+  return {
+    stop() {
+      if (restartTimer) clearTimeout(restartTimer);
+      if (child?.pid && processExists(child.pid)) child.kill("SIGTERM");
+    },
+  };
+}
+
 function start() {
   const existingPid = readExistingPid();
   if (existingPid && processExists(existingPid)) {
@@ -232,19 +261,19 @@ function start() {
   appendLog(`launcher starting for ${config.targetUrl}`);
 
   const servers = config.servers.map(serveStatic);
-  const helpers = config.helpers.map(startHelper).filter(Boolean);
+  let isShuttingDown = false;
+  const helpers = config.helpers
+    .map((helper) => startManagedHelper(helper, () => isShuttingDown))
+    .filter(Boolean);
 
   const shutdown = () => {
+    isShuttingDown = true;
     appendLog("launcher shutting down");
     clearPid();
     for (const server of servers) {
       server.close();
     }
-    for (const helper of helpers) {
-      if (helper.pid && processExists(helper.pid)) {
-        helper.kill("SIGTERM");
-      }
-    }
+    for (const helper of helpers) helper.stop();
     process.exit(0);
   };
 

@@ -27,11 +27,8 @@ export default function DropZone({ onFileSelected, encoding, onEncodingChange }:
   return (
     <section className={`dropzone-card ${dragging ? "is-dragging" : ""}`}>
       <div className="dropzone-copy">
-        <h1>CSV dosyanı bırak, temizle, filtrele ve tekrar indir.</h1>
-        <p>
-          Daha sakin bir çalışma alanı: sütun düzenleme, filtreleme, bul-değiştir,
-          tekilleştirme ve birleştirme aynı ekranda.
-        </p>
+        <h1>CSV dosyanı yükle ve düzenle.</h1>
+        <p>Sütunları seç, filtrele, temizle ve indir.</p>
       </div>
 
       <div
@@ -75,8 +72,8 @@ export default function DropZone({ onFileSelected, encoding, onEncodingChange }:
           }}
         />
         <div className="dropzone-icon">+</div>
-        <strong>CSV dosyasını buraya sürükle veya seç</strong>
-        <span>CSV, TSV ve delimiter’lı text dosyaları desteklenir.</span>
+        <strong>CSV dosyasını seç veya sürükle</strong>
+        <span>CSV, TSV ve text dosyaları desteklenir.</span>
       </div>
 
       <div className="encoding-row">
@@ -90,7 +87,7 @@ export default function DropZone({ onFileSelected, encoding, onEncodingChange }:
             ))}
           </select>
         </label>
-        <p className="field-note">Türkçe Excel çıktıları için çoğu zaman `Windows-1254` en güvenli seçimdir.</p>
+        <p className="field-note">Türkçe Excel için Windows-1254 gerekebilir.</p>
       </div>
     </section>
   );

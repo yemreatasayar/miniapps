@@ -70,13 +70,13 @@ export default function DropZone({
       />
 
       <div className="drop-zone-inner">
-        <strong>{loading ? "İşleniyor..." : "Ses dosyasını buraya bırak"}</strong>
-        <p className="drop-zone-description">MP3, WAV, M4A, OGG, FLAC ve diğer ses formatları</p>
+        <strong>{loading ? "İşleniyor..." : "Ses dosyası seç veya sürükle"}</strong>
+        <p className="drop-zone-description">MP3, WAV, M4A, OGG, FLAC.</p>
 
         {!loading ? (
           <div className="drop-zone-action">
             <span className="drop-zone-button">Dosya Seç</span>
-            <span className="drop-zone-meta">veya sürükle bırak</span>
+            <span className="drop-zone-meta">sürükle bırak da olur</span>
           </div>
         ) : null}
 

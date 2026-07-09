@@ -13,6 +13,7 @@ import type {
   PdfPage,
   WatermarkSettings,
 } from "./types";
+import { getPdfLocale, pdfCopy } from "./i18n";
 
 import pdfjsWorkerUrl from "pdfjs-dist/build/pdf.worker.mjs?url";
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
@@ -23,6 +24,21 @@ const OCR_MAX_DIMENSION = 2600;
 const DOCX_MIME =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 const OCR_LANGUAGES = "tur+eng";
+
+function runtimeErrors() {
+  return pdfCopy[getPdfLocale()].runtimeErrors;
+}
+
+type OcrProgressCopy = {
+  preparing: string;
+  page: (current: number, total: number) => string;
+  done: string;
+};
+
+type TableProgressCopy = {
+  page: (current: number, total: number) => string;
+  done: string;
+};
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   const copy = new Uint8Array(bytes.byteLength);
@@ -47,7 +63,7 @@ async function renderPageThumbnail(
   const context = canvas.getContext("2d");
 
   if (!context) {
-    throw new Error("Canvas context alınamadı.");
+    throw new Error(runtimeErrors().canvasContext);
   }
 
   canvas.width = Math.ceil(viewport.width);
@@ -70,7 +86,7 @@ async function renderPageToBlob(
   const context = canvas.getContext("2d");
 
   if (!context) {
-    throw new Error("Canvas context alınamadı.");
+    throw new Error(runtimeErrors().canvasContext);
   }
 
   canvas.width = Math.ceil(viewport.width);
@@ -87,7 +103,7 @@ async function renderPageToBlob(
     canvas.toBlob(
       (blob) => {
         if (!blob) {
-          reject(new Error("Görsel oluşturulamadı."));
+          reject(new Error(runtimeErrors().imageBlob));
           return;
         }
 
@@ -683,11 +699,12 @@ export async function extractStructuredTextWithOcr(
   fileBytes: Uint8Array,
   pageIndices?: number[],
   rotations?: Record<number, number>,
-  onProgress?: (message: string) => void
+  onProgress?: (message: string) => void,
+  progressCopy?: OcrProgressCopy
 ): Promise<ExtractedTextDocument> {
   const doc = await openPdfForPreview(fileBytes);
   const { createWorker } = await import("tesseract.js");
-  onProgress?.("OCR motoru hazırlanıyor. İlk kullanımda dil modeli indirilebilir.");
+  onProgress?.(progressCopy?.preparing ?? "OCR motoru hazırlanıyor. İlk kullanımda dil modeli indirilebilir.");
   const worker = await createWorker(OCR_LANGUAGES, 1);
 
   try {
@@ -700,7 +717,7 @@ export async function extractStructuredTextWithOcr(
 
     for (let index = 0; index < indices.length; index += 1) {
       const pageIndex = indices[index]!;
-      onProgress?.(`OCR çalışıyor: sayfa ${index + 1} / ${indices.length}`);
+      onProgress?.(progressCopy?.page(index + 1, indices.length) ?? `OCR çalışıyor: sayfa ${index + 1} / ${indices.length}`);
       const page = await doc.getPage(pageIndex + 1);
       const rotation = rotations?.[pageIndex] ?? 0;
       const blob = await renderPageToBlob(page, rotation, "png", OCR_MAX_DIMENSION);
@@ -722,7 +739,7 @@ export async function extractStructuredTextWithOcr(
       ),
     };
   } finally {
-    onProgress?.("OCR tamamlandı.");
+    onProgress?.(progressCopy?.done ?? "OCR tamamlandı.");
     await worker.terminate();
     await doc.destroy();
   }
@@ -731,7 +748,8 @@ export async function extractStructuredTextWithOcr(
 export async function extractTablesFromPdf(
   fileBytes: Uint8Array,
   pageIndices?: number[],
-  onProgress?: (message: string) => void
+  onProgress?: (message: string) => void,
+  progressCopy?: TableProgressCopy
 ): Promise<ExtractedTableDocument> {
   const doc = await openPdfForPreview(fileBytes);
 
@@ -745,7 +763,7 @@ export async function extractTablesFromPdf(
 
     for (let index = 0; index < indices.length; index += 1) {
       const pageIndex = indices[index]!;
-      onProgress?.(`Tablo analizi: sayfa ${index + 1} / ${indices.length}`);
+      onProgress?.(progressCopy?.page(index + 1, indices.length) ?? `Tablo analizi: sayfa ${index + 1} / ${indices.length}`);
       const page = await doc.getPage(pageIndex + 1);
       const content = await page.getTextContent();
       const rows = extractTableRowsFromTextContent(content.items);
@@ -765,16 +783,16 @@ export async function extractTablesFromPdf(
       maxColumnCount: pages.reduce((max, page) => Math.max(max, page.columnCount), 0),
     };
   } finally {
-    onProgress?.("Tablo analizi tamamlandı.");
+    onProgress?.(progressCopy?.done ?? "Tablo analizi tamamlandı.");
     await doc.destroy();
   }
 }
 
-export function buildExcelBlobFromExtractedTables(extracted: ExtractedTableDocument): Blob {
+export function buildExcelBlobFromExtractedTables(extracted: ExtractedTableDocument, sheetPrefix = "Sayfa"): Blob {
   const workbook = XLSX.utils.book_new();
 
   extracted.pages.forEach((page, index) => {
-    const sheetName = `Sayfa ${page.pageNumber}`.slice(0, 31) || `Sheet${index + 1}`;
+    const sheetName = `${sheetPrefix} ${page.pageNumber}`.slice(0, 31) || `Sheet${index + 1}`;
     const worksheet = XLSX.utils.aoa_to_sheet(page.rows);
     XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
   });

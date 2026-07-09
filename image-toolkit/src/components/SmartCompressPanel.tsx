@@ -42,7 +42,7 @@ export default function SmartCompressPanel({
   return (
     <section className="compress-panel">
       <div className="section-header">
-        <div><h2>Smart Compress</h2></div>
+        <div><h2>Akıllı Sıkıştır</h2></div>
       </div>
 
       <div className="preset-group">
@@ -60,8 +60,8 @@ export default function SmartCompressPanel({
 
       <div className="slider-panel">
         <div className="slider-label-row">
-          <span>Sıkıştırma yok</span>
-          <span>Maksimum eşitleme</span>
+          <span>Orijinal</span>
+          <span>Dengeli</span>
         </div>
         <input
           className="quality-slider"
@@ -120,13 +120,13 @@ export default function SmartCompressPanel({
         </button>
         {infoOpen ? (
           <div className="infotip-box">
-            Aktifken çıktı dosyalarına ".comp" eki eklenmez; orijinal dosya adı korunur.
+            Aktifken ".comp" eki eklenmez.
           </div>
         ) : null}
       </div>
 
       <button type="button" className="compress-button" onClick={onCompress} disabled={busy || images.length === 0}>
-        {busy ? "İşleniyor..." : "Tümünü Sıkıştır ve İndir"}
+        {busy ? "İşleniyor..." : "Tümünü İndir"}
       </button>
     </section>
   );

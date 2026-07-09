@@ -127,8 +127,7 @@ export default function VolumeNormalizer({ onToast }: VolumeNormalizerProps) {
           <div className="hero-copy">
             <h1>Ses seviyesini normalize et.</h1>
             <p className="hero-description">
-              Pik veya loudness normalizasyonu ile ses seviyesini hedef değere getir. Yayın ve
-              streaming işleri için -14 LUFS iyi bir başlangıç noktasıdır.
+              Peak veya LUFS hedefiyle seviyeyi dengede tut.
             </p>
           </div>
 

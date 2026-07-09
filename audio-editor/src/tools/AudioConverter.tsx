@@ -132,8 +132,7 @@ export default function AudioConverter({ onToast }: AudioConverterProps) {
           <div className="hero-copy">
             <h1>Ses formatını dönüştür.</h1>
             <p className="hero-description">
-              MP3 ve WAV arasında dönüşüm yap, kalite ya da bit derinliğini seçerek dosyayı dışa
-              aktar.
+              MP3 veya WAV olarak dışa aktar.
             </p>
           </div>
 
@@ -209,7 +208,7 @@ export default function AudioConverter({ onToast }: AudioConverterProps) {
                 disabled={isBusy}
               >
                 <strong>MP3</strong>
-                <span>Sıkıştırılmış · Küçük dosya</span>
+                <span>Küçük dosya</span>
               </button>
 
               <button

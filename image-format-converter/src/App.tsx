@@ -125,8 +125,8 @@ export default function App() {
       {images.length === 0 ? (
         <section className="hero-panel">
           <div className="hero-copy">
-            <h2>Görselleri yükle, istediğin formata tek akışta dönüştür.</h2>
-            <p>Ürün görselleri, ekran görüntüleri, HEIC fotoğrafları veya kampanya asset’leri için hızlı yerel dönüştürme.</p>
+            <h2>Görselleri farklı formata dönüştür.</h2>
+            <p>Tek dosyayı indir, çoklu dosyayı ZIP olarak al.</p>
           </div>
 
           <DropZone busy={loading} onFilesSelected={handleFilesSelected} />
@@ -150,7 +150,7 @@ export default function App() {
 
           <div className="workspace-toolbar">
             <div className="workspace-toolbar-copy">
-              <h2>Dönüştür ve dışa aktar.</h2>
+              <h2>Dönüştür ve indir.</h2>
 
               <div className="workspace-summary">
                 <span className="summary-pill">

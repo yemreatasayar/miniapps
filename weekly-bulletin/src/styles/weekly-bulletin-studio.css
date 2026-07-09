@@ -416,6 +416,7 @@
   position: relative;
   margin: 0 auto;
   padding: 0;
+  contain: layout paint;
 }
 
 .weekly-bulletin-legacy-root .preview-document {
@@ -425,6 +426,9 @@
   overflow: visible;
   border-radius: 0;
   box-shadow: none;
+  backface-visibility: hidden;
+  transform-style: flat;
+  will-change: transform;
 }
 
 .weekly-bulletin-legacy-root .preview-bg,
@@ -441,7 +445,7 @@
 
 .weekly-bulletin-legacy-root .preview-bg {
   inset: 0;
-  background: linear-gradient(180deg, #0000ee 0%, #0000ee 62%, #230bad 100%);
+  background: #0000ee;
 }
 
 .weekly-bulletin-legacy-root .preview-white-panel {
@@ -456,6 +460,8 @@
 .weekly-bulletin-legacy-root .preview-image {
   object-fit: cover;
   display: block;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .weekly-bulletin-legacy-root .preview-placeholder {

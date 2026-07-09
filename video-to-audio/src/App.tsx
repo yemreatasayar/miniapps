@@ -149,10 +149,9 @@ export default function App() {
       {!loadedVideo ? (
         <section className="hero-panel">
           <div className="hero-copy">
-            <h1>Videoyu bırak, sesi temiz ve hızlı biçimde dışa aktar.</h1>
+            <h1>Videodan ses çıkar.</h1>
             <p className="hero-description">
-              Video dosyanı yerelde MP3, WAV veya orijinal ses akışına dönüştür.
-              Dosyaların tarayıcı dışına çıkmaz.
+              MP3, WAV veya orijinal ses akışı olarak indir.
             </p>
 
             <div className="hero-stats">
@@ -162,11 +161,11 @@ export default function App() {
               </div>
               <div className="hero-stat">
                 <strong>Yerelde işlem</strong>
-                <span>Sunucuya yükleme yok</span>
+                <span>Tarayıcıda çalışır</span>
               </div>
               <div className="hero-stat">
-                <strong>Hızlı başlangıç</strong>
-                <span>Drag & drop veya dosya seç</span>
+                <strong>Kolay yükle</strong>
+                <span>Seç veya sürükle</span>
               </div>
             </div>
           </div>
@@ -270,21 +269,20 @@ export default function App() {
                 <div className="section-header">
                   <div>
                     <h2>İpucu</h2>
-                    <p>En pratik seçimler</p>
                   </div>
                 </div>
                 <div className="tip-list">
                   <div className="tip-item">
                     <strong>MP3</strong>
-                    <span>Genel paylaşım ve uyumluluk için en güvenli seçenek.</span>
+                    <span>Paylaşım için güvenli seçenek.</span>
                   </div>
                   <div className="tip-item">
                     <strong>WAV</strong>
-                    <span>Düzenleme ve arşiv için daha temiz ama daha büyük çıktı.</span>
+                    <span>Düzenleme için temiz, daha büyük çıktı.</span>
                   </div>
                   <div className="tip-item">
                     <strong>Original</strong>
-                    <span>Encode etmeden hızlı ses ayırmak istediğinde kullan.</span>
+                    <span>Encode etmeden hızlı çıkarır.</span>
                   </div>
                 </div>
               </section>

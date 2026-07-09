@@ -111,10 +111,9 @@ export default function App() {
       {images.length === 0 ? (
         <section className="hero-panel">
           <div className="hero-copy">
-            <h1>Fotoğrafları yükle, görünmeyen metadata izlerini tek adımda temizle.</h1>
+            <h1>Fotoğraflardaki metadata izlerini temizle.</h1>
             <p>
-              Sosyal paylaşım, CV başvurusu, medya gönderimi veya müşteri teslimi öncesinde fotoğrafların içindeki
-              GPS ve cihaz bilgisini ayıklayabilirsin.
+              GPS ve cihaz bilgilerini temiz kopyadan kaldır.
             </p>
           </div>
 
@@ -140,8 +139,8 @@ export default function App() {
 
             <div className="workspace-toolbar">
               <div className="workspace-toolbar-copy">
-                <h1>Temiz kopyaları hazırla ve indir.</h1>
-                <p>Metadata yeni dosyaya taşınmaz. Çıktı formatını seç, sonra tüm dosyaları tek akışta dışa aktar.</p>
+                <h1>Temiz kopyaları indir.</h1>
+                <p>Çıktı formatını seç ve dışa aktar.</p>
 
                 <div className="workspace-summary">
                   <span className="summary-pill">

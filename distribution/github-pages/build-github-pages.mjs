@@ -675,12 +675,17 @@ const enLocalizationReplacements = new Map([
       ['"Thumbnail data URL üretilemedi."', '"Thumbnail data URL could not be generated."'],
       ['"Görsel boyutu tarayıcı canvas limitini aşıyor."', '"Image dimensions exceed the browser canvas limit."'],
       ['"Görseller yükleniyor..."', '"Loading images..."'],
+      ['"Görselleri seç veya sürükle."', '"Choose or drag images."'],
+      ['"Boyutlandır, sıkıştır, kırp ve indir."', '"Resize, compress, crop, and download."'],
       ['"Görselleri bırak, düzenle ve yeniden indir."', '"Drop images, edit them, and download again."'],
       ['"Toplu görsel düzenleme, yeniden boyutlandırma ve sıkıştırma işlemlerini tek ekrandan hızlıca yapabilirsin."', '"Handle batch image editing, resizing, and compression quickly from one screen."'],
       ['"Dosya yükleme"', '"File upload"'],
+      ['"Yükle"', '"Upload"'],
       ['"İşleniyor..."', '"Processing..."'],
       ['"Görsel Seç"', '"Choose Image"'],
       ['"Sürükle bırak da çalışır. JPG, PNG, WebP, GIF, BMP ve HEIC desteklenir."', '"Drag and drop works too. JPG, PNG, WebP, GIF, BMP, and HEIC are supported."'],
+      ['"Dosya adını koru"', '"Keep file name"'],
+      ['aria-label:"Bilgi"', 'aria-label:"Info"'],
       ['"Seç"', '"Choose"'],
       ['"kaldır"', '"remove"'],
       ['"Genişliğe göre"', '"By width"'],
@@ -797,9 +802,12 @@ const enLocalizationReplacements = new Map([
       ['children:"Bilgi"', 'children:"Info"'],
       ['"Görsel yüklemek için tıkla veya sürükle bırak"', '"Click to upload an image or drag and drop"'],
       ['"İşleniyor…"','"Processing…"'],
+      ['"Görselleri seç veya sürükle"', '"Choose or drag images"'],
+      ['"PNG, JPG, WebP ve diğer görsel formatları."', '"PNG, JPG, WebP, and other image formats."'],
       ['"Görselleri buraya bırak"', '"Drop images here"'],
       ['"PNG, JPG, WEBP ve diğer görsel formatlarını tek seferde ekleyebilirsin."', '"You can add PNG, JPG, WEBP, and other image formats in one go."'],
       ['"Dosya Seç"', '"Choose File"'],
+      ['"veya sürükle bırak"', '"or drag and drop"'],
       ['"veya çoklu sürükle bırak"', '"or drag and drop multiple files"'],
       ['"AI modeli çalışıyor"', '"AI model is running"'],
       ['"WASM hazırlanıyor"', '"Preparing WASM"'],
@@ -818,6 +826,10 @@ const enLocalizationReplacements = new Map([
       ['"Toplu işlem başarısız."', '"Batch processing failed."'],
       ['"İndirilecek hazır çıktı bulunamadı."', '"No ready output found to download."'],
       ['"Arka planı kaldır, nesneyi temiz çıkar."', '"Remove the background and keep the subject clean."'],
+      ['"Arka planı kaldır."', '"Remove the background."'],
+      ['"Nesneyi temiz çıkar, şeffaf PNG olarak indir."', '"Keep the subject clean and download a transparent PNG."'],
+      ['"AI destekli"', '"AI powered"'],
+      ['"Tarayıcıda işler"', '"Runs in the browser"'],
       ['"Görsellerini tarayıcıda AI ile işle. Dosyaların sunucuya gitmiyor, her şey cihazında çalışıyor."', '"Process your images with AI in the browser. Files are not sent to a server; everything runs on your device."'],
       ['"Şeffaf PNG"', '"Transparent PNG"'],
       ['"Alpha kanallı çıktı"', '"Alpha channel output"'],
@@ -1395,6 +1407,10 @@ function injectSeoMeta(htmlPath, { title, description, lang, canonicalUrl }) {
     "image": ogImage,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock" },
   });
+
+  // English pages are generated from TR builds first; remove stale structured data
+  // before injecting the language-specific JSON-LD block below.
+  html = html.replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/g, "");
 
   if (html.includes('name="description"')) {
     html = html.replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${d}">`);
