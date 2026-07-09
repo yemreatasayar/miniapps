@@ -7,6 +7,7 @@ type ConvertPanelProps = {
   helperStatus: ConvertHelperStatus | null;
   selectedFiles: File[];
   convertedFileName: string | null;
+  convertedIsArchive?: boolean;
   statusMessage: string | null;
   busy?: boolean;
   onFilesSelected: (files: File[]) => void;
@@ -18,6 +19,7 @@ export default function ConvertPanel({
   helperStatus,
   selectedFiles,
   convertedFileName,
+  convertedIsArchive = false,
   statusMessage,
   busy = false,
   onFilesSelected,
@@ -112,11 +114,11 @@ export default function ConvertPanel({
       {convertedFileName ? (
         <div className="convert-result-card">
           <div>
-            <strong>{copy.readyTitle}</strong>
+            <strong>{convertedIsArchive ? copy.readyZipTitle : copy.readyTitle}</strong>
             <span>{convertedFileName}</span>
           </div>
           <button type="button" onClick={onDownload} disabled={busy}>
-            {copy.downloadButton}
+            {convertedIsArchive ? copy.downloadZipButton : copy.downloadButton}
           </button>
         </div>
       ) : null}

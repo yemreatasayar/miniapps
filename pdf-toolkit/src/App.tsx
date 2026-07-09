@@ -103,11 +103,16 @@ function buildTableExtractionContextKey(loadedPdf: LoadedPdf | null, selectedPag
 }
 
 const isDistribution = window.location.hostname === "miniapps.tr";
+const MAX_OFFICE_CONVERT_FILES = 50;
+const MAX_CONVERT_TOTAL_BYTES = 150 * 1024 * 1024;
+const MAX_CONVERT_TOTAL_MB = Math.round(MAX_CONVERT_TOTAL_BYTES / 1024 / 1024);
 
 type ConvertedPdfState = {
   fileName: string;
-  fileBytes: Uint8Array;
+  fileBytes?: Uint8Array;
+  files?: Array<{ fileName: string; bytes: Uint8Array }>;
   sourceFormat: string;
+  isArchive?: boolean;
 };
 
 export default function App() {
@@ -721,6 +726,12 @@ export default function App() {
 
   function handleDownloadConvertedPdf() {
     if (!convertedPdf) return;
+    if (convertedPdf.isArchive && convertedPdf.files?.length) {
+      void downloadBytesAsZip(convertedPdf.files, convertedPdf.fileName);
+      trackAppEvent("export_download", { export_format: "zip", file_count: convertedPdf.files.length });
+      return;
+    }
+    if (!convertedPdf.fileBytes) return;
     downloadBytes(convertedPdf.fileBytes, convertedPdf.fileName);
     trackAppEvent("export_download", { export_format: "pdf", file_count: 1 });
   }
@@ -743,14 +754,61 @@ export default function App() {
       return;
     }
 
-    if (officeFiles.length > 1) {
-      setToast(copy.status.singleOfficeOnly);
+    if (officeFiles.length > MAX_OFFICE_CONVERT_FILES) {
+      setToast(copy.status.tooManyOfficeFiles(MAX_OFFICE_CONVERT_FILES));
+      return;
+    }
+
+    const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+    if (totalBytes > MAX_CONVERT_TOTAL_BYTES) {
+      setToast(copy.status.convertSizeLimit(MAX_CONVERT_TOTAL_MB));
       return;
     }
 
     try {
       setBusy(true);
       setConvertStatusMessage(copy.status.preparingConvert);
+
+      if (officeFiles.length > 1) {
+        const convertedFiles: Array<{ fileName: string; bytes: Uint8Array; sourceFormat: string }> = [];
+
+        for (const [index, file] of officeFiles.entries()) {
+          setConvertStatusMessage(copy.status.convertingBatch(index + 1, officeFiles.length));
+          const result = await convertOfficeToPdf(file);
+          if (!result.ok) {
+            setConvertStatusMessage(result.message);
+            setToast(result.message);
+            trackAppEvent("process_error", {
+              process_type: "convert_to_pdf",
+              error_code: "convert_failed",
+              error_stage: "process",
+              file_count: officeFiles.length,
+            });
+            return;
+          }
+          convertedFiles.push({
+            fileName: result.fileName,
+            bytes: result.bytes,
+            sourceFormat: result.sourceFormat,
+          });
+        }
+
+        const zipName = zipFileName(convertedFiles[0]?.fileName ?? "pdf-donusumleri", "pdf-donusumleri");
+        setConvertedPdf({
+          fileName: zipName,
+          files: convertedFiles.map(({ fileName, bytes }) => ({ fileName, bytes })),
+          sourceFormat: "office-batch",
+          isArchive: true,
+        });
+        setConvertStatusMessage(copy.status.convertedBatchReady(convertedFiles.length));
+        trackProcessSuccess({
+          process_type: "convert_to_pdf",
+          export_format: "zip",
+          file_count: convertedFiles.length,
+          source_format: "office-batch",
+        });
+        return;
+      }
 
       const result =
         imageFiles.length > 0
@@ -1036,6 +1094,7 @@ export default function App() {
             helperStatus={convertHelperStatus}
             selectedFiles={convertSelection}
             convertedFileName={convertedPdf?.fileName ?? null}
+            convertedIsArchive={convertedPdf?.isArchive === true}
             statusMessage={convertStatusMessage}
             busy={busy}
             onFilesSelected={handleConvertSelection}
@@ -1130,6 +1189,7 @@ export default function App() {
               helperStatus={convertHelperStatus}
               selectedFiles={convertSelection}
               convertedFileName={convertedPdf?.fileName ?? null}
+              convertedIsArchive={convertedPdf?.isArchive === true}
               statusMessage={convertStatusMessage}
               busy={busy}
               onFilesSelected={handleConvertSelection}
