@@ -69,6 +69,14 @@ export default function DropZone({ busy, compact = false, onFilesSelected }: Dro
           ? "JPG, PNG, WebP, HEIC."
           : "EXIF ve GPS izlerini temiz kopyadan kaldır."}
       </span>
+      {!compact ? (
+        <div className="dropzone-format-row" aria-hidden="true">
+          <span>JPG</span>
+          <span>PNG</span>
+          <span>WEBP</span>
+          <span>HEIC</span>
+        </div>
+      ) : null}
     </div>
   );
 }

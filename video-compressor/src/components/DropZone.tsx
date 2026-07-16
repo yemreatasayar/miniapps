@@ -55,16 +55,10 @@ export default function DropZone({ onFileSelected, loading }: DropZoneProps) {
       />
 
       <div className="drop-zone-inner">
+        <div className="drop-zone-icon" aria-hidden="true">
+          <span>+</span>
+        </div>
         <strong>{loading ? t.dropLoading : t.dropTitle}</strong>
-        <p className="drop-zone-description">{t.dropDesc}</p>
-
-        {!loading ? (
-          <div className="drop-zone-action">
-            <span className="drop-zone-button">{t.dropButton}</span>
-            <span className="drop-zone-meta">{t.dropOr}</span>
-          </div>
-        ) : null}
-
         <div className="drop-zone-format-row">
           <span>MP4</span>
           <span>WebM</span>

@@ -18,10 +18,14 @@ export default function DropZone({ onFileSelected, loading }: DropZoneProps) {
   return (
     <div
       role="button"
-      tabIndex={0}
-      className={`drop-zone ${isDragging ? "is-dragging" : ""}`}
-      onClick={() => inputRef.current?.click()}
+      tabIndex={loading ? -1 : 0}
+      aria-disabled={loading}
+      className={`drop-zone ${isDragging ? "is-dragging" : ""} ${loading ? "is-loading" : ""}`}
+      onClick={() => {
+        if (!loading) inputRef.current?.click();
+      }}
       onKeyDown={(event) => {
+        if (loading) return;
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           inputRef.current?.click();
@@ -29,10 +33,12 @@ export default function DropZone({ onFileSelected, loading }: DropZoneProps) {
       }}
       onDragOver={(event) => {
         event.preventDefault();
+        if (loading) return;
         setIsDragging(true);
       }}
       onDragEnter={(event) => {
         event.preventDefault();
+        if (loading) return;
         setIsDragging(true);
       }}
       onDragLeave={(event) => {
@@ -43,6 +49,7 @@ export default function DropZone({ onFileSelected, loading }: DropZoneProps) {
       onDrop={(event) => {
         event.preventDefault();
         setIsDragging(false);
+        if (loading) return;
         pickFile(event.dataTransfer.files);
       }}
     >
@@ -50,6 +57,7 @@ export default function DropZone({ onFileSelected, loading }: DropZoneProps) {
         ref={inputRef}
         type="file"
         accept="video/*"
+        disabled={loading}
         hidden
         onChange={(event) => {
           pickFile(event.target.files);
@@ -57,16 +65,10 @@ export default function DropZone({ onFileSelected, loading }: DropZoneProps) {
         }}
       />
       <div className="drop-zone-inner">
-        <strong>{loading ? "Video yükleniyor..." : "Video seç veya sürükle"}</strong>
-        <span className="drop-zone-description">
-          MP4, MOV, WebM, MKV ve benzeri formatlar.
-        </span>
-
-        <div className="drop-zone-action">
-          <span className="drop-zone-button">{loading ? "Yükleniyor..." : "Video Seç"}</span>
-          <span className="drop-zone-meta">veya sürükle bırak</span>
+        <div className="drop-zone-icon" aria-hidden="true">
+          <span>+</span>
         </div>
-
+        <strong>{loading ? "Ses önizlemesi hazırlanıyor..." : "Video seç veya sürükle"}</strong>
         <div className="drop-zone-format-row">
           <span>MP4</span>
           <span>MOV</span>

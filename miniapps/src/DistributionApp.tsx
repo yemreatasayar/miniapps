@@ -32,7 +32,7 @@ function assetUrl(fileName: string): string {
 const OFFLINE_READY_APPS_STORAGE_KEY = "miniapps.distribution.offlineReadyApps";
 const SHELL_LANGUAGE_STORAGE_KEY = "miniapps.distribution.language";
 const DEFAULT_PACK_LABEL = "miniapps pack";
-const DEFAULT_PACK_VERSION = "2026.2.0";
+const DEFAULT_PACK_VERSION = "2026.2.1";
 const DEFAULT_AUTHOR_LABEL = "by y.e.a.";
 
 const defaultApps: MiniApp[] = [
@@ -75,7 +75,7 @@ const appDescriptions = {
     "bg-remover": "Görsel arka planlarını hızlıca kaldır.",
     "video-to-audio": "Videolardan ses dosyası çıkar.",
     "video-compressor": "Videoları sıkıştır, kes ve düzenle.",
-    "audio-editor": "Ses dosyalarını kırp, dönüştür ve dışa aktar.",
+    "audio-editor": "Ses dosyalarını tek yüklemede kes, dengele ve dönüştür.",
     "stem-splitter": "Vokali ayır ve ses parçalarını çıkar.",
     "dev-toolkit": "Geliştirici araçlarını tek yerde kullan.",
     "ga-report-bridge": "GA4 raporlarını arşivle ve analiz et.",
@@ -90,7 +90,7 @@ const appDescriptions = {
     "bg-remover": "Remove image backgrounds quickly.",
     "video-to-audio": "Extract audio files from videos.",
     "video-compressor": "Compress, trim and edit videos.",
-    "audio-editor": "Trim, convert and export audio files.",
+    "audio-editor": "Trim, balance and convert audio files in one upload.",
     "stem-splitter": "Separate vocals and extract audio stems.",
     "dev-toolkit": "Use developer utilities in one place.",
     "ga-report-bridge": "Archive and analyze GA4 reports.",

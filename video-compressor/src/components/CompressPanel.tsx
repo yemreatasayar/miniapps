@@ -4,6 +4,8 @@ import type { ProcessSettings, VideoFormat } from "../lib/types";
 type Props = {
   settings: ProcessSettings;
   onSettingsChange: (s: ProcessSettings) => void;
+  onProcess: () => void;
+  canProcess: boolean;
   disabled: boolean;
 };
 
@@ -19,7 +21,7 @@ function sliderValueToCrf(value: number): number {
   return MIN_CRF + MAX_CRF - value;
 }
 
-export default function CompressPanel({ settings, onSettingsChange, disabled }: Props) {
+export default function CompressPanel({ settings, onSettingsChange, onProcess, canProcess, disabled }: Props) {
   const { t } = useLang();
 
   function update<K extends keyof ProcessSettings>(key: K, value: ProcessSettings[K]) {
@@ -87,8 +89,7 @@ export default function CompressPanel({ settings, onSettingsChange, disabled }: 
 
       <div className="settings-group">
         <div className="audio-header">
-          <label className="settings-label">{t.audioLabel}</label>
-          <label className="toggle-label">
+          <label className="toggle-label audio-toggle-label">
             <input
               type="checkbox"
               checked={settings.includeAudio}
@@ -98,32 +99,37 @@ export default function CompressPanel({ settings, onSettingsChange, disabled }: 
             <span className={`toggle-track ${settings.includeAudio ? "is-on" : ""}`}>
               <span className="toggle-thumb" />
             </span>
-            <span>{settings.includeAudio ? t.audioOn : t.audioOff}</span>
+            <span>{t.audioInclude}</span>
           </label>
+          {settings.includeAudio ? (
+            <div className="radio-group audio-bitrate-group">
+              {(["64", "128", "192"] as const).map((bitrate) => (
+                <label
+                  key={bitrate}
+                  className={`radio-option ${settings.audioBitrate === bitrate ? "is-active" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="audioBitrate"
+                    value={bitrate}
+                    checked={settings.audioBitrate === bitrate}
+                    onChange={() => update("audioBitrate", bitrate)}
+                    disabled={disabled}
+                  />
+                  {bitrate} kbps{bitrate === "128" ? t.audioRecommended : ""}
+                </label>
+              ))}
+            </div>
+          ) : null}
+          <button
+            type="button"
+            className="settings-process-btn"
+            onClick={onProcess}
+            disabled={disabled || !canProcess}
+          >
+            {t.processBtn}
+          </button>
         </div>
-
-        {settings.includeAudio ? (
-          <div className="radio-group">
-            {(["64", "128", "192"] as const).map((bitrate) => (
-              <label
-                key={bitrate}
-                className={`radio-option ${settings.audioBitrate === bitrate ? "is-active" : ""}`}
-              >
-                <input
-                  type="radio"
-                  name="audioBitrate"
-                  value={bitrate}
-                  checked={settings.audioBitrate === bitrate}
-                  onChange={() => update("audioBitrate", bitrate)}
-                  disabled={disabled}
-                />
-                {bitrate} kbps{bitrate === "128" ? t.audioRecommended : ""}
-              </label>
-            ))}
-          </div>
-        ) : (
-          <p className="settings-muted">{t.audioMuted}</p>
-        )}
       </div>
 
     </div>

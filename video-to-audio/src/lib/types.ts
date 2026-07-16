@@ -7,6 +7,11 @@ export type AudioSettings = {
   bitrate: Mp3Bitrate;
 };
 
+export type CutterSelection = {
+  startSec: number;
+  endSec: number;
+};
+
 export type ProcessStatus =
   | { kind: "idle" }
   | { kind: "loading-ffmpeg"; progress: number }
@@ -18,4 +23,7 @@ export type LoadedVideo = {
   file: File;
   fileName: string;
   fileSize: number;
+  duration: number;
+  waveformData: Float32Array;
+  waveformAvailable: boolean;
 };

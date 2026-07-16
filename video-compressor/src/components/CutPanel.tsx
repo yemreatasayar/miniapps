@@ -510,11 +510,7 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
       <div className="section-header">
         <div>
           <h2>{t.cutTitle}</h2>
-          <p>
-            {isEdited
-              ? t.cutDescEdited(segments.length, fmt(keptDuration))
-              : t.cutDescIdle}
-          </p>
+          {isEdited ? <p>{t.cutDescEdited(segments.length, fmt(keptDuration))}</p> : null}
         </div>
         <div className="cut-actions">
           <button type="button" className="cut-action-btn" onClick={undoSegments} disabled={disabled || !canUndo}>

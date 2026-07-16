@@ -2,6 +2,8 @@ import type { MouseEvent as ReactMouseEvent } from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { drawWaveform } from "../lib/waveform";
 
+export type WaveformTarget = "start" | "end" | "playhead";
+
 type WaveformProps = {
   data: Float32Array;
   duration: number;
@@ -12,6 +14,9 @@ type WaveformProps = {
   onPlayheadChange?: (sec: number) => void;
   readOnly?: boolean;
   onTogglePlayback?: () => void;
+  activeTarget?: WaveformTarget;
+  onActiveTargetChange?: (target: WaveformTarget) => void;
+  onNudge?: (deltaSec: number) => void;
 };
 
 type DragTarget = "start" | "end" | "playhead" | "none";
@@ -26,6 +31,9 @@ export default function Waveform({
   onPlayheadChange,
   readOnly = false,
   onTogglePlayback,
+  activeTarget = "playhead",
+  onActiveTargetChange,
+  onNudge,
 }: WaveformProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const draggingRef = useRef<DragTarget>("none");
@@ -48,8 +56,9 @@ export default function Waveform({
       colorSelected: "#7c5cff",
       colorPlayhead: "#ffffff",
       bgColor: "#140c35",
+      activeTarget,
     });
-  }, [data, endRatio, playheadRatio, readOnly, startRatio]);
+  }, [activeTarget, data, endRatio, playheadRatio, readOnly, startRatio]);
 
   const getRatioFromEvent = useCallback((event: ReactMouseEvent<HTMLCanvasElement> | MouseEvent) => {
     const canvas = canvasRef.current;
@@ -71,16 +80,29 @@ export default function Waveform({
 
       if (distanceToStart < 0.03) {
         draggingRef.current = "start";
+        onActiveTargetChange?.("start");
       } else if (distanceToEnd < 0.03) {
         draggingRef.current = "end";
+        onActiveTargetChange?.("end");
       } else if (distanceToPlayhead < 0.03) {
         draggingRef.current = "playhead";
+        onActiveTargetChange?.("playhead");
       } else {
         draggingRef.current = "playhead";
+        onActiveTargetChange?.("playhead");
         onPlayheadChange?.(ratio * safeDuration);
       }
     },
-    [endRatio, getRatioFromEvent, onPlayheadChange, playheadRatio, readOnly, safeDuration, startRatio]
+    [
+      endRatio,
+      getRatioFromEvent,
+      onActiveTargetChange,
+      onPlayheadChange,
+      playheadRatio,
+      readOnly,
+      safeDuration,
+      startRatio,
+    ]
   );
 
   useEffect(() => {
@@ -120,12 +142,19 @@ export default function Waveform({
       height={120}
       tabIndex={0}
       role="application"
-      aria-label="Ses önizleme dalga formu"
+      aria-label="Ses önizleme dalga formu. Yön tuşlarıyla seçili noktayı hassas ayarla."
       onMouseDown={handleMouseDown}
       onKeyDown={(event) => {
         if (event.key === " " && onTogglePlayback) {
           event.preventDefault();
           onTogglePlayback();
+          return;
+        }
+
+        if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && onNudge) {
+          event.preventDefault();
+          const step = event.shiftKey ? 1 : 0.1;
+          onNudge(event.key === "ArrowRight" ? step : -step);
         }
       }}
       style={{ cursor: readOnly ? "default" : "crosshair" }}

@@ -773,3 +773,123 @@ select {
   width: auto;
   display: block;
 }
+
+/* Ortak miniapps giriş kompozisyonu */
+.csv-shell {
+  max-width: 1480px;
+  padding: 20px clamp(20px, 3vw, 40px) 0;
+  gap: 16px;
+}
+
+.csv-header {
+  min-height: 76px;
+  padding: 0;
+}
+
+.csv-brand-logo {
+  height: 76px;
+  max-width: min(100%, 280px);
+}
+
+.dropzone-card {
+  min-height: clamp(500px, 60vh, 610px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "copy upload"
+    "encoding upload";
+  gap: 28px clamp(36px, 4.5vw, 68px);
+  align-items: stretch;
+  padding: clamp(36px, 4vw, 56px);
+  border-radius: 32px;
+}
+
+.dropzone-copy {
+  grid-area: copy;
+  align-content: center;
+  max-width: none;
+  min-width: 0;
+  padding: 0;
+  gap: 20px;
+}
+
+.dropzone-copy h1 {
+  max-width: 15ch;
+  font-size: clamp(3.15rem, 4.7vw, 5rem);
+}
+
+.dropzone-copy p {
+  font-size: 1.08rem;
+  line-height: 1.65;
+}
+
+.dropzone-area {
+  grid-area: upload;
+  width: 100%;
+  min-height: 100%;
+  padding: clamp(30px, 3vw, 44px);
+  border-radius: 26px;
+}
+
+.encoding-row {
+  grid-area: encoding;
+  align-self: end;
+  margin: 0;
+}
+
+.dropzone-card.is-dragging .dropzone-area {
+  border-color: rgba(53, 92, 155, 0.48);
+  box-shadow: 0 24px 50px rgba(53, 92, 155, 0.12);
+}
+
+@media (max-width: 1180px) {
+  .dropzone-card {
+    min-height: 0;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    grid-template-areas:
+      "copy"
+      "upload"
+      "encoding";
+    gap: 28px;
+    padding: 34px;
+  }
+
+  .dropzone-copy h1 {
+    max-width: 16ch;
+  }
+
+  .dropzone-area {
+    min-height: 340px;
+  }
+}
+
+@media (max-width: 760px) {
+  .csv-shell {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .csv-header {
+    min-height: 64px;
+  }
+
+  .csv-brand-logo {
+    height: 64px;
+  }
+
+  .dropzone-card {
+    padding: 24px;
+    gap: 24px;
+    border-radius: 24px;
+  }
+
+  .dropzone-copy h1 {
+    font-size: clamp(2.55rem, 13vw, 3.5rem);
+  }
+
+  .dropzone-area {
+    min-height: 300px;
+    padding: 24px;
+  }
+}

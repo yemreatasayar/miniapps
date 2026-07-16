@@ -64,11 +64,18 @@ export default function DropZone({ busy, compact = false, onFilesSelected }: Dro
         <span>+</span>
       </div>
       <strong>{busy ? "Dosyalar hazırlanıyor..." : compact ? "Daha fazla görsel ekle" : "Görselleri seç veya sürükle"}</strong>
-      <span>
-        {compact
-          ? "JPG, PNG, WebP, GIF, BMP, HEIC/HEIF."
-          : "JPG, PNG, WebP, GIF, BMP, HEIC/HEIF."}
-      </span>
+      {compact ? (
+        <span>JPG, PNG, WebP, GIF, BMP, HEIC/HEIF.</span>
+      ) : (
+        <div className="dropzone-format-row" aria-hidden="true">
+          <span>JPG</span>
+          <span>PNG</span>
+          <span>WEBP</span>
+          <span>GIF</span>
+          <span>BMP</span>
+          <span>HEIC</span>
+        </div>
+      )}
     </div>
   );
 }

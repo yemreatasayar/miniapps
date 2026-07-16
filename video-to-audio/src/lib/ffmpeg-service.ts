@@ -1,6 +1,6 @@
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { toBlobURL } from "@ffmpeg/util";
-import type { AudioSettings, OutputFormat } from "./types";
+import type { AudioSettings, CutterSelection, OutputFormat } from "./types";
 
 let ffmpegInstance: FFmpeg | null = null;
 let loadPromise: Promise<void> | null = null;
@@ -85,6 +85,8 @@ export function getFFmpeg(): FFmpeg {
 export async function extractAudio(
   file: File,
   settings: AudioSettings,
+  selection: CutterSelection,
+  totalDuration: number,
   onProgress: (progress: number) => void
 ): Promise<{ blob: Blob; fileName: string }> {
   const ffmpeg = getFFmpeg();
@@ -98,7 +100,7 @@ export async function extractAudio(
 
   try {
     await ffmpeg.writeFile(inputName, await fetchFile(file));
-    await ffmpeg.exec(buildArgs(inputName, outputName, settings));
+    await ffmpeg.exec(buildArgs(inputName, outputName, settings, selection, totalDuration));
     const data = await ffmpeg.readFile(outputName);
     return {
       blob: new Blob([toBlobPart(data)], { type: getMimeType(settings.format) }),
@@ -127,8 +129,22 @@ function toBlobPart(data: Uint8Array | string): BlobPart {
   return data.slice().buffer as ArrayBuffer;
 }
 
-function buildArgs(input: string, output: string, settings: AudioSettings): string[] {
-  const base = ["-i", input, "-vn"];
+function buildArgs(
+  input: string,
+  output: string,
+  settings: AudioSettings,
+  selection: CutterSelection,
+  totalDuration: number
+): string[] {
+  const selectionDuration = Math.max(0.1, selection.endSec - selection.startSec);
+  const hasKnownDuration = totalDuration > 0 && selection.endSec > selection.startSec;
+  const isTrimmed =
+    hasKnownDuration &&
+    (selection.startSec > 0.01 || selection.endSec < totalDuration - 0.05);
+  const trimArgs = isTrimmed
+    ? ["-ss", selection.startSec.toFixed(3), "-t", selectionDuration.toFixed(3)]
+    : [];
+  const base = ["-i", input, ...trimArgs, "-vn"];
   if (settings.format === "original") return [...base, "-acodec", "copy", output];
   if (settings.format === "wav") return [...base, "-acodec", "pcm_s16le", output];
   return [...base, "-acodec", "libmp3lame", "-b:a", `${settings.bitrate}k`, output];

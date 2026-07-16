@@ -32,7 +32,7 @@ export default function ResultPanel({
   const savedPercent = originalSize > 0 ? Math.round((1 - outputSize / originalSize) * 100) : 0;
 
   return (
-    <div className="workspace-section">
+    <div className="workspace-section result-panel">
       <div className="section-header">
         <div>
           <h2>Tamamlandı</h2>

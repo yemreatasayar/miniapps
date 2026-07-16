@@ -52,15 +52,12 @@ export type Strings = {
   crfSmall: string;
   crfVerySmall: string;
   qualityHint: string;
-  audioLabel: string;
-  audioOn: string;
+  audioInclude: string;
   audioOff: string;
   audioRecommended: string;
-  audioMuted: string;
   // CutPanel
   cutTitle: string;
   cutDescEdited: (n: number, dur: string) => string;
-  cutDescIdle: string;
   cutUndo: string;
   cutRedo: string;
   cutSplit: string;
@@ -73,7 +70,7 @@ export type Strings = {
   cutPlayheadTitle: string;
   // App hero
   waiting: string;
-  heroTitle: string;
+  heroTitle: readonly [string, string];
   heroDesc: string;
   stat1Title: string;
   stat1Desc: string;
@@ -84,7 +81,6 @@ export type Strings = {
   changeVideo: string;
   processBtn: string;
   sourceFileLabel: string;
-  operationsLabel: string;
   summaryTitle: string;
   sizeLabel: string;
   durationLabel: string;
@@ -93,14 +89,6 @@ export type Strings = {
   segmentLabel: string;
   fullVideo: string;
   pieceCount: (n: number) => string;
-  tipsTitle: string;
-  tipsBest: string;
-  tip1Title: string;
-  tip1Desc: string;
-  tip2Title: string;
-  tip2Desc: string;
-  tip3Title: string;
-  tip3Desc: string;
   // Errors / status
   notVideoFile: string;
   processFailed: string;
@@ -145,15 +133,12 @@ export const strings: Record<Lang, Strings> = {
     crfSmall: "küçük dosya",
     crfVerySmall: "çok küçük dosya",
     qualityHint: "Düşük CRF = daha az sıkıştırma. Orijinal kaliteyi aşmak mümkün değildir; çok düşük CRF yalnızca dosya boyutunu artırır.",
-    audioLabel: "Ses",
-    audioOn: "Dahil",
+    audioInclude: "Ses Dahil",
     audioOff: "Sessiz",
     audioRecommended: " — Önerilen",
-    audioMuted: "Ses kanalı çıktıya dahil edilmeyecek.",
 
     cutTitle: "Segment Yönetimi",
     cutDescEdited: (n, dur) => `${n} parça · ${dur} kalacak`,
-    cutDescIdle: "Kalacak bölgeleri belirle.",
     cutUndo: "Geri Al",
     cutRedo: "İleri Al",
     cutSplit: "Böl",
@@ -166,7 +151,7 @@ export const strings: Record<Lang, Strings> = {
     cutPlayheadTitle: "Oynatma konumunu sürükle",
 
     waiting: "Video bekleniyor",
-    heroTitle: "Videoyu sıkıştır ve kırp.",
+    heroTitle: ["Videoyu sıkıştır", "ve kırp."],
     heroDesc: "Formatı seç, kaliteyi ayarla, gereksiz bölümleri çıkar.",
     stat1Title: "Tek geçiş",
     stat1Desc: "Sıkıştır ve kırp",
@@ -177,7 +162,6 @@ export const strings: Record<Lang, Strings> = {
     changeVideo: "Başka Video Seç",
     processBtn: "İşle",
     sourceFileLabel: "Kaynak dosya",
-    operationsLabel: "İşlemler",
     summaryTitle: "Özet",
     sizeLabel: "Boyut",
     durationLabel: "Süre",
@@ -186,14 +170,6 @@ export const strings: Record<Lang, Strings> = {
     segmentLabel: "Segment",
     fullVideo: "Tam video",
     pieceCount: (n) => `${n} parça`,
-    tipsTitle: "İpucu",
-    tipsBest: "Kısa öneriler",
-    tip1Title: "CRF 18–22",
-    tip1Desc: "Dengeli kalite ve boyut.",
-    tip2Title: "CRF 28–32",
-    tip2Desc: "Daha küçük çıktı.",
-    tip3Title: "Segment kenarları",
-    tip3Desc: "Blok kenarlarını sürükle.",
     notVideoFile: "Lütfen bir video dosyası seç.",
     processFailed: "İşlem başarısız.",
     processingSegments: "Segmentler işleniyor",
@@ -236,15 +212,12 @@ export const strings: Record<Lang, Strings> = {
     crfSmall: "small file",
     crfVerySmall: "very small file",
     qualityHint: "Lower CRF = less compression. You can't exceed the original quality; a very low CRF only increases file size.",
-    audioLabel: "Audio",
-    audioOn: "Included",
+    audioInclude: "Include Audio",
     audioOff: "Muted",
     audioRecommended: " — Recommended",
-    audioMuted: "Audio track will not be included in the output.",
 
     cutTitle: "Segment Editor",
     cutDescEdited: (n, dur) => `${n} segment${n > 1 ? "s" : ""} · ${dur} remaining`,
-    cutDescIdle: "Define the regions to keep.",
     cutUndo: "Undo",
     cutRedo: "Redo",
     cutSplit: "Split",
@@ -257,7 +230,7 @@ export const strings: Record<Lang, Strings> = {
     cutPlayheadTitle: "Drag to seek",
 
     waiting: "Waiting for video",
-    heroTitle: "Compress and trim your video.",
+    heroTitle: ["Compress your video", "and trim it."],
     heroDesc: "Choose format, adjust quality, remove unwanted parts.",
     stat1Title: "Single pass",
     stat1Desc: "Compress and trim",
@@ -268,7 +241,6 @@ export const strings: Record<Lang, Strings> = {
     changeVideo: "Change Video",
     processBtn: "Process",
     sourceFileLabel: "Source file",
-    operationsLabel: "Operations",
     summaryTitle: "Summary",
     sizeLabel: "Size",
     durationLabel: "Duration",
@@ -277,14 +249,6 @@ export const strings: Record<Lang, Strings> = {
     segmentLabel: "Segment",
     fullVideo: "Full video",
     pieceCount: (n) => `${n} segment${n > 1 ? "s" : ""}`,
-    tipsTitle: "Tips",
-    tipsBest: "Quick hints",
-    tip1Title: "CRF 18–22",
-    tip1Desc: "Balanced quality and size.",
-    tip2Title: "CRF 28–32",
-    tip2Desc: "Smaller output.",
-    tip3Title: "Segment edges",
-    tip3Desc: "Drag the block edges.",
     notVideoFile: "Please select a video file.",
     processFailed: "Processing failed.",
     processingSegments: "Processing segments",

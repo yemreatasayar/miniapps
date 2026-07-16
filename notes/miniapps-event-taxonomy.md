@@ -20,7 +20,7 @@ Tum event'lerde zorunlu parametreler:
 | --- | --- | --- | --- |
 | `app_id` | string | `json-formatter` | App'in sabit slug'i. |
 | `app_version` | string | `1.4.0` | App'in semver versiyonu. |
-| `shell_version` | string | `2026.1.1` | MiniApps shell versiyonu. |
+| `shell_version` | string | `2026.2.1` | MiniApps shell versiyonu. |
 | `source` | string | `home_grid` | Event'in nereden tetiklendigi. |
 | `page_language` | string | `tr` | Site dili. Izinli degerler: `tr`, `en`. |
 

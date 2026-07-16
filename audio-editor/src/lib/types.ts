@@ -1,7 +1,5 @@
 export type AudioFormat = "mp3" | "wav";
 
-export type Tab = "cutter" | "normalizer" | "converter";
-
 export type ProcessStatus =
   | { kind: "idle" }
   | { kind: "loading-ffmpeg"; progress: number }
@@ -34,4 +32,10 @@ export type ConverterSettings = {
   outputFormat: AudioFormat;
   mp3Bitrate: "128" | "192" | "320";
   wavBitDepth: "16" | "24";
+};
+
+export type AudioProcessingSettings = {
+  normalizationEnabled: boolean;
+  normalizer: NormalizerSettings;
+  converter: ConverterSettings;
 };

@@ -119,14 +119,6 @@ export default function App() {
       (segs.length === 1 && (segs[0].start > 0.1 || segs[0].end < loadedVideo.duration - 0.1));
   }, [settings.segments, loadedVideo]);
 
-  const processSummary = useMemo(() => {
-    const parts: string[] = [];
-    parts.push(`${settings.outputFormat.toUpperCase()} · CRF ${settings.videoCrf}`);
-    if (!settings.includeAudio) parts.push(t.audioOff);
-    if (hasCuts) parts.push(t.pieceCount(settings.segments.length));
-    return parts.join(" · ");
-  }, [settings, hasCuts, t]);
-
   const handleFileSelected = useCallback(async (file: File) => {
     if (!file.type.startsWith("video/")) {
       setToast(t.notVideoFile);
@@ -227,7 +219,11 @@ export default function App() {
       {!loadedVideo ? (
         <section className="hero-panel">
           <div className="hero-copy">
-            <h1>{t.heroTitle}</h1>
+            <h1 className="hero-title">
+              {t.heroTitle.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </h1>
             <p className="hero-description">{t.heroDesc}</p>
             <div className="hero-stats">
               <div className="hero-stat">
@@ -254,28 +250,21 @@ export default function App() {
             <div className="hero-copy">
               <h1>{loadedVideo.fileName}</h1>
               <p className="hero-description">{fileSummary}</p>
-              <div className="hero-actions">
-                <button type="button" className="hero-secondary" onClick={handleReset}>
-                  {t.changeVideo}
-                </button>
-                {canProcess ? (
-                  <button type="button" className="hero-primary" onClick={() => void handleProcess()}>
-                    {t.processBtn}
-                  </button>
-                ) : null}
-              </div>
             </div>
-            <div className="hero-side hero-side-summary">
-              <div className="summary-card summary-card-accent">
-                <span className="summary-label">{t.operationsLabel}</span>
-                <strong>{processSummary}</strong>
-                <span>{loadedVideo.duration > 0 ? `${loadedVideo.duration.toFixed(1)}s` : "—"}</span>
-              </div>
+            <div className="hero-actions hero-actions-loaded">
+              <button type="button" className="hero-secondary" onClick={handleReset}>
+                {t.changeVideo}
+              </button>
+              {canProcess ? (
+                <button type="button" className="hero-primary" onClick={() => void handleProcess()}>
+                  {t.processBtn}
+                </button>
+              ) : null}
             </div>
           </section>
 
           <section className="workspace-grid">
-            <div className="workspace-main">
+            <div className="workspace-feedback">
               {isBusy && (status.kind === "loading-ffmpeg" || status.kind === "processing") ? (
                 <ProgressPanel status={status} />
               ) : null}
@@ -294,13 +283,19 @@ export default function App() {
               {status.kind === "error" ? (
                 <div className="status-banner is-error">{status.message}</div>
               ) : null}
-
-              <CompressPanel settings={settings} onSettingsChange={setSettings} disabled={isBusy} />
-              <CutPanel video={loadedVideo} settings={settings} onSettingsChange={setSettings} disabled={isBusy} />
             </div>
 
-            <aside className="workspace-aside">
-              <section className="workspace-section info-card">
+            <CutPanel video={loadedVideo} settings={settings} onSettingsChange={setSettings} disabled={isBusy} />
+
+            <div className="settings-summary-grid">
+              <CompressPanel
+                settings={settings}
+                onSettingsChange={setSettings}
+                onProcess={() => void handleProcess()}
+                canProcess={Boolean(canProcess)}
+                disabled={isBusy}
+              />
+              <section className="workspace-section info-card summary-panel">
                 <div className="section-header">
                   <div><h2>{t.summaryTitle}</h2><p>{fileSummary}</p></div>
                 </div>
@@ -313,18 +308,7 @@ export default function App() {
                   <div className="detail-item"><span>{t.segmentLabel}</span><strong>{hasCuts ? t.pieceCount(settings.segments.length) : t.fullVideo}</strong></div>
                 </div>
               </section>
-
-              <section className="workspace-section info-card">
-                <div className="section-header">
-                  <div><h2>{t.tipsTitle}</h2></div>
-                </div>
-                <div className="tip-list">
-                  <div className="tip-item"><strong>{t.tip1Title}</strong><span>{t.tip1Desc}</span></div>
-                  <div className="tip-item"><strong>{t.tip2Title}</strong><span>{t.tip2Desc}</span></div>
-                  <div className="tip-item"><strong>{t.tip3Title}</strong><span>{t.tip3Desc}</span></div>
-                </div>
-              </section>
-            </aside>
+            </div>
           </section>
         </>
       )}

@@ -28,25 +28,24 @@ export default function ResultPanel({
   onReset,
 }: ResultPanelProps) {
   return (
-    <section className="workspace-section">
-      <div className="section-header">
-        <div>
-          <h2>Hazır</h2>
-          <p>Ses dosyası üretildi.</p>
+    <section className="workspace-section result-panel">
+      <div className="result-heading">
+        <h2>Ses dosyası üretildi</h2>
+      </div>
+
+      <div className="result-footer-row">
+        <div className="result-metrics">
+          <strong>{formatBytes(originalSize)} → {formatBytes(outputSize)}</strong>
         </div>
-      </div>
 
-      <div className="result-metrics">
-        <strong>{formatBytes(originalSize)} → {formatBytes(outputSize)}</strong>
-      </div>
-
-      <div className="action-row">
-        <a className="download-link" href={outputUrl} download={outputFileName} onClick={onDownload}>
-          İndir
-        </a>
-        <button type="button" onClick={onReset}>
-          Yeni Video
-        </button>
+        <div className="action-row">
+          <a className="download-link" href={outputUrl} download={outputFileName} onClick={onDownload}>
+            İndir
+          </a>
+          <button type="button" onClick={onReset}>
+            Yeni Video
+          </button>
+        </div>
       </div>
     </section>
   );

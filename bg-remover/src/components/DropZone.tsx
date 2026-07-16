@@ -46,16 +46,10 @@ export default function DropZone({ onFilesSelected, loading }: Props) {
         }}
       />
       <div className="drop-zone-inner">
+        <div className="drop-zone-icon" aria-hidden="true">
+          <span>+</span>
+        </div>
         <strong>{loading ? "İşleniyor…" : "Görselleri seç veya sürükle"}</strong>
-        <p className="drop-zone-description">
-          PNG, JPG, WebP ve diğer görsel formatları.
-        </p>
-        {!loading ? (
-          <div className="drop-zone-action">
-            <span className="drop-zone-button">Dosya Seç</span>
-            <span className="drop-zone-meta">veya sürükle bırak</span>
-          </div>
-        ) : null}
         <div className="drop-zone-format-row">
           <span>PNG</span>
           <span>JPG</span>

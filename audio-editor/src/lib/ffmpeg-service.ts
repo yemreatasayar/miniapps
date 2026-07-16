@@ -2,10 +2,10 @@ import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { toBlobURL } from "@ffmpeg/util";
 import type {
   AudioFormat,
+  AudioProcessingSettings,
   ConverterSettings,
   CutterSelection,
   LoadedAudio,
-  NormalizerSettings,
 } from "./types";
 
 let ffmpegInstance: FFmpeg | null = null;
@@ -103,21 +103,43 @@ function getMimeForAudio(file: File, format?: AudioFormat): string {
   return extension ? `audio/${extension}` : "application/octet-stream";
 }
 
-function getCodecArgsForPreservedFormat(extension: string): string[] {
-  if (extension === ".wav") return ["-acodec", "pcm_s16le"];
-  if (extension === ".mp3") return ["-acodec", "libmp3lame", "-b:a", "192k"];
-  return [];
+function getCodecArgsForOutput(settings: ConverterSettings): string[] {
+  return settings.outputFormat === "mp3"
+    ? ["-vn", "-acodec", "libmp3lame", "-b:a", `${settings.mp3Bitrate}k`]
+    : ["-vn", "-acodec", settings.wavBitDepth === "24" ? "pcm_s24le" : "pcm_s16le"];
 }
 
-export async function trimAudio(
+export async function processAudio(
   audio: LoadedAudio,
   selection: CutterSelection,
+  settings: AudioProcessingSettings,
   onProgress: (progress: number) => void
 ): Promise<{ blob: Blob; fileName: string }> {
   const ffmpeg = getFFmpeg();
-  const extension = getExtension(audio.fileName);
-  const inputName = `input${extension}`;
-  const outputName = `trimmed${extension}`;
+  const inputExtension = getExtension(audio.fileName);
+  const outputExtension = `.${settings.converter.outputFormat}`;
+  const inputName = `input${inputExtension}`;
+  const outputName = `edited${outputExtension}`;
+  const selectionDuration = Math.max(0.1, selection.endSec - selection.startSec);
+  const hasTrim = selection.startSec > 0.05 || selection.endSec < audio.duration - 0.05;
+
+  const trimArgs = hasTrim
+    ? ["-ss", String(selection.startSec), "-t", String(selectionDuration)]
+    : [];
+  const normalizeArgs = settings.normalizationEnabled
+    ? [
+        "-filter:a",
+        settings.normalizer.mode === "peak"
+          ? `volume=${settings.normalizer.targetDbFs}dB`
+          : `loudnorm=I=${settings.normalizer.targetLufs}:TP=-1.5:LRA=11`,
+      ]
+    : [];
+  const normalizedWavSampleRateArgs =
+    settings.normalizationEnabled &&
+    settings.normalizer.mode === "loudness" &&
+    settings.converter.outputFormat === "wav"
+      ? ["-ar", "48000"]
+      : [];
 
   const progressHandler = ({ progress }: { progress: number }) => onProgress(Math.min(progress, 1));
   ffmpeg.on("progress", progressHandler);
@@ -125,116 +147,21 @@ export async function trimAudio(
   try {
     await ffmpeg.writeFile(inputName, await readFileAsUint8Array(audio.file));
     await ffmpeg.exec([
+      "-y",
       "-i",
       inputName,
-      "-ss",
-      String(selection.startSec),
-      "-to",
-      String(selection.endSec),
-      "-c",
-      "copy",
+      ...trimArgs,
+      ...normalizeArgs,
+      ...getCodecArgsForOutput(settings.converter),
+      ...normalizedWavSampleRateArgs,
       outputName,
     ]);
 
     const data = await ffmpeg.readFile(outputName);
     const baseName = audio.fileName.replace(/\.[^.]+$/, "");
     return {
-      blob: toBlob(data as Uint8Array, getMimeForAudio(audio.file)),
-      fileName: `${baseName}_trimmed${extension}`,
-    };
-  } finally {
-    ffmpeg.off("progress", progressHandler);
-    try {
-      await ffmpeg.deleteFile(inputName);
-    } catch {
-      // ignore
-    }
-    try {
-      await ffmpeg.deleteFile(outputName);
-    } catch {
-      // ignore
-    }
-  }
-}
-
-export async function normalizeAudio(
-  audio: LoadedAudio,
-  settings: NormalizerSettings,
-  onProgress: (progress: number) => void
-): Promise<{ blob: Blob; fileName: string }> {
-  const ffmpeg = getFFmpeg();
-  const extension = getExtension(audio.fileName);
-  const inputName = `input${extension}`;
-  const outputName = `normalized${extension}`;
-
-  const filterArg =
-    settings.mode === "peak"
-      ? `volume=${settings.targetDbFs}dB`
-      : `loudnorm=I=${settings.targetLufs}:TP=-1.5:LRA=11`;
-
-  const progressHandler = ({ progress }: { progress: number }) => onProgress(Math.min(progress, 1));
-  ffmpeg.on("progress", progressHandler);
-
-  try {
-    await ffmpeg.writeFile(inputName, await readFileAsUint8Array(audio.file));
-    await ffmpeg.exec([
-      "-i",
-      inputName,
-      "-filter:a",
-      filterArg,
-      ...getCodecArgsForPreservedFormat(extension),
-      outputName,
-    ]);
-
-    const data = await ffmpeg.readFile(outputName);
-    const baseName = audio.fileName.replace(/\.[^.]+$/, "");
-    return {
-      blob: toBlob(data as Uint8Array, getMimeForAudio(audio.file)),
-      fileName: `${baseName}_normalized${extension}`,
-    };
-  } finally {
-    ffmpeg.off("progress", progressHandler);
-    try {
-      await ffmpeg.deleteFile(inputName);
-    } catch {
-      // ignore
-    }
-    try {
-      await ffmpeg.deleteFile(outputName);
-    } catch {
-      // ignore
-    }
-  }
-}
-
-export async function convertAudio(
-  audio: LoadedAudio,
-  settings: ConverterSettings,
-  onProgress: (progress: number) => void
-): Promise<{ blob: Blob; fileName: string }> {
-  const ffmpeg = getFFmpeg();
-  const extension = getExtension(audio.fileName);
-  const inputName = `input${extension}`;
-  const outputExtension = `.${settings.outputFormat}`;
-  const outputName = `converted${outputExtension}`;
-
-  const codecArgs =
-    settings.outputFormat === "mp3"
-      ? ["-vn", "-acodec", "libmp3lame", "-b:a", `${settings.mp3Bitrate}k`]
-      : ["-vn", "-acodec", settings.wavBitDepth === "24" ? "pcm_s24le" : "pcm_s16le"];
-
-  const progressHandler = ({ progress }: { progress: number }) => onProgress(Math.min(progress, 1));
-  ffmpeg.on("progress", progressHandler);
-
-  try {
-    await ffmpeg.writeFile(inputName, await readFileAsUint8Array(audio.file));
-    await ffmpeg.exec(["-i", inputName, ...codecArgs, outputName]);
-
-    const data = await ffmpeg.readFile(outputName);
-    const baseName = audio.fileName.replace(/\.[^.]+$/, "");
-    return {
-      blob: toBlob(data as Uint8Array, getMimeForAudio(audio.file, settings.outputFormat)),
-      fileName: `${baseName}${outputExtension}`,
+      blob: toBlob(data as Uint8Array, getMimeForAudio(audio.file, settings.converter.outputFormat)),
+      fileName: `${baseName}_edited${outputExtension}`,
     };
   } finally {
     ffmpeg.off("progress", progressHandler);

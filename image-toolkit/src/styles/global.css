@@ -63,6 +63,7 @@ button {
 }
 
 .app-header,
+.workspace-shell,
 .workspace-section,
 .compress-panel,
 .drop-zone {
@@ -220,14 +221,15 @@ button {
 }
 
 .tab-row {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.78);
+  padding: 0;
+  background: transparent;
   width: fit-content;
-  border: 1px solid rgba(17, 24, 39, 0.06);
-  border-radius: 999px;
-  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.06);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .tab-row button,
@@ -247,10 +249,14 @@ button {
 
 .tab-row button {
   font-weight: 700;
-  background: transparent;
+  min-width: 132px;
+  min-height: 44px;
+  padding: 0 18px;
+  background: #ffffff;
   color: #475467;
-  border-color: transparent;
-  min-width: 120px;
+  border-color: rgba(17, 24, 39, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
 }
 
 .tab-row button.is-active,
@@ -262,6 +268,28 @@ button {
   color: white;
 }
 
+.tab-row button.is-active {
+  border-color: transparent;
+  box-shadow: 0 8px 22px rgba(46, 156, 255, 0.18);
+}
+
+.workspace-shell {
+  overflow: hidden;
+}
+
+.workspace-tabs {
+  padding: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.workspace-shell > .workspace-section,
+.workspace-shell > .compress-panel {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .workspace-section,
 .compress-panel {
   padding: 22px;
@@ -269,20 +297,26 @@ button {
   gap: 18px;
 }
 
+.workspace-section {
+  padding: 16px 18px 20px;
+  gap: 16px;
+}
+
 .toolbar {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 
 .toolbar-resize-group {
   display: inline-flex;
-  align-items: stretch;
-  gap: 10px;
-  padding: 8px;
-  border: 1px solid rgba(17, 24, 39, 0.06);
-  border-radius: 18px;
-  background: #f7f9fc;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .toolbar-resize-group input {
@@ -295,16 +329,18 @@ button {
   background: #ffffff;
   color: #111827;
   border-color: rgba(17, 24, 39, 0.1);
-  min-height: 48px;
+  min-height: 42px;
+  padding: 0 13px;
+  border-radius: 12px;
   font-weight: 600;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  box-shadow: none;
 }
 
 .toolbar-primary {
   background: var(--accent) !important;
   border-color: transparent !important;
   color: white !important;
-  box-shadow: 0 16px 34px rgba(46, 156, 255, 0.22) !important;
+  box-shadow: 0 8px 20px rgba(46, 156, 255, 0.18) !important;
 }
 
 .toolbar button:hover:not(:disabled),
@@ -353,29 +389,29 @@ button {
 
 .page-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
 }
 
 .page-card {
-  padding: 14px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
+  padding: 12px;
+  border: 1px solid rgba(17, 24, 39, 0.07);
+  background: #ffffff;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto auto;
-  gap: 10px;
-  min-height: 320px;
+  gap: 12px;
+  min-height: 0;
   min-width: 0;
   overflow: hidden;
-  border-radius: 22px;
-  box-shadow: 0 14px 42px rgba(15, 23, 42, 0.06);
+  border-radius: 18px;
+  box-shadow: 0 3px 16px rgba(15, 23, 42, 0.04);
 }
 
 .page-card.is-selected {
   border-color: var(--accent);
   box-shadow:
-    0 14px 42px rgba(15, 23, 42, 0.06),
-    inset 0 0 0 1px rgba(46, 156, 255, 0.42);
+    0 5px 20px rgba(46, 156, 255, 0.1),
+    inset 0 0 0 1px rgba(46, 156, 255, 0.34);
 }
 
 .page-card-toolbar,
@@ -401,23 +437,31 @@ button {
 }
 
 .image-remove-button {
-  min-width: 36px;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: #f5f6f8;
+  color: #667085;
+  font-size: 1rem;
 }
 
 .page-card-preview {
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  background: #f6f7f9;
   width: 100%;
-  min-height: 210px;
+  min-height: 250px;
   display: grid;
   place-items: center;
   overflow: hidden;
   min-width: 0;
-  border-radius: 18px;
-  border: 1px solid rgba(17, 24, 39, 0.05);
+  border-radius: 14px;
+  border: 0;
 }
 
 .image-card-preview {
-  padding: 12px;
+  padding: 10px;
 }
 
 .page-thumbnail-image {
@@ -425,7 +469,7 @@ button {
   width: 100%;
   height: 100%;
   max-width: 100%;
-  max-height: 240px;
+  max-height: 280px;
   object-fit: contain;
   object-position: center;
   transition: transform 180ms ease;
@@ -433,17 +477,18 @@ button {
 
 .image-card-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   min-width: 0;
 }
 
 .image-card-actions button {
-  border: 1px solid var(--border);
-  background: #f8fafc;
+  min-height: 34px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  background: #ffffff;
   color: #111827;
-  padding: 8px 10px;
-  border-radius: 14px;
+  padding: 0 10px;
+  border-radius: 10px;
   font-weight: 600;
 }
 
@@ -452,6 +497,7 @@ button {
   min-width: 0;
   align-items: flex-start;
   flex-direction: column;
+  gap: 3px;
 }
 
 .image-card-meta strong,
@@ -579,17 +625,86 @@ button {
   }
 
   .toolbar {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: stretch;
   }
 
+  .toolbar > button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 10px;
+    white-space: normal;
+  }
+
   .toolbar-resize-group {
+    grid-column: 1 / -1;
     flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .toolbar-resize-group select {
+    flex: 1 1 190px;
+  }
+
+  .tab-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .tab-row button {
+    min-width: 0;
+    padding: 0 8px;
   }
 
   .page-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.drop-zone-upload-card {
+  justify-items: center;
+  text-align: center;
+  gap: 18px;
+}
+
+.drop-zone-upload-card .drop-zone-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: #1d70b8;
+  font-size: 2.2rem;
+  font-weight: 500;
+}
+
+.drop-zone-upload-card .drop-zone-upload-title {
+  max-width: 17ch;
+  font-size: clamp(1.85rem, 2.5vw, 2.5rem);
+  line-height: 1.03;
+  letter-spacing: -0.04em;
+}
+
+.drop-zone-copy .drop-zone-title-line,
+.drop-zone-upload-title .drop-zone-title-line {
+  display: block;
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.drop-zone-upload-card p {
+  max-width: 28rem;
+  text-align: center;
+  font-size: 1.02rem;
+}
+
+.drop-zone-upload-card .drop-zone-formats {
+  justify-content: center;
+  margin-top: 4px;
 }
 
 .miniapps-footer {
@@ -845,3 +960,110 @@ button {
 }
 
 .crop-btn-confirm:hover { background: #f0f0f0; }
+
+/* Ortak miniapps giriş kompozisyonu */
+.pdf-toolkit-shell {
+  max-width: 1480px;
+  padding: 20px clamp(20px, 3vw, 40px) 0;
+  gap: 16px;
+}
+
+.app-header {
+  min-height: 76px;
+  padding: 0;
+}
+
+.brand-logo {
+  height: 76px;
+  max-width: min(100%, 280px);
+}
+
+.drop-zone {
+  min-height: clamp(480px, 58vh, 590px);
+  padding: clamp(36px, 4vw, 56px);
+  border-radius: 32px;
+}
+
+.drop-zone-inner {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(36px, 4.5vw, 68px);
+  align-items: stretch;
+}
+
+.drop-zone-copy {
+  max-width: none;
+  min-width: 0;
+  align-content: center;
+  gap: 20px;
+}
+
+.drop-zone-inner strong {
+  max-width: 15ch;
+  font-size: clamp(3.15rem, 4.7vw, 5rem);
+}
+
+.drop-zone-inner span {
+  font-size: 1.08rem;
+}
+
+.drop-zone-upload-card {
+  width: 100%;
+  min-height: 380px;
+  padding: clamp(30px, 3vw, 44px);
+  align-content: center;
+  border-radius: 26px;
+}
+
+@media (max-width: 980px) {
+  .app-header {
+    display: flex;
+    justify-content: center;
+  }
+
+  .drop-zone {
+    min-height: 0;
+    padding: 34px;
+  }
+
+  .drop-zone-inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .drop-zone-inner strong {
+    max-width: 16ch;
+  }
+
+  .drop-zone-upload-card {
+    min-height: 330px;
+  }
+}
+
+@media (max-width: 760px) {
+  .pdf-toolkit-shell {
+    padding: 14px 14px 72px;
+    gap: 12px;
+  }
+
+  .app-header {
+    min-height: 64px;
+  }
+
+  .brand-logo {
+    height: 64px;
+  }
+
+  .drop-zone {
+    padding: 24px;
+    border-radius: 24px;
+  }
+
+  .drop-zone-inner strong {
+    font-size: clamp(2.55rem, 13vw, 3.5rem);
+  }
+
+  .drop-zone-upload-card {
+    min-height: 300px;
+    padding: 24px;
+  }
+}

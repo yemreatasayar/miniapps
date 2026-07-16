@@ -382,6 +382,9 @@ export default function App() {
           >
             {helperViewState.kind === "ready" || helperViewState.kind === "warmup" ? (
               <div className="drop-zone-inner">
+                <div className="drop-zone-icon" aria-hidden="true">
+                  <span>+</span>
+                </div>
                 <strong>
                   {status === "loading"
                     ? "Track analiz ediliyor..."
@@ -391,16 +394,15 @@ export default function App() {
                         ? "Model hazırlanıyor, track seçebilirsin"
                         : "Audio dosyasını bırak"}
                 </strong>
-                <p>
-                  {helperViewState.kind === "warmup"
-                    ? helperViewState.detail ?? helperViewState.description
-                    : "MP3, WAV, M4A, AAC, OGG, FLAC."}
-                </p>
-                <div className="drop-zone-action">
-                  <span className="primary-pill">Dosya Seç</span>
-                  <span className="muted-copy">
-                    {helperViewState.kind === "warmup" ? "helper hazır olunca başlar" : "veya sürükle bırak"}
-                  </span>
+                {helperViewState.kind === "warmup" ? (
+                  <p>{helperViewState.detail ?? helperViewState.description}</p>
+                ) : null}
+                <div className="drop-zone-format-row" aria-hidden="true">
+                  <span>MP3</span>
+                  <span>WAV</span>
+                  <span>M4A</span>
+                  <span>AAC</span>
+                  <span>FLAC</span>
                 </div>
               </div>
             ) : (

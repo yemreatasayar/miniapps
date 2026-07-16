@@ -356,6 +356,27 @@ export default function App() {
         </section>
       ) : (
         <section className="workspace-grid">
+          <section className="workspace-section info-strip" aria-label="Uygulama bilgileri">
+            <div className="info-strip-list">
+              <div className="info-strip-item">
+                <strong>İlk kullanım</strong>
+                <span>Model ilk açılışta indirilir.</span>
+              </div>
+              <div className="info-strip-item">
+                <strong>Sonraki kullanımlar</strong>
+                <span>Sonraki açılışlar daha hızlıdır.</span>
+              </div>
+              <div className="info-strip-item">
+                <strong>Gizlilik</strong>
+                <span>Görseller cihazında işlenir.</span>
+              </div>
+              <div className="info-strip-item">
+                <strong>Model kaynağı</strong>
+                <span>IMG.LY CDN üzerinden alınır.</span>
+              </div>
+            </div>
+          </section>
+
           <div className="workspace-main">
             <section
               className={`workspace-section gallery-panel ${isGalleryDragging ? "is-dragging" : ""}`}
@@ -414,6 +435,19 @@ export default function App() {
                   );
                 })}
               </div>
+
+              {actionableCount > 0 && !displayProgressStatus ? (
+                <div className="gallery-action-bar" onClick={(event) => event.stopPropagation()}>
+                  <button
+                    type="button"
+                    className="hero-primary gallery-process-button"
+                    onClick={() => void handleProcessAll()}
+                    disabled={isBusy}
+                  >
+                    Arka Planı Temizle
+                  </button>
+                </div>
+              ) : null}
             </section>
 
             {displayProgressStatus ? (
@@ -424,17 +458,6 @@ export default function App() {
                 }
                 currentFileLabel={batchProgress?.currentFileName ?? processingImage?.fileName ?? undefined}
               />
-            ) : actionableCount > 0 ? (
-              <section className="workspace-section action-panel">
-                <button
-                  type="button"
-                  className="hero-primary action-panel-button"
-                  onClick={() => void handleProcessAll()}
-                  disabled={isBusy}
-                >
-                  Arka Planı Temizle
-                </button>
-              </section>
             ) : null}
 
             {readyImages.length > 0 && idleCount === 0 && !isBusy ? (
@@ -452,34 +475,6 @@ export default function App() {
               />
             ) : null}
           </div>
-
-          <aside className="workspace-aside">
-            <section className="workspace-section info-card">
-              <div className="section-header">
-                <div>
-                    <h2>Bilgi</h2>
-                </div>
-              </div>
-              <div className="tip-list">
-                <div className="tip-item">
-                  <strong>İlk kullanım</strong>
-                  <span>Model dosyaları ilk açılışta indirilir.</span>
-                </div>
-                <div className="tip-item">
-                  <strong>Sonraki kullanımlar</strong>
-                  <span>Model cache'e alındıktan sonra daha hızlı açılır.</span>
-                </div>
-                <div className="tip-item">
-                  <strong>Gizlilik</strong>
-                  <span>Görseller cihazında işlenir.</span>
-                </div>
-                <div className="tip-item">
-                  <strong>Model kaynağı</strong>
-                  <span>Model IMG.LY CDN üzerinden alınır.</span>
-                </div>
-              </div>
-            </section>
-          </aside>
         </section>
       )}
 

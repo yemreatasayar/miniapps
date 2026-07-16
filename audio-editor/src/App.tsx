@@ -1,16 +1,11 @@
 import { useState } from "react";
-import AudioConverter from "./tools/AudioConverter";
-import AudioCutter from "./tools/AudioCutter";
-import VolumeNormalizer from "./tools/VolumeNormalizer";
-import TabNav from "./components/TabNav";
+import AudioWorkspace from "./tools/AudioWorkspace";
 import Toast from "./components/Toast";
-import type { Tab } from "./lib/types";
 
 const isDistribution = window.location.hostname === "miniapps.tr";
 
 export default function App() {
   const logoUrl = `${import.meta.env.BASE_URL}assets/audio-editor-logo.svg`;
-  const [activeTab, setActiveTab] = useState<Tab>("cutter");
   const [toast, setToast] = useState<string | null>(null);
 
   return (
@@ -19,13 +14,7 @@ export default function App() {
         <img className="brand-logo" src={logoUrl} alt="Audio Editor" />
       </header>
 
-      <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
-
-      <div className="tab-content">
-        {activeTab === "cutter" ? <AudioCutter onToast={setToast} /> : null}
-        {activeTab === "normalizer" ? <VolumeNormalizer onToast={setToast} /> : null}
-        {activeTab === "converter" ? <AudioConverter onToast={setToast} /> : null}
-      </div>
+      <AudioWorkspace onToast={setToast} />
 
       <Toast message={toast} onClose={() => setToast(null)} />
       {isDistribution && (

@@ -47,6 +47,7 @@ export interface WaveformDrawOptions {
   colorSelected: string;
   colorPlayhead: string;
   bgColor: string;
+  activeTarget?: "start" | "end" | "playhead";
 }
 
 export function drawWaveform(canvas: HTMLCanvasElement, options: WaveformDrawOptions): void {
@@ -86,20 +87,28 @@ export function drawWaveform(canvas: HTMLCanvasElement, options: WaveformDrawOpt
     context.fillRect(selectionX, 0, 2, height);
     context.fillRect(selectionX + selectionWidth - 2, 0, 2, height);
 
-    context.fillStyle = "#d7cfff";
+    context.fillStyle = options.activeTarget === "start" ? "#ffffff" : "#d7cfff";
     context.beginPath();
-    context.arc(selectionX + 1, 10, 8, 0, Math.PI * 2);
+    context.arc(selectionX + 1, 10, options.activeTarget === "start" ? 10 : 8, 0, Math.PI * 2);
     context.fill();
 
+    context.fillStyle = options.activeTarget === "end" ? "#ffffff" : "#d7cfff";
     context.beginPath();
-    context.arc(selectionX + selectionWidth - 1, 10, 8, 0, Math.PI * 2);
+    context.arc(
+      selectionX + selectionWidth - 1,
+      10,
+      options.activeTarget === "end" ? 10 : 8,
+      0,
+      Math.PI * 2
+    );
     context.fill();
   }
 
   if (options.playheadRatio >= 0) {
     const playheadX = options.playheadRatio * width;
     context.fillStyle = options.colorPlayhead;
-    context.fillRect(playheadX - 1, 0, 2, height);
+    const playheadWidth = options.activeTarget === "playhead" ? 3 : 2;
+    context.fillRect(playheadX - playheadWidth / 2, 0, playheadWidth, height);
     context.beginPath();
     context.moveTo(playheadX - 6, 0);
     context.lineTo(playheadX + 6, 0);

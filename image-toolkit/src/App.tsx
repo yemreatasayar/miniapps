@@ -598,26 +598,28 @@ export default function App() {
       {images.length === 0 ? (
         <DropZone onFilesSelected={(files) => void handleFilesAdded(files)} loading={busy} />
       ) : (
-        <>
-          <nav className="tab-row">
-            <button type="button" className={activeTab === "edit" ? "is-active" : ""} onClick={() => setActiveTab("edit")}>
-              Edit
-            </button>
-            <button
-              type="button"
-              className={activeTab === "smart-compress" ? "is-active" : ""}
-              onClick={() => setActiveTab("smart-compress")}
-            >
-              Akıllı Sıkıştır
-            </button>
-            <button
-              type="button"
-              className={activeTab === "compress" ? "is-active" : ""}
-              onClick={() => setActiveTab("compress")}
-            >
-              Sıkıştır
-            </button>
-          </nav>
+        <section className="workspace-shell">
+          <div className="workspace-tabs">
+            <nav className="tab-row" aria-label="Görsel işleme modu">
+              <button type="button" className={activeTab === "edit" ? "is-active" : ""} onClick={() => setActiveTab("edit")}>
+                Edit
+              </button>
+              <button
+                type="button"
+                className={activeTab === "smart-compress" ? "is-active" : ""}
+                onClick={() => setActiveTab("smart-compress")}
+              >
+                Akıllı Sıkıştır
+              </button>
+              <button
+                type="button"
+                className={activeTab === "compress" ? "is-active" : ""}
+                onClick={() => setActiveTab("compress")}
+              >
+                Sıkıştır
+              </button>
+            </nav>
+          </div>
 
           {activeTab === "edit" ? (
             <section className="workspace-section">
@@ -719,7 +721,7 @@ export default function App() {
               </button>
             </section>
           ) : null}
-        </>
+        </section>
       )}
 
       {cropModal && (

@@ -412,6 +412,47 @@ button {
   }
 }
 
+.hero-panel > .dropzone-card {
+  justify-items: center;
+  text-align: center;
+  gap: 18px;
+}
+
+.hero-panel > .dropzone-card strong {
+  max-width: 17ch;
+  margin-top: 0;
+  font-size: clamp(1.85rem, 2.5vw, 2.5rem);
+  line-height: 1.03;
+}
+
+.hero-panel > .dropzone-card > span {
+  max-width: 28rem;
+  color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.6;
+}
+
+.dropzone-format-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dropzone-format-row span {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
 .miniapps-footer {
   display: flex;
   justify-content: center;
@@ -593,3 +634,101 @@ button {
 
 .crop-card-btn:hover { background: var(--bg-2, #f5f5f5); }
 .crop-card-btn.is-active { border-color: #3b82f6; color: #3b82f6; }
+
+/* Ortak miniapps giriş kompozisyonu */
+.converter-shell {
+  max-width: 1480px;
+  padding: 20px clamp(20px, 3vw, 40px) 0;
+  gap: 16px;
+}
+
+.app-header {
+  min-height: 76px;
+  padding: 0;
+}
+
+.brand-logo {
+  height: 76px;
+  max-width: min(100%, 300px);
+}
+
+.hero-panel {
+  min-height: clamp(480px, 58vh, 590px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(36px, 4.5vw, 68px);
+  align-items: stretch;
+  padding: clamp(36px, 4vw, 56px);
+  border-radius: 32px;
+}
+
+.hero-copy {
+  align-content: center;
+  max-width: none;
+  min-width: 0;
+  gap: 20px;
+}
+
+.hero-copy h2 {
+  max-width: 15ch;
+  font-size: clamp(3.15rem, 4.7vw, 5rem);
+  line-height: 0.97;
+}
+
+.hero-copy p {
+  font-size: 1.08rem;
+}
+
+.hero-panel > .dropzone-card {
+  width: 100%;
+  min-height: 380px;
+  padding: clamp(30px, 3vw, 44px);
+  border-radius: 26px;
+}
+
+@media (max-width: 1120px) {
+  .hero-panel {
+    min-height: 0;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 34px;
+  }
+
+  .hero-copy h2 {
+    max-width: 16ch;
+  }
+
+  .hero-panel > .dropzone-card {
+    min-height: 330px;
+  }
+}
+
+@media (max-width: 720px) {
+  .converter-shell {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .app-header {
+    min-height: 64px;
+    padding: 0;
+  }
+
+  .brand-logo {
+    height: 64px;
+  }
+
+  .hero-panel {
+    padding: 24px;
+    gap: 26px;
+    border-radius: 24px;
+  }
+
+  .hero-copy h2 {
+    font-size: clamp(2.55rem, 13vw, 3.5rem);
+  }
+
+  .hero-panel > .dropzone-card {
+    min-height: 300px;
+    padding: 24px;
+  }
+}

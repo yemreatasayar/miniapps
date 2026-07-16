@@ -281,7 +281,28 @@ button {
 }
 
 .field input[type="color"] {
-  padding: 4px;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.field input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.field input[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: 13px;
+}
+
+.field input[type="color"]::-moz-color-swatch {
+  border: 0;
+  border-radius: 13px;
+}
+
+.field input[type="color"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .field input:focus,

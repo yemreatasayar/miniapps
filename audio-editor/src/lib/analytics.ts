@@ -42,9 +42,14 @@ export function trackAppEvent(eventName: AnalyticsEventName, params: AnalyticsPa
 export function trackProcessSuccess(params: AnalyticsParams = {}): void {
   trackAppEvent("process_success", params);
 
-  const currentCount = Number.parseInt(window.sessionStorage.getItem(SUCCESS_COUNT_KEY) || "0", 10);
-  const nextCount = Number.isFinite(currentCount) ? currentCount + 1 : 1;
-  window.sessionStorage.setItem(SUCCESS_COUNT_KEY, String(nextCount));
+  let nextCount = 1;
+  try {
+    const currentCount = Number.parseInt(window.sessionStorage.getItem(SUCCESS_COUNT_KEY) || "0", 10);
+    nextCount = Number.isFinite(currentCount) ? currentCount + 1 : 1;
+    window.sessionStorage.setItem(SUCCESS_COUNT_KEY, String(nextCount));
+  } catch {
+    // Analytics storage must never turn a successful export into an app error.
+  }
 
   if (nextCount >= 2) {
     trackAppEvent("repeat_use", { run_index: nextCount });
