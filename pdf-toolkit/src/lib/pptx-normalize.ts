@@ -19,6 +19,10 @@ const MAX_COMPRESSED_BYTES = 64 * 1024 * 1024;
 const MAX_EXPANDED_BYTES = 256 * 1024 * 1024;
 const MAX_ARCHIVE_ENTRIES = 5_000;
 const MAX_CHART_XML_BYTES = 8 * 1024 * 1024;
+const BAR_CATEGORY_WRAP_COLUMNS = 30;
+const MAX_BAR_CATEGORY_LABEL_LENGTH = BAR_CATEGORY_WRAP_COLUMNS * 2;
+const MIN_LARGE_DATA_LABEL_FONT_SIZE = 3_000;
+const MIN_LARGE_CATEGORY_LABEL_FONT_SIZE = 1_800;
 
 type NormalizedAttribute = (typeof NORMALIZED_ATTRIBUTES)[number];
 
@@ -28,6 +32,9 @@ export type PptxNormalizationStats = {
   chartParseFailures: number;
   runsChanged: number;
   attributesApplied: Record<NormalizedAttribute, number>;
+  zeroMinimumAxesApplied: number;
+  categoryLabelsWrapped: number;
+  dataLabelPositionsAdjusted: number;
   expandedBytes: number;
 };
 
@@ -43,12 +50,20 @@ export type ChartXmlNormalizationResult = {
   changed: boolean;
   runsChanged: number;
   attributesApplied: Record<NormalizedAttribute, number>;
+  zeroMinimumAxesApplied: number;
+  categoryLabelsWrapped: number;
+  dataLabelPositionsAdjusted: number;
 };
 
 type UnzipResult = {
   archive: Unzipped;
   expandedBytes: number;
   limitWarning: string | null;
+};
+
+type BarLayoutAdjustmentStats = {
+  categoryLabelsWrapped: number;
+  dataLabelPositionsAdjusted: number;
 };
 
 function emptyStats(): PptxNormalizationStats {
@@ -58,6 +73,9 @@ function emptyStats(): PptxNormalizationStats {
     chartParseFailures: 0,
     runsChanged: 0,
     attributesApplied: { b: 0, i: 0 },
+    zeroMinimumAxesApplied: 0,
+    categoryLabelsWrapped: 0,
+    dataLabelPositionsAdjusted: 0,
     expandedBytes: 0,
   };
 }
@@ -77,6 +95,17 @@ function directChildInNamespace(
 
 function directDrawingChild(parent: Element, localName: string): Element | null {
   return directChildInNamespace(parent, DRAWINGML_NAMESPACE, localName);
+}
+
+function directChartChild(parent: Element, localName: string): Element | null {
+  return directChildInNamespace(parent, CHART_NAMESPACE, localName);
+}
+
+function directChartChildren(parent: Element, localName: string): Element[] {
+  return Array.from(parent.children).filter(
+    (child) =>
+      child.namespaceURI === CHART_NAMESPACE && child.localName === localName
+  );
 }
 
 function isDrawingRun(element: Element): boolean {
@@ -173,6 +202,311 @@ function chartLabelDefaultProperties(paragraph: Element): Element[] {
   return properties;
 }
 
+function numericBarChartValues(barChart: Element): number[] | null {
+  const values: number[] = [];
+
+  for (const series of directChartChildren(barChart, "ser")) {
+    const valueContainer = directChartChild(series, "val");
+    if (!valueContainer) return null;
+
+    for (const valueElement of Array.from(
+      valueContainer.getElementsByTagNameNS(CHART_NAMESPACE, "v")
+    )) {
+      const rawValue = valueElement.textContent?.trim() || "";
+      if (!rawValue) continue;
+
+      const value = Number(rawValue);
+      if (!Number.isFinite(value)) return null;
+      values.push(value);
+    }
+  }
+
+  return values.length > 0 ? values : null;
+}
+
+function applyZeroMinimumToPositiveBarAxes(document: XMLDocument): number {
+  let axesChanged = 0;
+
+  for (const plotArea of Array.from(
+    document.getElementsByTagNameNS(CHART_NAMESPACE, "plotArea")
+  )) {
+    const chartGroups = Array.from(plotArea.children).filter(
+      (child) =>
+        child.namespaceURI === CHART_NAMESPACE &&
+        child.localName.endsWith("Chart")
+    );
+
+    for (const valueAxis of directChartChildren(plotArea, "valAx")) {
+      const axisId = directChartChild(valueAxis, "axId")?.getAttribute("val");
+      if (!axisId) continue;
+
+      const axisChartGroups = chartGroups.filter((chartGroup) =>
+        directChartChildren(chartGroup, "axId").some(
+          (chartAxisId) => chartAxisId.getAttribute("val") === axisId
+        )
+      );
+      if (
+        axisChartGroups.length === 0 ||
+        axisChartGroups.some((chartGroup) => chartGroup.localName !== "barChart")
+      ) {
+        continue;
+      }
+
+      const valueSets = axisChartGroups.map(numericBarChartValues);
+      if (valueSets.some((values) => values === null)) continue;
+
+      const values = valueSets.flatMap((axisValues) => axisValues || []);
+      if (
+        values.length === 0 ||
+        values.some((value) => value < 0)
+      ) {
+        continue;
+      }
+
+      const scaling = directChartChild(valueAxis, "scaling");
+      if (!scaling || directChartChild(scaling, "min")) continue;
+      if (directChartChild(scaling, "logBase")) continue;
+
+      const orientation =
+        directChartChild(scaling, "orientation")?.getAttribute("val");
+      if (orientation && orientation !== "minMax") continue;
+
+      const maximum = directChartChild(scaling, "max");
+      const maximumValue = Number(maximum?.getAttribute("val"));
+      if (
+        !maximum ||
+        !Number.isFinite(maximumValue) ||
+        maximumValue <= 0 ||
+        values.some((value) => value > maximumValue)
+      ) {
+        continue;
+      }
+
+      const prefix =
+        scaling.lookupPrefix(CHART_NAMESPACE) || valueAxis.prefix || "c";
+      const minimum = document.createElementNS(
+        CHART_NAMESPACE,
+        `${prefix}:min`
+      );
+      minimum.setAttribute("val", "0");
+      scaling.insertBefore(minimum, maximum.nextSibling);
+      axesChanged += 1;
+    }
+  }
+
+  return axesChanged;
+}
+
+function directTextPropertyFontSize(
+  parent: Element,
+  propertyName: string
+): number | null {
+  const properties = defaultPropertiesFromTextProperties(
+    directChartChild(parent, propertyName)
+  );
+  const size = Number(properties?.getAttribute("sz"));
+  return Number.isFinite(size) && size > 0 ? size : null;
+}
+
+function wrapBarCategoryLabel(value: string): string | null {
+  if (
+    value.length <= BAR_CATEGORY_WRAP_COLUMNS ||
+    value.length > MAX_BAR_CATEGORY_LABEL_LENGTH ||
+    value !== value.trim() ||
+    /[\r\n\t]|\s{2,}/u.test(value)
+  ) {
+    return null;
+  }
+
+  const words = value.split(" ");
+  if (
+    words.length < 2 ||
+    words.some((word) => word.length > BAR_CATEGORY_WRAP_COLUMNS)
+  ) {
+    return null;
+  }
+
+  const lines: string[] = [];
+  let line = "";
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (candidate.length <= BAR_CATEGORY_WRAP_COLUMNS) {
+      line = candidate;
+      continue;
+    }
+    if (!line) return null;
+    lines.push(line);
+    line = word;
+  }
+  if (line) lines.push(line);
+
+  return lines.length === 2 ? lines.join("\n") : null;
+}
+
+function dataLabelGroups(barChart: Element, series: Element[]): Element[] {
+  return [
+    ...series
+      .map((entry) => directChartChild(entry, "dLbls"))
+      .filter((entry): entry is Element => Boolean(entry)),
+    ...directChartChildren(barChart, "dLbls"),
+  ];
+}
+
+function applyPositiveBarLayoutCompatibility(
+  document: XMLDocument
+): BarLayoutAdjustmentStats {
+  const stats: BarLayoutAdjustmentStats = {
+    categoryLabelsWrapped: 0,
+    dataLabelPositionsAdjusted: 0,
+  };
+
+  for (const plotArea of Array.from(
+    document.getElementsByTagNameNS(CHART_NAMESPACE, "plotArea")
+  )) {
+    const chartGroups = Array.from(plotArea.children).filter(
+      (child) =>
+        child.namespaceURI === CHART_NAMESPACE &&
+        child.localName.endsWith("Chart")
+    );
+    if (chartGroups.length !== 1 || chartGroups[0].localName !== "barChart") {
+      continue;
+    }
+
+    const barChart = chartGroups[0];
+    if (
+      directChartChild(barChart, "barDir")?.getAttribute("val") !== "bar" ||
+      directChartChild(barChart, "grouping")?.getAttribute("val") !==
+        "clustered"
+    ) {
+      continue;
+    }
+
+    const plotLayout = directChartChild(plotArea, "layout");
+    if (!plotLayout || plotLayout.children.length > 0) continue;
+
+    const series = directChartChildren(barChart, "ser");
+    if (series.length !== 1) continue;
+
+    const values = numericBarChartValues(barChart);
+    if (
+      !values ||
+      values.length < 2 ||
+      values.some((value) => value < 0)
+    ) {
+      continue;
+    }
+
+    const axisIds = new Set(
+      directChartChildren(barChart, "axId")
+        .map((axisId) => axisId.getAttribute("val"))
+        .filter((axisId): axisId is string => Boolean(axisId))
+    );
+    const valueAxis = directChartChildren(plotArea, "valAx").find((axis) =>
+      axisIds.has(directChartChild(axis, "axId")?.getAttribute("val") || "")
+    );
+    const categoryAxis = directChartChildren(plotArea, "catAx").find((axis) =>
+      axisIds.has(directChartChild(axis, "axId")?.getAttribute("val") || "")
+    );
+    if (!valueAxis || !categoryAxis) continue;
+
+    const scaling = directChartChild(valueAxis, "scaling");
+    const minimumValue = Number(
+      directChartChild(scaling || valueAxis, "min")?.getAttribute("val")
+    );
+    const maximumValue = Number(
+      directChartChild(scaling || valueAxis, "max")?.getAttribute("val")
+    );
+    if (
+      !scaling ||
+      directChartChild(scaling, "logBase") ||
+      minimumValue !== 0 ||
+      !Number.isFinite(maximumValue) ||
+      maximumValue <= 0 ||
+      values.some((value) => value > maximumValue)
+    ) {
+      continue;
+    }
+
+    const categoryFontSize = directTextPropertyFontSize(categoryAxis, "txPr");
+    if (
+      categoryFontSize === null ||
+      categoryFontSize < MIN_LARGE_CATEGORY_LABEL_FONT_SIZE
+    ) {
+      continue;
+    }
+
+    const labels = dataLabelGroups(barChart, series);
+    if (
+      labels.length === 0 ||
+      labels.some(
+        (group) =>
+          directChartChildren(group, "dLbl").length > 0 ||
+          directChartChild(group, "layout")
+      )
+    ) {
+      continue;
+    }
+
+    const positionedLabels = labels.filter(
+      (group) =>
+        directChartChild(group, "dLblPos")?.getAttribute("val") === "outEnd" &&
+        directChartChild(group, "showVal")?.getAttribute("val") === "1"
+    );
+    if (positionedLabels.length === 0) continue;
+
+    const largeLabelFont = positionedLabels
+      .map((group) => directTextPropertyFontSize(group, "txPr"))
+      .find((size) => size !== null);
+    if (
+      largeLabelFont === undefined ||
+      largeLabelFont === null ||
+      largeLabelFont < MIN_LARGE_DATA_LABEL_FONT_SIZE
+    ) {
+      continue;
+    }
+
+    const category = directChartChild(series[0], "cat");
+    const stringReference = category
+      ? directChartChild(category, "strRef")
+      : null;
+    const stringCache = stringReference
+      ? directChartChild(stringReference, "strCache")
+      : null;
+    if (!stringCache) continue;
+
+    const labelValues = directChartChildren(stringCache, "pt")
+      .map((point) => directChartChild(point, "v"))
+      .filter((value): value is Element => Boolean(value));
+    if (
+      labelValues.length !== values.length ||
+      labelValues.some((value) => /[\r\n\t]/u.test(value.textContent || ""))
+    ) {
+      continue;
+    }
+
+    const wrappedLabels = labelValues.map((value) =>
+      wrapBarCategoryLabel(value.textContent || "")
+    );
+    if (wrappedLabels.some((value) => value === null)) continue;
+
+    for (let index = 0; index < labelValues.length; index += 1) {
+      const wrapped = wrappedLabels[index];
+      if (!wrapped) continue;
+      labelValues[index].textContent = wrapped;
+      stats.categoryLabelsWrapped += 1;
+    }
+
+    for (const group of labels) {
+      const position = directChartChild(group, "dLblPos");
+      if (position?.getAttribute("val") !== "outEnd") continue;
+      position.setAttribute("val", "inEnd");
+      stats.dataLabelPositionsAdjusted += 1;
+    }
+  }
+
+  return stats;
+}
+
 export function normalizeChartXmlForLibreOffice(
   xml: string
 ): ChartXmlNormalizationResult {
@@ -183,6 +517,9 @@ export function normalizeChartXmlForLibreOffice(
 
   const attributesApplied: Record<NormalizedAttribute, number> = { b: 0, i: 0 };
   let runsChanged = 0;
+  const zeroMinimumAxesApplied = applyZeroMinimumToPositiveBarAxes(document);
+  const barLayoutAdjustments =
+    applyPositiveBarLayoutCompatibility(document);
 
   for (const paragraph of Array.from(
     document.getElementsByTagNameNS(DRAWINGML_NAMESPACE, "p")
@@ -227,12 +564,19 @@ export function normalizeChartXmlForLibreOffice(
     }
   }
 
-  if (runsChanged === 0) {
+  if (
+    runsChanged === 0 &&
+    zeroMinimumAxesApplied === 0 &&
+    barLayoutAdjustments.categoryLabelsWrapped === 0 &&
+    barLayoutAdjustments.dataLabelPositionsAdjusted === 0
+  ) {
     return {
       xml,
       changed: false,
       runsChanged,
       attributesApplied,
+      zeroMinimumAxesApplied,
+      ...barLayoutAdjustments,
     };
   }
 
@@ -241,6 +585,8 @@ export function normalizeChartXmlForLibreOffice(
     changed: true,
     runsChanged,
     attributesApplied,
+    zeroMinimumAxesApplied,
+    ...barLayoutAdjustments,
   };
 }
 
@@ -377,6 +723,10 @@ export async function normalizePptxForLibreOffice(
       stats.runsChanged += result.runsChanged;
       stats.attributesApplied.b += result.attributesApplied.b;
       stats.attributesApplied.i += result.attributesApplied.i;
+      stats.zeroMinimumAxesApplied += result.zeroMinimumAxesApplied;
+      stats.categoryLabelsWrapped += result.categoryLabelsWrapped;
+      stats.dataLabelPositionsAdjusted +=
+        result.dataLabelPositionsAdjusted;
     } catch {
       stats.chartParseFailures += 1;
       warnings.push("chart-skipped:xml-parse-failed");

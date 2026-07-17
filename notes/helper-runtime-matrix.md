@@ -75,6 +75,12 @@ Tests completed on macOS arm64:
 - The Open Sans chart-label regression normalized all six inherited `bold`
   runs. LibreOffice produced a one-page PDF containing all category/value text
   and only embedded `OpenSans-Bold`, matching the PowerPoint thumbnail.
+- The positive horizontal bar-chart regression applied the compatibility rule
+  only to the strict single-series/clustered/auto-layout case. The real chart
+  rendered with a `0%..60%` axis, wrapped category labels, and bar bounds of
+  `114..207` pixels versus PowerPoint's `116..207` at `256x144`. Negative,
+  column, short-label, and manual-layout synthetic cases did not receive the
+  label-layout adjustment.
 - A 12 MB, 19-page PPTX converted successfully to a 2.05 MB PDF.
 - The converted PDF retained 19 pages and 52 image objects; the first three
   rendered pages, including small embedded icons, were visually checked again

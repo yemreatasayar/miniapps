@@ -252,6 +252,7 @@ git commit && git push
 - **Dönüştürme akışı:** Dosya seçmek dönüşümü veya indirmeyi otomatik başlatmaz. Kullanıcı önce `PDF'e Dönüştür`, çıktı hazır olunca ayrıca `PDF'i indir` der.
 - **Görsel → PDF:** JPG/PNG/WebP dönüşümü tarayıcıda `pdf-lib` ile yapılır; dosya sunucuya gitmez.
 - **Office → PDF:** DOC/DOCX/ODT/RTF/TXT/XLS/XLSX/ODS/PPT/PPTX/PPS/PPSX/ODP dönüşümü sadece local helper üzerinden çalışır. `pdf-compress-server` içindeki `/convert` endpoint'i LibreOffice/soffice algılar ve `--headless --convert-to pdf` ile çıktı üretir. PPTX içinde EMF/Office ikonları varsa çıktı sadakati LibreOffice motoruyla sınırlı olabilir; stabil LibreOffice, bundled LibreOfficeDev'e göre tercih edilir.
+- **PPTX yatay bar chart uyumluluğu:** LibreOffice büyük `outEnd` veri etiketlerini plot alanına dahil edip çubukları daraltabildiği için normalizer yalnızca tek serili, pozitif, `clustered` yatay bar chart + boş otomatik layout + büyük veri etiketi + uzun kategori etiketi kombinasyonunda ekseni `0`'a sabitler, kategori cache metnini 30 karakterlik kelime sınırlarında sarar ve geçici dönüşüm kopyasında veri etiketini `inEnd` yapar. Negatif, stacked, çok serili, kısa etiketli veya manual layout kullanan grafikler bu kuralın dışındadır.
 - **Public web sınırı:** `miniapps.tr` tarafında helper kapalı olduğu için Office dönüşümü local-only kalır; görsel dönüşümü web'de de çalışır.
 - **Helper health:** `/health` artık Ghostscript yanında `libreOffice`, `libreOfficeCommand`, `libreOfficeVersion` alanlarını döner.
 
