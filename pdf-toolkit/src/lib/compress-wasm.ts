@@ -32,8 +32,11 @@ self.onmessage = async function (ev) {
   if (d.op === 'init') {
     try {
       importScripts(d.gsBase + 'gs.js');
-      var wasmBinary = await fetch(d.gsBase + 'gs.wasm').then(function(r) { return r.arrayBuffer(); });
-      gs = await Module({ wasmBinary: wasmBinary });
+      gs = await Module({
+        locateFile: function (path) {
+          return d.gsBase + path;
+        }
+      });
       self.postMessage({ op: 'ready' });
     } catch (err) {
       self.postMessage({ op: 'init-error', message: String((err && err.message) || err) });
