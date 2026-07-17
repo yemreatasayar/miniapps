@@ -3,12 +3,16 @@ export type Lang = "tr" | "en";
 const LANG_KEY = "video-compressor.lang";
 
 export function readStoredLang(): Lang {
+  // Public routes are authoritative; shared localStorage must not override them.
+  if (typeof window !== "undefined") {
+    if (window.location.pathname.includes("/apps-en/")) return "en";
+    if (window.location.pathname.includes("/apps/")) return "tr";
+  }
+
   try {
     const stored = window.localStorage.getItem(LANG_KEY);
     if (stored === "tr" || stored === "en") return stored;
   } catch { /* */ }
-  // Auto-detect from URL: /apps-en/ paths default to English
-  if (typeof window !== "undefined" && window.location.pathname.includes("/apps-en/")) return "en";
   return "tr";
 }
 

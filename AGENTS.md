@@ -50,12 +50,13 @@ tek kaynak kod:**
 - **Yeni app eklemek = TEK yer yetmez.** Local shell'de kart görünmesi için `miniapps/src/App.tsx`'te **5 yer** güncellenmeli: (1) URL sabiti, (2) `INTERNAL_APPS`, (3) `SHARED_APP_DISPLAY_ORDER`, (4) `DEFAULT_AUTO_ATTACH_APP_IDS`, (5) `initialCustomerApps` içindeki **her müşteri**. Ayrıca: `miniapps/public/distribution-config.json` (`visibleAppIds` + `launchUrlOverrides`), `miniapps/src/DistributionApp.tsx` (`defaultApps` + `renderAppCardArt`), `local-runtime/launcher-config.json` (yeni port). (Kart çıkmıyorsa: müşteri ataması unutulmuştur.)
 - **Yeni port seçerken** önce `lsof -i :PORT` ile boş olduğunu doğrula (çakışma yaşandı).
 - **Public footer (`.distribution-header`) sabit konumlu** (`position: fixed; bottom: 0`); yüksekliği `--distribution-footer-height` CSS değişkeniyle workspace'e boşluk olarak rezerve edilir. Footer içeriğini değiştirince (satır ekle/çıkar) bu değişkeni **her breakpoint'te** (980/760/560px) güncelle, yoksa alt grid'de boşluk/üst üste binme olur. Mobilde (≤760px) sürüm metni (`.distribution-version` = "miniapps pack … by y.e.a.") `display:none` ile gizli; Manifesto + TR/ENG butonları küçültülmüş.
+- **İngilizce app build'leri arşivden overlay edilmez.** `apps-en/` her zaman aynı çalıştırmada üretilen güncel `apps/` çıktısından kopyalanıp yerelleştirilir. `legacy-en-build/` paketlerini sonradan bindirmek İngilizce sayfaları sessizce eski sürüme döndürür.
 - **Standart giriş ekranları** (PDF/QR gibi özel akışlar hariç): içerik en fazla `1480px`, logo satırı masaüstünde `76px`/mobilde `64px`, hero masaüstünde eşit iki kolon ve yaklaşık `480–590px`, `1120px` altında tek kolon. Başlık ve yükleme yüzeyi aynı dikey eksende başlamalı; yeni araçlarda bu ritmi koru.
 
 ## Güncel durum
 
 - Local + web stabil.
-- **Son değişiklikler** (tarihli, son birkaçı tut): 2026-07-16 — Audio Editor tek yüklemeli kesme, normalizasyon ve format dönüşümü akışında birleştirildi; dokuz benzer uygulamanın giriş ekranı ortak logo ritmi, eşit kolon, yükleme yüzeyi ve responsive ölçülere geçirildi. 2026-07-09 — toplu text sadeleştirme, PDF Toolkit polish/i18n, Dev Toolkit kutu-içinde-kutu sadeleştirme ve GitHub Pages rebuild deploy edildi.
+- **Son değişiklikler** (tarihli, son birkaçı tut): 2026-07-17 — İngilizce uygulamalar güncel TR build'leriyle eşitlendi; eski bundle overlay kaldırıldı, eksik EN çevirileri tamamlandı. 2026-07-16 — Audio Editor tek yüklemeli kesme, normalizasyon ve format dönüşümü akışında birleştirildi; dokuz benzer uygulamanın giriş ekranı ortak logo ritmi, eşit kolon, yükleme yüzeyi ve responsive ölçülere geçirildi.
 - **Bekleyen / sıradaki:** —
 
 ## Çalışma tarzı (kullanıcı tercihleri)
