@@ -1,4 +1,4 @@
-const CACHE_VERSION = "20260717t130008775z";
+const CACHE_VERSION = "20260717t140404418z";
 const CACHE_PREFIX = "miniapps-github-pages";
 const SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;
 const APP_CACHE = `${CACHE_PREFIX}-apps-${CACHE_VERSION}`;
@@ -89,7 +89,7 @@ function isCrossOriginIsolatedApp(url) {
 }
 
 function isExcludedRuntimeRequest(url) {
-  return url.pathname.includes("/downloads/");
+  return url.pathname.includes("/downloads/") || url.pathname.endsWith(".wasm");
 }
 
 function addCrossOriginIsolationHeaders(response) {

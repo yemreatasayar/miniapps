@@ -1,12 +1,29 @@
 import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { toBlobURL } from "@ffmpeg/util";
 import type { AudioSettings, CutterSelection, OutputFormat } from "./types";
 
 let ffmpegInstance: FFmpeg | null = null;
 let loadPromise: Promise<void> | null = null;
+const FFMPEG_LOAD_TIMEOUT_MS = 90_000;
 
 function ffmpegAssetUrl(fileName: string): string {
-  return `${import.meta.env.BASE_URL}ffmpeg/${fileName}`;
+  return new URL(`${import.meta.env.BASE_URL}ffmpeg/${fileName}`, document.baseURI).href;
+}
+
+async function loadWithTimeout(ffmpeg: FFmpeg, coreURL: string, wasmURL: string): Promise<void> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error("Dönüştürme motoru yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin."));
+    }, FFMPEG_LOAD_TIMEOUT_MS);
+  });
+
+  try {
+    await Promise.race([ffmpeg.load({ coreURL, wasmURL }), timeout]);
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+  }
 }
 
 export function terminateFFmpeg(): void {
@@ -36,26 +53,12 @@ export async function loadFFmpeg(onProgress: (progress: number) => void): Promis
   const ffmpeg = new FFmpeg();
 
   loadPromise = (async () => {
-    broadcast(0.05);
-    const coreURL = await toBlobURL(ffmpegAssetUrl("ffmpeg-core.js"), "text/javascript");
-    broadcast(0.12);
-
-    let workerURL: string | undefined;
-    try {
-      const res = await fetch(ffmpegAssetUrl("ffmpeg-core.worker.js"), { method: "HEAD" });
-      if (res.ok) {
-        workerURL = await toBlobURL(ffmpegAssetUrl("ffmpeg-core.worker.js"), "text/javascript");
-      }
-    } catch {
-      // bu versiyon worker içermiyor
-    }
-    broadcast(0.15);
-
+    broadcast(0.1);
+    const coreURL = ffmpegAssetUrl("ffmpeg-core.js");
+    const wasmURL = ffmpegAssetUrl("ffmpeg-core.wasm");
     broadcast(0.2);
-    const wasmURL = await toBlobURL(ffmpegAssetUrl("ffmpeg-core.wasm"), "application/wasm");
-    broadcast(0.9);
 
-    await ffmpeg.load({ coreURL, wasmURL, workerURL });
+    await loadWithTimeout(ffmpeg, coreURL, wasmURL);
     ffmpegInstance = ffmpeg;
   })();
 

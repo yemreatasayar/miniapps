@@ -1036,6 +1036,7 @@ const enLocalizationReplacements = new Map([
       ['children:"Yeni Video"', 'children:"New Video"'],
       ['"İndir"', '"Download"'],
       ['"FFmpeg henüz yüklenmedi."', '"FFmpeg is not loaded yet."'],
+      ['"Dönüştürme motoru yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin."', '"The conversion engine could not be loaded. Check your connection and try again."'],
       ['"Orijinal ses akışı çıkarılamadı. MP3 veya WAV seçin."', '"The original audio stream could not be extracted. Choose MP3 or WAV."'],
       ['"Ses çıkarma başarısız."', '"Audio extraction failed."'],
       ['"WAV · kayıpsız çıktı"', '"WAV · lossless output"'],
@@ -2225,7 +2226,7 @@ function isCrossOriginIsolatedApp(url) {
 }
 
 function isExcludedRuntimeRequest(url) {
-  return url.pathname.includes("/downloads/");
+  return url.pathname.includes("/downloads/") || url.pathname.endsWith(".wasm");
 }
 
 function addCrossOriginIsolationHeaders(response) {
