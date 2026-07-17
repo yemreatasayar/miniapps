@@ -45,9 +45,9 @@ function Install-WinGetPackage {
 function Find-Python311 {
   $pyLauncher = Get-Command "py.exe" -ErrorAction SilentlyContinue
   if ($pyLauncher) {
-    & $pyLauncher.Source -3.11 -c "import sys; print(sys.executable)" 2>$null
+    $pythonExecutable = & $pyLauncher.Source -3.11 -c "import sys; print(sys.executable)" 2>$null
     if ($LASTEXITCODE -eq 0) {
-      return (& $pyLauncher.Source -3.11 -c "import sys; print(sys.executable)").Trim()
+      return ([string]$pythonExecutable).Trim()
     }
   }
 
