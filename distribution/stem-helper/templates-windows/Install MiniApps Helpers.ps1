@@ -126,10 +126,12 @@ function Wait-HelperHealth {
   param(
     [string]$Name,
     [string]$Url,
+    [string]$ProcessName,
+    [string]$OutputLogPath,
     [string]$ErrorLogPath
   )
 
-  for ($attempt = 0; $attempt -lt 30; $attempt += 1) {
+  for ($attempt = 0; $attempt -lt 60; $attempt += 1) {
     try {
       return Invoke-RestMethod -Uri $Url -TimeoutSec 3
     } catch {
@@ -137,12 +139,26 @@ function Wait-HelperHealth {
     }
   }
 
-  $logDetails = ""
-  if (Test-Path $ErrorLogPath) {
-    $logDetails = (Get-Content $ErrorLogPath -Tail 40) -join "`n"
+  $processDetails = "PID unavailable"
+  $pidPath = Join-Path $InstallRoot "helper-processes.json"
+  if (Test-Path $pidPath) {
+    $pidMap = Get-Content -Raw $pidPath | ConvertFrom-Json
+    $processId = $pidMap.$ProcessName
+    if ($processId) {
+      $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
+      $processDetails = "PID $processId, running: $([bool]$process)"
+    }
   }
-  $logSuffix = if ($logDetails) { "`n$logDetails" } else { "" }
-  throw "$Name did not become ready within 30 seconds.$logSuffix"
+
+  $outputDetails = ""
+  if (Test-Path $OutputLogPath) {
+    $outputDetails = (Get-Content $OutputLogPath -Tail 40) -join "`n"
+  }
+  $errorDetails = ""
+  if (Test-Path $ErrorLogPath) {
+    $errorDetails = (Get-Content $ErrorLogPath -Tail 40) -join "`n"
+  }
+  throw "$Name did not become ready within 60 seconds.`n$processDetails`nstdout:`n$outputDetails`nstderr:`n$errorDetails"
 }
 
 try {
@@ -260,10 +276,14 @@ $vbsContent | Set-Content -Encoding ASCII $StartupVbs
 $pdfHealth = Wait-HelperHealth `
   -Name "PDF Helper" `
   -Url "http://127.0.0.1:4184/health" `
+  -ProcessName "pdf" `
+  -OutputLogPath (Join-Path $InstallRoot "logs\pdf-helper.out.log") `
   -ErrorLogPath (Join-Path $InstallRoot "logs\pdf-helper.err.log")
 $stemHealth = Wait-HelperHealth `
   -Name "Stem Helper" `
   -Url "http://127.0.0.1:4195/api/health" `
+  -ProcessName "stem" `
+  -OutputLogPath (Join-Path $InstallRoot "logs\stem-helper.out.log") `
   -ErrorLogPath (Join-Path $InstallRoot "logs\stem-helper.err.log")
 if (-not $pdfHealth.libreOffice) {
   throw "PDF Helper started, but LibreOffice was not detected."
