@@ -1,11 +1,17 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const repoRoot = "/Users/yusufemreatasayar/miniapps";
-const sourceExecutable = path.join(repoRoot, "pdf-compress-server", "bin", "gs");
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(__dirname, "..");
+const sourceExecutable =
+  process.env.MINIAPPS_GHOSTSCRIPT_SRC ||
+  ["/opt/homebrew/bin/gs", "/usr/local/bin/gs"].find((candidate) => fs.existsSync(candidate));
+const sourceSnapshot = path.join(repoRoot, "pdf-compress-server", "bin", "gs");
 const outputExecutable = path.join(repoRoot, "pdf-compress-server", "bin", "gs-macos-arm64");
 const outputLibDir = path.join(repoRoot, "pdf-compress-server", "lib");
+const expectedVersion = process.env.MINIAPPS_GHOSTSCRIPT_VERSION || "10.07.1";
 
 function listDependencies(filePath) {
   const output = execFileSync("otool", ["-L", filePath], { encoding: "utf8" });
@@ -72,6 +78,7 @@ function ensureDirectory(directoryPath) {
 
 function copyFile(sourcePath, destinationPath) {
   ensureDirectory(path.dirname(destinationPath));
+  fs.rmSync(destinationPath, { force: true });
   fs.copyFileSync(sourcePath, destinationPath);
   fs.chmodSync(destinationPath, 0o755);
 }
@@ -80,12 +87,26 @@ function runInstallNameTool(args) {
   execFileSync("install_name_tool", args, { stdio: "inherit" });
 }
 
+function signMachO(filePath) {
+  execFileSync("codesign", ["--force", "--sign", "-", filePath], { stdio: "inherit" });
+  execFileSync("codesign", ["--verify", "--strict", filePath], { stdio: "inherit" });
+}
+
 function bundleGhostscript() {
-  if (!fs.existsSync(sourceExecutable)) {
+  if (!sourceExecutable || !fs.existsSync(sourceExecutable)) {
     throw new Error(`Ghostscript source executable missing: ${sourceExecutable}`);
   }
 
+  const versionOutput = execFileSync(sourceExecutable, ["-version"], { encoding: "utf8" });
+  if (!versionOutput.includes(expectedVersion)) {
+    throw new Error(
+      `Ghostscript ${expectedVersion} expected, received: ${versionOutput.trim() || "unknown"}`
+    );
+  }
+
+  fs.rmSync(outputLibDir, { recursive: true, force: true });
   ensureDirectory(outputLibDir);
+  copyFile(sourceExecutable, sourceSnapshot);
   copyFile(sourceExecutable, outputExecutable);
 
   const dependencyClosure = collectDependencyClosure(sourceExecutable);
@@ -139,7 +160,20 @@ function bundleGhostscript() {
     );
   }
 
+  // install_name_tool invalidates existing Mach-O signatures. Re-sign every
+  // modified library before the executable so macOS can load the bundle.
+  for (const destination of destinationForOriginal.values()) {
+    signMachO(destination);
+  }
+  signMachO(outputExecutable);
+
+  const bundledVersionOutput = execFileSync(outputExecutable, ["-version"], { encoding: "utf8" });
+  if (!bundledVersionOutput.includes(expectedVersion)) {
+    throw new Error(`Bundled Ghostscript failed its version check: ${bundledVersionOutput.trim()}`);
+  }
+
   console.log(`Bundled Ghostscript executable: ${outputExecutable}`);
+  console.log(`Ghostscript version: ${bundledVersionOutput.trim().split(/\r?\n/)[0]}`);
   console.log(`Bundled dylib count: ${dependencyClosure.length}`);
 }
 

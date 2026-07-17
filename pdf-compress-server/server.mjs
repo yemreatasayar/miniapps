@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import http from "node:http";
 import { tmpdir } from "node:os";
 import { basename, dirname, extname, join } from "node:path";
@@ -130,7 +130,30 @@ function buildGhostscriptCandidates() {
   if (process.platform === "darwin") {
     candidates.push("/opt/homebrew/bin/gs", "/usr/local/bin/gs");
   } else if (process.platform === "win32") {
-    candidates.push("C:\\Program Files\\gs\\gs10.07.0\\bin\\gswin64c.exe");
+    const programFilesRoots = [
+      process.env.ProgramW6432,
+      process.env.ProgramFiles,
+      process.env["ProgramFiles(x86)"],
+      "C:\\Program Files",
+      "C:\\Program Files (x86)",
+    ].filter(Boolean);
+
+    for (const programFilesRoot of [...new Set(programFilesRoots)]) {
+      const gsRoot = join(programFilesRoot, "gs");
+      if (!existsSync(gsRoot)) continue;
+
+      const versionDirs = readdirSync(gsRoot, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+        .sort((left, right) => right.localeCompare(left, undefined, { numeric: true }));
+
+      for (const versionDir of versionDirs) {
+        candidates.push(
+          join(gsRoot, versionDir, "bin", "gswin64c.exe"),
+          join(gsRoot, versionDir, "bin", "gswin32c.exe")
+        );
+      }
+    }
   }
 
   if (process.platform === "win32") {
@@ -204,10 +227,17 @@ function buildLibreOfficeCandidates() {
       );
     }
   } else if (process.platform === "win32") {
-    candidates.push(
-      "C:\\Program Files\\LibreOffice\\program\\soffice.exe",
-      "C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe"
-    );
+    const programFilesRoots = [
+      process.env.ProgramW6432,
+      process.env.ProgramFiles,
+      process.env["ProgramFiles(x86)"],
+      "C:\\Program Files",
+      "C:\\Program Files (x86)",
+    ].filter(Boolean);
+
+    for (const programFilesRoot of [...new Set(programFilesRoots)]) {
+      candidates.push(join(programFilesRoot, "LibreOffice", "program", "soffice.exe"));
+    }
   }
 
   candidates.push("soffice", "libreoffice");

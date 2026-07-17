@@ -1279,6 +1279,7 @@ const enLocalizationReplacements = new Map([
       ['"veya sürükle bırak"', '"or drag and drop"'],
       ['"İzinli origin\'ler"', '"Allowed origins"'],
       ['"macOS için indir"', '"Download for macOS"'],
+      ['"Windows için indir"', '"Download for Windows"'],
       ['"Windows yakında"', '"Windows coming soon"'],
       ['"Tekrar Dene"', '"Try Again"'],
       ['"Track hazır, stem separation başlat."', '"Your track is ready, start stem separation."'],
@@ -1427,6 +1428,9 @@ function runBuild(cwd, script, outDir) {
     env.VITE_STEM_SPLITTER_HELPER_MAC_URL =
       process.env.VITE_STEM_SPLITTER_HELPER_MAC_URL ||
       "https://github.com/yemreatasayar/miniapps/releases/latest/download/stem-helper-macos.zip";
+    env.VITE_STEM_SPLITTER_HELPER_WINDOWS_URL =
+      process.env.VITE_STEM_SPLITTER_HELPER_WINDOWS_URL ||
+      "https://github.com/yemreatasayar/miniapps/releases/latest/download/stem-helper-windows.zip";
   }
 
   const result = spawnSync(npmCmd, ["run", script], {

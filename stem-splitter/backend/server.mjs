@@ -137,6 +137,8 @@ function loadRuntimeConfig() {
     typeof ffmpegBin === "string" && ffmpegBin.includes(path.sep)
       ? path.join(path.dirname(ffmpegBin), process.platform === "win32" ? "ffprobe.exe" : "ffprobe")
       : "ffprobe";
+  const defaultPythonBin =
+    process.platform === "win32" ? "./.venv/Scripts/python.exe" : "./.venv/bin/python3";
 
   return {
     configPath,
@@ -147,8 +149,8 @@ function loadRuntimeConfig() {
       resolveFrom(baseDir, process.env.MINIAPPS_STEM_HELPER_TMP_DIR ?? fileConfig.tmpDir ?? "./tmp") ??
       path.join(baseDir, "tmp"),
     pythonBin:
-      resolveFrom(baseDir, process.env.MINIAPPS_STEM_HELPER_PYTHON_BIN ?? fileConfig.pythonBin ?? "./.venv/bin/python3") ??
-      path.join(baseDir, ".venv", "bin", "python3"),
+      resolveFrom(baseDir, process.env.MINIAPPS_STEM_HELPER_PYTHON_BIN ?? fileConfig.pythonBin ?? defaultPythonBin) ??
+      path.join(baseDir, ".venv", process.platform === "win32" ? "Scripts/python.exe" : "bin/python3"),
     ffmpegBin,
     ffprobeBin:
       resolveFrom(baseDir, process.env.MINIAPPS_STEM_HELPER_FFPROBE_BIN ?? fileConfig.ffprobeBin ?? ffprobeDefault, {
@@ -349,6 +351,22 @@ function startDemucs(args, options = {}) {
   return { process, promise };
 }
 
+function terminateChildProcess(child, force = false) {
+  if (!child || child.killed) return;
+
+  if (process.platform === "win32" && child.pid) {
+    spawnSync("taskkill", ["/PID", String(child.pid), "/T", ...(force ? ["/F"] : [])], {
+      encoding: "utf8",
+      shell: false,
+      timeout: 5_000,
+      stdio: "ignore",
+    });
+    return;
+  }
+
+  child.kill(force ? "SIGKILL" : "SIGTERM");
+}
+
 async function cancelJob(jobId) {
   const job = jobs.get(jobId);
   if (!job) return false;
@@ -360,10 +378,10 @@ async function cancelJob(jobId) {
   job.cancelled = true;
 
   if (job.process && !job.process.killed) {
-    job.process.kill("SIGTERM");
+    terminateChildProcess(job.process);
     setTimeout(() => {
       if (job.process && !job.process.killed) {
-        job.process.kill("SIGKILL");
+        terminateChildProcess(job.process, true);
       }
     }, 2_000);
   }

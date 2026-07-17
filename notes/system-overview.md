@@ -230,6 +230,21 @@ git commit && git push
 
 ---
 
+## Helper Runtime Surumleri
+
+- Test edilmis Node, FFmpeg, Ghostscript, LibreOffice ve Stem Splitter matrisi:
+  `notes/helper-runtime-matrix.md`.
+- macOS Stem Helper dagitiminda Homebrew FFmpeg binary'si tek basina
+  paketlenmez; self-contained FFmpeg/FFprobe kaynagi zorunludur.
+- Demucs/Python/Torch zinciri patch bakimindan ayri tutulur ve paralel venv
+  regresyonu olmadan yerinde guncellenmez.
+- Windows x64 dagitimi `distribution/stem-helper/build-stem-helper-windows.mjs`
+  ile uretilir. Tek paket Vocal Remover ve PDF/Office helper servislerini
+  kullanici profilinden baslatir; gercek Windows regresyonu
+  `.github/workflows/windows-helpers.yml` ile zorunludur.
+
+---
+
 ## pdf-toolkit Özel Notlar
 
 - **Dil:** Yeni PDF dönüşüm ve yükleme kopyaları `pdf-toolkit/src/lib/i18n.ts` üzerinden TR/EN çalışır. EN algısı public app yolundaki `/apps-en/` veya `document.documentElement.lang === "en"` ile yapılır.

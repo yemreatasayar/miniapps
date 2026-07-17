@@ -1,4 +1,5 @@
-import { chmodSync, copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, readlinkSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -15,6 +16,9 @@ const artifactPath = path.join(repoRoot, "distribution", "stem-helper", "stem-he
 const outputRuntimeDir = path.join(outputDir, "runtime");
 const outputAppDir = path.join(outputRuntimeDir, "app");
 const outputLogsDir = path.join(outputDir, "logs");
+const REQUIRED_NODE_MAJOR = 24;
+const MINIMUM_FFMPEG_VERSION = [8, 1];
+const allowDynamicFfmpeg = process.env.MINIAPPS_STEM_HELPER_ALLOW_DYNAMIC_FFMPEG === "1";
 
 function ensureDir(targetPath) {
   mkdirSync(targetPath, { recursive: true });
@@ -49,6 +53,91 @@ function commandOutput(command, args) {
   return result.stdout.trim() || null;
 }
 
+function commandVersion(command, args) {
+  if (!command || !existsSync(command)) return null;
+  return commandOutput(command, args)?.split(/\r?\n/)[0] ?? null;
+}
+
+function fileSha256(filePath) {
+  if (!filePath || !existsSync(filePath) || !statSync(filePath).isFile()) return null;
+  return createHash("sha256").update(readFileSync(filePath)).digest("hex");
+}
+
+function nonSystemMacDependencies(filePath) {
+  if (process.platform !== "darwin" || !filePath || !existsSync(filePath)) return [];
+  const output = commandOutput("otool", ["-L", filePath]);
+  if (!output) return [];
+
+  return output
+    .split(/\r?\n/)
+    .slice(1)
+    .map((line) => line.trim().split(" (")[0])
+    .filter(
+      (dependency) =>
+        dependency &&
+        !dependency.startsWith("/usr/lib/") &&
+        !dependency.startsWith("/System/Library/")
+    );
+}
+
+function parseVersionTuple(value) {
+  const match = String(value || "").match(/(\d+)\.(\d+)(?:\.(\d+))?/);
+  return match ? match.slice(1, 4).map((entry) => Number.parseInt(entry || "0", 10)) : null;
+}
+
+function versionAtLeast(actual, minimum) {
+  const tuple = parseVersionTuple(actual);
+  if (!tuple) return false;
+  for (let index = 0; index < minimum.length; index += 1) {
+    const current = tuple[index] || 0;
+    if (current > minimum[index]) return true;
+    if (current < minimum[index]) return false;
+  }
+  return true;
+}
+
+function validateRuntimeVersions(runtimes) {
+  if (runtimes.node.sourcePath) {
+    const nodeVersion = runtimes.node.version;
+    const nodeMajor = parseVersionTuple(nodeVersion)?.[0];
+    if (nodeMajor !== REQUIRED_NODE_MAJOR) {
+      throw new Error(`Node ${REQUIRED_NODE_MAJOR}.x LTS expected, received: ${nodeVersion || "unknown"}`);
+    }
+  }
+
+  if (
+    runtimes.ffmpeg.sourcePath &&
+    !versionAtLeast(runtimes.ffmpeg.version, MINIMUM_FFMPEG_VERSION)
+  ) {
+    throw new Error(`FFmpeg 8.1 or newer expected, received: ${runtimes.ffmpeg.version || "unknown"}`);
+  }
+
+  if (
+    runtimes.ffprobe.sourcePath &&
+    !versionAtLeast(runtimes.ffprobe.version, MINIMUM_FFMPEG_VERSION)
+  ) {
+    throw new Error(`FFprobe 8.1 or newer expected, received: ${runtimes.ffprobe.version || "unknown"}`);
+  }
+
+  if (runtimes.python.version && !runtimes.python.version.startsWith("Python 3.9.")) {
+    throw new Error(`Packaged Demucs environment expects Python 3.9, received: ${runtimes.python.version}`);
+  }
+
+  for (const runtime of [runtimes.ffmpeg, runtimes.ffprobe]) {
+    if (
+      runtime.sourcePath &&
+      runtime.dynamicDependencies.length > 0 &&
+      !allowDynamicFfmpeg
+    ) {
+      throw new Error(
+        `${path.basename(runtime.sourcePath)} is not portable; external dependencies detected: ` +
+          `${runtime.dynamicDependencies.join(", ")}. Provide a self-contained runtime or set ` +
+          "MINIAPPS_STEM_HELPER_ALLOW_DYNAMIC_FFMPEG=1 for a host-specific test build."
+      );
+    }
+  }
+}
+
 function resolveSourcePath(value) {
   if (!value) return null;
   return path.isAbsolute(value) ? value : path.resolve(repoRoot, value);
@@ -62,6 +151,8 @@ function detectNodeSource() {
       sourcePath: envSource,
       mode: "provided",
       note: "Using explicit node runtime source.",
+      version: commandVersion(envSource, ["--version"]),
+      sha256: fileSha256(envSource),
     };
   }
 
@@ -74,6 +165,8 @@ function detectNodeSource() {
       sourcePath: candidate,
       mode: "autodetected",
       note: `Auto-detected node runtime from local-runtime (${archBinary}).`,
+      version: commandVersion(candidate, ["--version"]),
+      sha256: fileSha256(candidate),
     };
   }
 
@@ -82,6 +175,8 @@ function detectNodeSource() {
     sourcePath: null,
     mode: "missing",
     note: "Node runtime source not found.",
+    version: null,
+    sha256: null,
   };
 }
 
@@ -93,6 +188,9 @@ function detectFfmpegSource() {
       sourcePath: envSource,
       mode: "provided",
       note: "Using explicit ffmpeg runtime source.",
+      version: commandVersion(envSource, ["-version"]),
+      sha256: fileSha256(envSource),
+      dynamicDependencies: nonSystemMacDependencies(envSource),
     };
   }
 
@@ -103,6 +201,9 @@ function detectFfmpegSource() {
       sourcePath: whichFfmpeg,
       mode: "autodetected",
       note: `Auto-detected ffmpeg from PATH (${whichFfmpeg}).`,
+      version: commandVersion(whichFfmpeg, ["-version"]),
+      sha256: fileSha256(whichFfmpeg),
+      dynamicDependencies: nonSystemMacDependencies(whichFfmpeg),
     };
   }
 
@@ -111,6 +212,9 @@ function detectFfmpegSource() {
     sourcePath: null,
     mode: "missing",
     note: "FFmpeg runtime source not found.",
+    version: null,
+    sha256: null,
+    dynamicDependencies: [],
   };
 }
 
@@ -122,6 +226,9 @@ function detectFfprobeSource(ffmpegRuntime) {
       sourcePath: envSource,
       mode: "provided",
       note: "Using explicit ffprobe runtime source.",
+      version: commandVersion(envSource, ["-version"]),
+      sha256: fileSha256(envSource),
+      dynamicDependencies: nonSystemMacDependencies(envSource),
     };
   }
 
@@ -133,6 +240,9 @@ function detectFfprobeSource(ffmpegRuntime) {
         sourcePath: candidate,
         mode: ffmpegRuntime.mode === "provided" ? "derived" : "autodetected",
         note: `Using ffprobe next to ffmpeg (${candidate}).`,
+        version: commandVersion(candidate, ["-version"]),
+        sha256: fileSha256(candidate),
+        dynamicDependencies: nonSystemMacDependencies(candidate),
       };
     }
   }
@@ -144,6 +254,9 @@ function detectFfprobeSource(ffmpegRuntime) {
       sourcePath: whichFfprobe,
       mode: "autodetected",
       note: `Auto-detected ffprobe from PATH (${whichFfprobe}).`,
+      version: commandVersion(whichFfprobe, ["-version"]),
+      sha256: fileSha256(whichFfprobe),
+      dynamicDependencies: nonSystemMacDependencies(whichFfprobe),
     };
   }
 
@@ -152,6 +265,9 @@ function detectFfprobeSource(ffmpegRuntime) {
     sourcePath: null,
     mode: "missing",
     note: "FFprobe runtime source not found.",
+    version: null,
+    sha256: null,
+    dynamicDependencies: [],
   };
 }
 
@@ -164,6 +280,8 @@ function detectPythonSource() {
       mode: "provided",
       note: "Using explicit python runtime source.",
       pythonVersion: "3.9",
+      version: null,
+      packages: null,
     };
   }
 
@@ -183,12 +301,21 @@ function detectPythonSource() {
       }
     }
 
+    const packageVersions = existsSync(localPython)
+      ? commandOutput(localPython, [
+          "-c",
+          "import demucs, torch, torchaudio; print(f'demucs={demucs.__version__};torch={torch.__version__};torchaudio={torchaudio.__version__}')",
+        ])
+      : null;
+
     return {
       envName: "MINIAPPS_STEM_HELPER_PYTHON_SRC",
       sourcePath: sitePackagesPath,
       mode: "autodetected",
       note,
       pythonVersion: "3.9",
+      version: commandVersion(localPython, ["--version"]),
+      packages: packageVersions,
     };
   }
 
@@ -197,6 +324,8 @@ function detectPythonSource() {
     sourcePath: null,
     mode: "missing",
     note: "Python runtime source not found.",
+    version: null,
+    packages: null,
   };
 }
 
@@ -283,6 +412,10 @@ function writeRuntimeManifest(runtimes) {
           mode: runtime.mode,
           sourcePath: runtime.sourcePath,
           note: runtime.note,
+          version: runtime.version ?? null,
+          packages: runtime.packages ?? null,
+          sha256: runtime.sha256 ?? null,
+          dynamicDependencies: runtime.dynamicDependencies ?? [],
         },
       ])
     ),
@@ -313,11 +446,20 @@ Runtime kaynak durumu:
 - ffmpeg: ${runtimes.ffmpeg.mode} - ${runtimes.ffmpeg.note}
 - ffprobe: ${runtimes.ffprobe.mode} - ${runtimes.ffprobe.note}
 
+Runtime surumleri:
+
+- node: ${runtimes.node.version ?? "missing"}
+- python: ${runtimes.python.version ?? "missing"}
+- python packages: ${runtimes.python.packages ?? "missing"}
+- ffmpeg: ${runtimes.ffmpeg.version ?? "missing"}
+- ffprobe: ${runtimes.ffprobe.version ?? "missing"}
+
 Not:
 
 - Runtime env kaynaklari verilmediyse ilgili klasorlerde *.placeholder.txt dosyalari olusur.
 - Python runtime placeholder varsa bu paket install edilir ama helper health check gecmez.
 - Gercek runtime binary'leri packaging env ile tekrar build edilerek bu klasore yerlestirilmelidir.
+- macOS helper dagitimi icin FFmpeg ve FFprobe self-contained olmalidir; Homebrew binary'leri host dylib'lerine bagli olabilir.
 `;
 
   writeFileSync(path.join(outputDir, "README.md"), readme, "utf8");
@@ -348,29 +490,34 @@ function createZipArtifact() {
 function installBackendNodeDependencies() {
   copyRequiredFile(path.join(sourceBackendDir, "package.json"), path.join(outputAppDir, "package.json"));
 
-  const result = spawnSync("npm", ["install", "--omit=dev", "--prefer-offline"], {
+  const result = spawnSync(
+    "npm",
+    ["ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund", "--prefer-offline"],
+    {
     cwd: outputAppDir,
     stdio: "inherit",
     env: process.env,
-  });
+    }
+  );
 
   if (result.status !== 0) {
-    throw new Error(`npm install for backend dependencies failed with exit code ${result.status ?? "unknown"}`);
+    throw new Error(`npm ci for backend dependencies failed with exit code ${result.status ?? "unknown"}`);
   }
 }
 
 function main() {
-  resetOutput();
-
   const runtimes = {
     node: detectNodeSource(),
     python: detectPythonSource(),
     ffmpeg: detectFfmpegSource(),
   };
   runtimes.ffprobe = detectFfprobeSource(runtimes.ffmpeg);
+  validateRuntimeVersions(runtimes);
+  resetOutput();
 
   copyRequiredFile(path.join(sourceBackendDir, "server.mjs"), path.join(outputAppDir, "server.mjs"));
   copyRequiredFile(path.join(sourceBackendDir, "requirements.txt"), path.join(outputAppDir, "requirements.txt"));
+  copyRequiredFile(path.join(sourceBackendDir, "package-lock.json"), path.join(outputAppDir, "package-lock.json"));
   installBackendNodeDependencies();
   copyRequiredFile(
     path.join(runtimeTemplateAppDir, "helper-config.template.json"),
