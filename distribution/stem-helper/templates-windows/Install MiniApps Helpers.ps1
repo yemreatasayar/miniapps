@@ -122,6 +122,29 @@ function Find-Ghostscript {
   return $null
 }
 
+function Wait-HelperHealth {
+  param(
+    [string]$Name,
+    [string]$Url,
+    [string]$ErrorLogPath
+  )
+
+  for ($attempt = 0; $attempt -lt 30; $attempt += 1) {
+    try {
+      return Invoke-RestMethod -Uri $Url -TimeoutSec 3
+    } catch {
+      Start-Sleep -Seconds 1
+    }
+  }
+
+  $logDetails = ""
+  if (Test-Path $ErrorLogPath) {
+    $logDetails = (Get-Content $ErrorLogPath -Tail 40) -join "`n"
+  }
+  $logSuffix = if ($logDetails) { "`n$logDetails" } else { "" }
+  throw "$Name did not become ready within 30 seconds.$logSuffix"
+}
+
 try {
 if (-not (Test-Path $SourceRuntime)) {
   throw "Package runtime is missing: $SourceRuntime"
@@ -233,10 +256,15 @@ shell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ""$escapedSta
 $vbsContent | Set-Content -Encoding ASCII $StartupVbs
 
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $StartScript
-Start-Sleep -Seconds 3
 
-$pdfHealth = Invoke-RestMethod -Uri "http://127.0.0.1:4184/health" -TimeoutSec 10
-$stemHealth = Invoke-RestMethod -Uri "http://127.0.0.1:4195/api/health" -TimeoutSec 10
+$pdfHealth = Wait-HelperHealth `
+  -Name "PDF Helper" `
+  -Url "http://127.0.0.1:4184/health" `
+  -ErrorLogPath (Join-Path $InstallRoot "logs\pdf-helper.err.log")
+$stemHealth = Wait-HelperHealth `
+  -Name "Stem Helper" `
+  -Url "http://127.0.0.1:4195/api/health" `
+  -ErrorLogPath (Join-Path $InstallRoot "logs\stem-helper.err.log")
 if (-not $pdfHealth.libreOffice) {
   throw "PDF Helper started, but LibreOffice was not detected."
 }
