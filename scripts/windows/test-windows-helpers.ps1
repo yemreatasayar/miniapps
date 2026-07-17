@@ -18,23 +18,22 @@ function Invoke-LocalJson {
     [int]$TimeoutMilliseconds = 5000
   )
 
-  $request = [System.Net.HttpWebRequest]::Create($Url)
-  $request.Proxy = $null
-  $request.Timeout = $TimeoutMilliseconds
+  $arguments = @(
+    "--silent",
+    "--show-error",
+    "--fail",
+    "--noproxy", "*",
+    "--max-time", ([Math]::Max(1, [Math]::Ceiling($TimeoutMilliseconds / 1000)))
+  )
   foreach ($header in $Headers.GetEnumerator()) {
-    $request.Headers[$header.Key] = $header.Value
+    $arguments += @("-H", "$($header.Key): $($header.Value)")
   }
-  $response = $request.GetResponse()
-  try {
-    $reader = New-Object System.IO.StreamReader($response.GetResponseStream())
-    try {
-      return ($reader.ReadToEnd() | ConvertFrom-Json)
-    } finally {
-      $reader.Dispose()
-    }
-  } finally {
-    $response.Dispose()
+  $arguments += $Url
+  $output = & curl.exe @arguments
+  if ($LASTEXITCODE -ne 0) {
+    throw "Local request failed for $Url (exit code $LASTEXITCODE)."
   }
+  return (($output -join "`n") | ConvertFrom-Json)
 }
 
 if (Test-Path $TestRoot) {
@@ -103,6 +102,7 @@ $splitResponsePath = Join-Path $TestRoot "split-response.json"
   --silent `
   --show-error `
   --fail `
+  --noproxy "*" `
   -H "Origin: https://miniapps.tr" `
   -F "file=@$audioPath;type=audio/wav" `
   -o $splitResponsePath `
@@ -141,6 +141,7 @@ foreach ($stem in @("vocals", "instrumental")) {
     --silent `
     --show-error `
     --fail `
+    --noproxy "*" `
     -H "Origin: https://miniapps.tr" `
     -o $outputPath `
     "http://127.0.0.1:4195/api/download/$jobId/$stem"
@@ -200,6 +201,7 @@ $pdfPath = Join-Path $TestRoot "office-fixture.pdf"
   --silent `
   --show-error `
   --fail `
+  --noproxy "*" `
   -H "Origin: https://miniapps.tr" `
   -F "file=@$pptxPath;type=application/vnd.openxmlformats-officedocument.presentationml.presentation" `
   -o $pdfPath `

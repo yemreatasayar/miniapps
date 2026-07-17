@@ -128,20 +128,18 @@ function Invoke-LocalJson {
     [int]$TimeoutMilliseconds = 5000
   )
 
-  $request = [System.Net.HttpWebRequest]::Create($Url)
-  $request.Proxy = $null
-  $request.Timeout = $TimeoutMilliseconds
-  $response = $request.GetResponse()
-  try {
-    $reader = New-Object System.IO.StreamReader($response.GetResponseStream())
-    try {
-      return ($reader.ReadToEnd() | ConvertFrom-Json)
-    } finally {
-      $reader.Dispose()
-    }
-  } finally {
-    $response.Dispose()
+  $timeoutSeconds = [Math]::Max(1, [Math]::Ceiling($TimeoutMilliseconds / 1000))
+  $output = & curl.exe `
+    --silent `
+    --show-error `
+    --fail `
+    --noproxy "*" `
+    --max-time $timeoutSeconds `
+    $Url
+  if ($LASTEXITCODE -ne 0) {
+    throw "Local request failed for $Url (exit code $LASTEXITCODE)."
   }
+  return (($output -join "`n") | ConvertFrom-Json)
 }
 
 function Wait-HelperHealth {
