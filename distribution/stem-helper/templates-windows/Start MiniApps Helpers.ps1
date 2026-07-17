@@ -42,6 +42,7 @@ function Start-HelperProcess {
     -PassThru
 }
 
+try {
 if (-not (Test-Path $NodePath)) {
   throw "Bundled node.exe is missing: $NodePath"
 }
@@ -77,3 +78,9 @@ if (-not (Test-HelperHealth "http://127.0.0.1:4184/health")) {
 }
 
 $processes | ConvertTo-Json | Set-Content -Encoding UTF8 $PidPath
+} catch {
+  $line = $_.InvocationInfo.ScriptLineNumber
+  $message = $_.Exception.Message.Replace("`r", "").Replace("`n", "%0A")
+  Write-Host "::error file=distribution/stem-helper/templates-windows/Start MiniApps Helpers.ps1,line=${line}::$message"
+  throw
+}

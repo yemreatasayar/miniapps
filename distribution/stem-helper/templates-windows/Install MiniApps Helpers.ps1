@@ -255,7 +255,7 @@ shell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ""$escapedSta
 "@
 $vbsContent | Set-Content -Encoding ASCII $StartupVbs
 
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $StartScript
+& $StartScript
 
 $pdfHealth = Wait-HelperHealth `
   -Name "PDF Helper" `
