@@ -15,6 +15,16 @@ function Refresh-ProcessPath {
   $env:Path = "$machinePath;$userPath"
 }
 
+function Write-Utf8NoBom {
+  param(
+    [string]$Path,
+    [string]$Content
+  )
+
+  $encoding = [System.Text.UTF8Encoding]::new($false)
+  [System.IO.File]::WriteAllText($Path, $Content, $encoding)
+}
+
 function Install-WinGetPackage {
   param(
     [string]$Id,
@@ -275,14 +285,18 @@ $stemConfig = @{
     "http://localhost:4194"
   )
 }
-$stemConfig | ConvertTo-Json -Depth 4 | Set-Content -Encoding UTF8 (Join-Path $InstallRoot "stem-helper-config.json")
+Write-Utf8NoBom `
+  -Path (Join-Path $InstallRoot "stem-helper-config.json") `
+  -Content ($stemConfig | ConvertTo-Json -Depth 4)
 
 $ghostscriptPath = Find-Ghostscript
 $pdfEnv = @{
   libreOfficePath = $libreOfficePath
   ghostscriptPath = $ghostscriptPath
 }
-$pdfEnv | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $InstallRoot "pdf-helper-env.json")
+Write-Utf8NoBom `
+  -Path (Join-Path $InstallRoot "pdf-helper-env.json") `
+  -Content ($pdfEnv | ConvertTo-Json)
 
 $escapedStartScript = $StartScript.Replace('"', '""')
 $vbsContent = @"
