@@ -255,10 +255,23 @@ function detectLibreOffice() {
       continue;
     }
 
+    if (
+      process.platform === "win32" &&
+      explicitCandidate &&
+      isLocalFile &&
+      candidate.toLowerCase() === explicitCandidate
+    ) {
+      return {
+        available: true,
+        command: candidate,
+        version: "configured",
+      };
+    }
+
     const probe = spawnSync(candidate, ["--version"], {
       encoding: "utf8",
       shell: false,
-      timeout: process.platform === "win32" ? 30000 : 5000,
+      timeout: 5000,
     });
 
     if (probe.status === 0) {
@@ -586,8 +599,6 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://${req.headers.host || `${HOST}:${PORT}`}`);
 
   if (url.pathname === "/health" && req.method === "GET") {
-    ghostscript = detectGhostscript();
-    libreOffice = detectLibreOffice();
     sendJson(
       res,
       200,
@@ -622,7 +633,9 @@ const server = http.createServer(async (req, res) => {
     const { fields, file } = parseMultipartForm(req, body);
 
     if (url.pathname === "/convert") {
-      libreOffice = detectLibreOffice();
+      if (!libreOffice.available) {
+        libreOffice = detectLibreOffice();
+      }
       if (!libreOffice.available) {
         sendText(res, 503, "LibreOffice is unavailable on this device.", origin);
         return;
@@ -694,8 +707,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  ghostscript = detectGhostscript();
-  libreOffice = detectLibreOffice();
   console.log(`pdf-compress-server listening on http://${HOST}:${PORT}`);
   console.log(
     `Ghostscript: ${ghostscript.available ? `${ghostscript.command} (${ghostscript.version})` : "unavailable"}`
