@@ -33,8 +33,16 @@ function run(command, args, options = {}) {
   });
 
   if (result.status !== 0) {
+    const details = [
+      result.error?.message,
+      result.stdout?.trim(),
+      result.stderr?.trim(),
+    ]
+      .filter(Boolean)
+      .join("\n");
     throw new Error(
-      `${command} ${args.join(" ")} failed with exit code ${result.status ?? "unknown"}`
+      `${command} ${args.join(" ")} failed with exit code ${result.status ?? "unknown"}` +
+        (details ? `\n${details}` : "")
     );
   }
 
@@ -72,9 +80,21 @@ function validateWindowsNode(nodePath) {
 }
 
 function installStemNodeDependencies() {
-  run("npm.cmd", ["ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], {
-    cwd: stemAppDir,
-  });
+  const npmCliPath = path.join(
+    path.dirname(process.execPath),
+    "node_modules",
+    "npm",
+    "bin",
+    "npm-cli.js"
+  );
+  if (!existsSync(npmCliPath)) {
+    throw new Error(`npm CLI was not found beside the packaged Node runtime: ${npmCliPath}`);
+  }
+  run(
+    process.execPath,
+    [npmCliPath, "ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"],
+    { cwd: stemAppDir }
+  );
 }
 
 function writeManifest(nodePath, nodeVersion) {
@@ -159,4 +179,11 @@ function main() {
   console.log(`Artifact SHA-256: ${fileSha256(artifactPath)}`);
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  const message = error instanceof Error ? error.stack || error.message : String(error);
+  const annotation = message.replaceAll("\r", "").replaceAll("\n", "%0A");
+  console.error(`::error file=distribution/stem-helper/build-stem-helper-windows.mjs::${annotation}`);
+  process.exitCode = 1;
+}
