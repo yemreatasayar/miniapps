@@ -11,6 +11,32 @@ $StemConfigPath = Join-Path $InstallRoot "stem-helper-config.json"
 $VenvPython = Join-Path $InstallRoot "runtime\stem\.venv\Scripts\python.exe"
 $TestRoot = Join-Path $env:RUNNER_TEMP "miniapps-windows-helper-test"
 
+function Invoke-LocalJson {
+  param(
+    [string]$Url,
+    [hashtable]$Headers = @{},
+    [int]$TimeoutMilliseconds = 5000
+  )
+
+  $request = [System.Net.HttpWebRequest]::Create($Url)
+  $request.Proxy = $null
+  $request.Timeout = $TimeoutMilliseconds
+  foreach ($header in $Headers.GetEnumerator()) {
+    $request.Headers[$header.Key] = $header.Value
+  }
+  $response = $request.GetResponse()
+  try {
+    $reader = New-Object System.IO.StreamReader($response.GetResponseStream())
+    try {
+      return ($reader.ReadToEnd() | ConvertFrom-Json)
+    } finally {
+      $reader.Dispose()
+    }
+  } finally {
+    $response.Dispose()
+  }
+}
+
 if (Test-Path $TestRoot) {
   Remove-Item $TestRoot -Recurse -Force
 }
@@ -34,7 +60,9 @@ Write-Host "Waiting for Demucs warm-up..."
 $stemHealth = $null
 for ($attempt = 0; $attempt -lt 180; $attempt += 1) {
   try {
-    $stemHealth = Invoke-RestMethod -Uri "http://127.0.0.1:4195/api/health" -TimeoutSec 5
+    $stemHealth = Invoke-LocalJson `
+      -Url "http://127.0.0.1:4195/api/health" `
+      -TimeoutMilliseconds 5000
     if ($stemHealth.warmup.status -eq "ready") {
       break
     }
@@ -91,10 +119,10 @@ if (-not $jobId) {
 
 $job = $null
 for ($attempt = 0; $attempt -lt 120; $attempt += 1) {
-  $job = Invoke-RestMethod `
+  $job = Invoke-LocalJson `
+    -Url "http://127.0.0.1:4195/api/jobs/$jobId" `
     -Headers @{ Origin = "https://miniapps.tr" } `
-    -Uri "http://127.0.0.1:4195/api/jobs/$jobId" `
-    -TimeoutSec 5
+    -TimeoutMilliseconds 5000
   if ($job.status -eq "done") {
     break
   }
@@ -159,7 +187,9 @@ if ($LASTEXITCODE -ne 0) {
   throw "Office fixture creation failed."
 }
 
-$pdfHealth = Invoke-RestMethod -Uri "http://127.0.0.1:4184/health" -TimeoutSec 10
+$pdfHealth = Invoke-LocalJson `
+  -Url "http://127.0.0.1:4184/health" `
+  -TimeoutMilliseconds 10000
 if (-not $pdfHealth.libreOffice) {
   throw "PDF Helper did not detect LibreOffice on Windows."
 }

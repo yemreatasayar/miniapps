@@ -122,6 +122,28 @@ function Find-Ghostscript {
   return $null
 }
 
+function Invoke-LocalJson {
+  param(
+    [string]$Url,
+    [int]$TimeoutMilliseconds = 5000
+  )
+
+  $request = [System.Net.HttpWebRequest]::Create($Url)
+  $request.Proxy = $null
+  $request.Timeout = $TimeoutMilliseconds
+  $response = $request.GetResponse()
+  try {
+    $reader = New-Object System.IO.StreamReader($response.GetResponseStream())
+    try {
+      return ($reader.ReadToEnd() | ConvertFrom-Json)
+    } finally {
+      $reader.Dispose()
+    }
+  } finally {
+    $response.Dispose()
+  }
+}
+
 function Wait-HelperHealth {
   param(
     [string]$Name,
@@ -133,7 +155,7 @@ function Wait-HelperHealth {
 
   for ($attempt = 0; $attempt -lt 60; $attempt += 1) {
     try {
-      return Invoke-RestMethod -Uri $Url -TimeoutSec 3
+      return Invoke-LocalJson -Url $Url -TimeoutMilliseconds 3000
     } catch {
       Start-Sleep -Seconds 1
     }

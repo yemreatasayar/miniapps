@@ -245,6 +245,10 @@ function buildLibreOfficeCandidates() {
 }
 
 function detectLibreOffice() {
+  const explicitCandidate = process.env.MINIAPPS_LIBREOFFICE_PATH
+    ? process.env.MINIAPPS_LIBREOFFICE_PATH.toLowerCase()
+    : null;
+
   for (const candidate of buildLibreOfficeCandidates()) {
     const isLocalFile = candidate.includes("/") || candidate.includes("\\");
     if (isLocalFile && !existsSync(candidate)) {
@@ -254,7 +258,7 @@ function detectLibreOffice() {
     const probe = spawnSync(candidate, ["--version"], {
       encoding: "utf8",
       shell: false,
-      timeout: 5000,
+      timeout: process.platform === "win32" ? 30000 : 5000,
     });
 
     if (probe.status === 0) {
@@ -262,6 +266,18 @@ function detectLibreOffice() {
         available: true,
         command: candidate,
         version: (probe.stdout || probe.stderr).trim().split(/\r?\n/)[0] || "unknown",
+      };
+    }
+
+    if (
+      explicitCandidate &&
+      isLocalFile &&
+      candidate.toLowerCase() === explicitCandidate
+    ) {
+      return {
+        available: true,
+        command: candidate,
+        version: "unverified",
       };
     }
   }
