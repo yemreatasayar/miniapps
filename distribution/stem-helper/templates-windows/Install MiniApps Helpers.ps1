@@ -122,6 +122,7 @@ function Find-Ghostscript {
   return $null
 }
 
+try {
 if (-not (Test-Path $SourceRuntime)) {
   throw "Package runtime is missing: $SourceRuntime"
 }
@@ -180,6 +181,14 @@ $requirementsPath = Join-Path $RuntimeRoot "stem\app\requirements-windows.txt"
 & $venvPython -m pip install --disable-pip-version-check --upgrade pip
 if ($LASTEXITCODE -ne 0) {
   throw "pip upgrade failed."
+}
+& $venvPython -m pip install `
+  --disable-pip-version-check `
+  --index-url "https://download.pytorch.org/whl/cpu" `
+  "torch==2.8.0" `
+  "torchaudio==2.8.0"
+if ($LASTEXITCODE -ne 0) {
+  throw "CPU-only Torch dependencies could not be installed."
 }
 & $venvPython -m pip install --disable-pip-version-check -r $requirementsPath
 if ($LASTEXITCODE -ne 0) {
@@ -240,4 +249,10 @@ Write-Host "MiniApps Helpers are running."
 Write-Host "Vocal Remover model warm-up continues in the background on first use."
 if (-not $pdfHealth.ghostscript) {
   Write-Host "Ghostscript is not installed; Office conversion works, PDF compression remains browser-only."
+}
+} catch {
+  $line = $_.InvocationInfo.ScriptLineNumber
+  $message = $_.Exception.Message.Replace("`r", "").Replace("`n", "%0A")
+  Write-Host "::error file=distribution/stem-helper/templates-windows/Install MiniApps Helpers.ps1,line=${line}::$message"
+  throw
 }

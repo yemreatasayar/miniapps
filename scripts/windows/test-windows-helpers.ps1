@@ -16,6 +16,7 @@ if (Test-Path $TestRoot) {
 }
 New-Item -ItemType Directory -Path $TestRoot -Force | Out-Null
 
+try {
 Write-Host "Running the packaged installer..."
 & powershell.exe `
   -NoProfile `
@@ -198,3 +199,9 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "Windows Stem Helper and Office conversion smoke tests passed."
+} catch {
+  $line = $_.InvocationInfo.ScriptLineNumber
+  $message = $_.Exception.Message.Replace("`r", "").Replace("`n", "%0A")
+  Write-Host "::error file=scripts/windows/test-windows-helpers.ps1,line=${line}::$message"
+  throw
+}
