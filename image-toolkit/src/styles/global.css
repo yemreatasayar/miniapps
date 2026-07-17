@@ -274,7 +274,56 @@ button {
 }
 
 .workspace-shell {
+  position: relative;
   overflow: hidden;
+}
+
+.workspace-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  border: 2px dashed var(--accent);
+  border-radius: inherit;
+  background: rgba(247, 250, 255, 0.94);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
+.workspace-drop-overlay-card {
+  width: min(100%, 520px);
+  padding: clamp(28px, 5vw, 48px);
+  border-radius: 26px;
+  border: 1px solid rgba(46, 156, 255, 0.2);
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.workspace-drop-overlay-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.workspace-drop-overlay-card strong {
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  letter-spacing: -0.04em;
+}
+
+.workspace-drop-overlay-card > span:last-child {
+  color: var(--muted);
 }
 
 .workspace-tabs {

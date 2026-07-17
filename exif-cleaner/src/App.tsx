@@ -13,6 +13,7 @@ import {
 } from "./lib/image-ops";
 import { trackAppEvent, trackProcessSuccess } from "./lib/analytics";
 import type { OutputFormat, SanitizableImage } from "./lib/types";
+import WorkspaceFileDrop from "./components/WorkspaceFileDrop";
 
 function formatCountLabel(count: number, singular: string, plural: string): string {
   return `${count} ${count === 1 ? singular : plural}`;
@@ -45,7 +46,13 @@ export default function App() {
     try {
       setLoading(true);
       const loadedImages = await Promise.all(supportedFiles.map((file) => loadSanitizableImage(file)));
-      setImages((current) => [...current, ...loadedImages]);
+      setImages((current) => {
+        const inheritedOutputFormat = current[0]?.outputFormat;
+        const nextImages = inheritedOutputFormat
+          ? loadedImages.map((image) => ({ ...image, outputFormat: inheritedOutputFormat }))
+          : loadedImages;
+        return [...current, ...nextImages];
+      });
 
       if (supportedFiles.length !== files.length) {
         setToast("Bazı dosyalar desteklenmediği için atlandı.");
@@ -120,14 +127,18 @@ export default function App() {
           <DropZone busy={loading} onFilesSelected={handleFilesSelected} />
         </section>
       ) : (
-        <>
-          <section className="workspace-shell">
+        <WorkspaceFileDrop
+          disabled={loading || exporting}
+          title="Fotoğrafları eklemek için bırak"
+          onFilesDropped={(files) => void handleFilesSelected(files)}
+        >
             <input
               ref={loadMoreRef}
               type="file"
               accept={IMAGE_INPUT_ACCEPT}
               multiple
               hidden
+              disabled={loading || exporting}
               onChange={(event) => {
                 const nextFiles = Array.from(event.target.files ?? []);
                 if (nextFiles.length > 0) {
@@ -185,8 +196,7 @@ export default function App() {
             <div className="workspace-main">
               <ImageGrid images={images} />
             </div>
-          </section>
-        </>
+        </WorkspaceFileDrop>
       )}
 
       <Toast message={toast} onClose={() => setToast(null)} />

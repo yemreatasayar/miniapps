@@ -56,7 +56,7 @@ tek kaynak kod:**
 ## Güncel durum
 
 - Local + web stabil.
-- **Son değişiklikler** (tarihli, son birkaçı tut): 2026-07-17 — Windows x64 Vocal Remover + PDF/Office helper paketi gerçek Windows CI'da uçtan uca doğrulandı ve release olarak yayımlandı. 2026-07-17 — Helper runtime patch matrisi ve paketleme güvenlik kontrolleri `notes/helper-runtime-matrix.md` altında sabitlendi. 2026-07-17 — İngilizce uygulamalar güncel TR build'leriyle eşitlendi; eski bundle overlay kaldırıldı, eksik EN çevirileri tamamlandı.
+- **Son değişiklikler** (tarihli, son birkaçı tut): 2026-07-17 — Image Converter, Image Resizer ve EXIF Cleaner üretim workspace'lerine, mevcut liste/ayarları koruyan ve yalnızca harici dosya drag'ini yakalayan sürükle-bırak eklendi; diğer uygulamalar kapsam dışında bırakıldı. 2026-07-17 — Office → PDF akışında PPTX grafik etiketlerinin LibreOffice'te kaybolan `bold`/`italic` mirası tarayıcı tarafında güvenli ve fail-open normalizasyonla düzeltildi. 2026-07-17 — Windows x64 Vocal Remover + PDF/Office helper paketi gerçek Windows CI'da uçtan uca doğrulandı ve release olarak yayımlandı.
 - **Bekleyen / sıradaki:** —
 
 ## Çalışma tarzı (kullanıcı tercihleri)

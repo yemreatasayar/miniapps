@@ -14,6 +14,7 @@ import {
 import CropModal from "./components/CropModal";
 import { trackAppEvent, trackProcessSuccess } from "./lib/analytics";
 import type { ConvertibleImage, OutputFormat } from "./lib/types";
+import WorkspaceFileDrop from "./components/WorkspaceFileDrop";
 
 function formatCountLabel(count: number, singular: string, plural: string): string {
   return `${count} ${count === 1 ? singular : plural}`;
@@ -132,13 +133,18 @@ export default function App() {
           <DropZone busy={loading} onFilesSelected={handleFilesSelected} />
         </section>
       ) : (
-        <section className="workspace-shell">
+        <WorkspaceFileDrop
+          disabled={loading || exporting}
+          title="Görselleri eklemek için bırak"
+          onFilesDropped={(files) => void handleFilesSelected(files)}
+        >
           <input
             ref={loadMoreRef}
             type="file"
             accept={IMAGE_INPUT_ACCEPT}
             multiple
             hidden
+            disabled={loading || exporting}
             onChange={(event) => {
               const nextFiles = Array.from(event.target.files ?? []);
               if (nextFiles.length > 0) {
@@ -196,7 +202,7 @@ export default function App() {
           <div className="workspace-main">
             <ImageGrid images={images} onCropRequest={handleCropRequest} />
           </div>
-        </section>
+        </WorkspaceFileDrop>
       )}
 
       {cropModal && (

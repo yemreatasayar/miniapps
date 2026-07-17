@@ -5,6 +5,7 @@ import ImageGrid from "./components/ImageGrid";
 import SmartCompressPanel from "./components/SmartCompressPanel";
 import Toast from "./components/Toast";
 import Toolbar from "./components/Toolbar";
+import WorkspaceFileDrop from "./components/WorkspaceFileDrop";
 import { trackAppEvent, trackProcessSuccess } from "./lib/analytics";
 import { computeNormalizedScores, computeSmartQualities } from "./lib/quality-estimator";
 import {
@@ -589,6 +590,7 @@ export default function App() {
         accept={IMAGE_INPUT_ACCEPT}
         multiple
         hidden
+        disabled={busy}
         onChange={(event) => {
           void handleFilesAdded(Array.from(event.target.files ?? []));
           event.currentTarget.value = "";
@@ -598,7 +600,11 @@ export default function App() {
       {images.length === 0 ? (
         <DropZone onFilesSelected={(files) => void handleFilesAdded(files)} loading={busy} />
       ) : (
-        <section className="workspace-shell">
+        <WorkspaceFileDrop
+          disabled={busy}
+          title="Görselleri eklemek için bırak"
+          onFilesDropped={(files) => void handleFilesAdded(files)}
+        >
           <div className="workspace-tabs">
             <nav className="tab-row" aria-label="Görsel işleme modu">
               <button type="button" className={activeTab === "edit" ? "is-active" : ""} onClick={() => setActiveTab("edit")}>
@@ -721,7 +727,7 @@ export default function App() {
               </button>
             </section>
           ) : null}
-        </section>
+        </WorkspaceFileDrop>
       )}
 
       {cropModal && (

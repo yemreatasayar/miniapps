@@ -70,9 +70,16 @@ Tests completed on macOS arm64:
 
 - Node 24.18.0 executed on arm64 and x64 binaries.
 - PDF helper health detected Ghostscript 10.07.1 and LibreOffice 26.2.4.2.
+- The browser-side PPTX chart normalizer passed 10 synthetic inheritance,
+  explicit-override, malformed-XML, signed-package, and size-limit checks.
+- The Open Sans chart-label regression normalized all six inherited `bold`
+  runs. LibreOffice produced a one-page PDF containing all category/value text
+  and only embedded `OpenSans-Bold`, matching the PowerPoint thumbnail.
 - A 12 MB, 19-page PPTX converted successfully to a 2.05 MB PDF.
 - The converted PDF retained 19 pages and 52 image objects; the first three
-  rendered pages, including small embedded icons, were visually checked.
+  rendered pages, including small embedded icons, were visually checked again
+  after the PPTX normalizer change. The chart-free package remained source
+  passthrough (`changed: false`).
 - Ghostscript balanced compression produced a valid 663 KB, 19-page PDF.
 - Ghostscript repair produced a valid 1.44 MB, 19-page PDF.
 - Stem Helper warm-up completed with `htdemucs`.

@@ -1,5 +1,6 @@
 import { PDFDocument } from "pdf-lib";
 import { getPdfLocale, pdfCopy } from "./i18n";
+import { normalizePptxForLibreOffice } from "./pptx-normalize";
 
 const PDF_HELPER_SERVER = "http://127.0.0.1:4184";
 const OFFICE_HELPER_DISABLED = import.meta.env.VITE_MINIAPPS_DISABLE_PDF_HELPER === "true";
@@ -203,8 +204,33 @@ export async function convertOfficeToPdf(file: File): Promise<ConvertResult> {
   }
 
   try {
+    let uploadFile = file;
+    if (getFileExtension(file.name) === "pptx") {
+      try {
+        const normalization = await normalizePptxForLibreOffice(file);
+        uploadFile = normalization.file;
+
+        if (
+          import.meta.env.DEV &&
+          (normalization.changed || normalization.warnings.length > 0)
+        ) {
+          console.info("[pptx-normalize]", {
+            changed: normalization.changed,
+            warnings: normalization.warnings,
+            stats: normalization.stats,
+          });
+        }
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.warn("[pptx-normalize] failed; using the original file.", {
+            errorType: error instanceof Error ? error.name : typeof error,
+          });
+        }
+      }
+    }
+
     const formData = new FormData();
-    formData.append("file", file, file.name);
+    formData.append("file", uploadFile, file.name);
 
     const res = await fetch(`${PDF_HELPER_SERVER}/convert`, {
       method: "POST",

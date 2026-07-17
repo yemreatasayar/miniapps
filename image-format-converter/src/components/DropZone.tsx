@@ -12,7 +12,7 @@ export default function DropZone({ busy, compact = false, onFilesSelected }: Dro
   const [isDragging, setIsDragging] = useState(false);
 
   function emitFiles(fileList: FileList | null) {
-    if (!fileList?.length) return;
+    if (busy || !fileList?.length) return;
     onFilesSelected(Array.from(fileList));
   }
 
@@ -21,20 +21,24 @@ export default function DropZone({ busy, compact = false, onFilesSelected }: Dro
       className={`dropzone-card${compact ? " is-compact" : ""}${isDragging ? " is-dragging" : ""}`}
       role="button"
       tabIndex={0}
-      onClick={() => inputRef.current?.click()}
+      aria-disabled={busy}
+      onClick={() => {
+        if (!busy) inputRef.current?.click();
+      }}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
+        if (!busy && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
           inputRef.current?.click();
         }
       }}
       onDragOver={(event) => {
         event.preventDefault();
-        setIsDragging(true);
+        event.dataTransfer.dropEffect = busy ? "none" : "copy";
+        if (!busy) setIsDragging(true);
       }}
       onDragEnter={(event) => {
         event.preventDefault();
-        setIsDragging(true);
+        if (!busy) setIsDragging(true);
       }}
       onDragLeave={(event) => {
         event.preventDefault();
@@ -54,6 +58,7 @@ export default function DropZone({ busy, compact = false, onFilesSelected }: Dro
         accept={IMAGE_INPUT_ACCEPT}
         multiple
         hidden
+        disabled={busy}
         onChange={(event) => {
           emitFiles(event.target.files);
           event.currentTarget.value = "";

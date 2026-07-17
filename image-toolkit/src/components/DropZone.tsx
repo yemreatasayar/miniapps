@@ -11,6 +11,7 @@ export default function DropZone({ onFilesSelected, loading }: DropZoneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   function forwardFiles(fileList: FileList | null) {
+    if (loading) return;
     const files = Array.from(fileList ?? []).filter((file) => isSupportedImageFile(file));
     onFilesSelected(files);
   }
@@ -22,11 +23,12 @@ export default function DropZone({ onFilesSelected, loading }: DropZoneProps) {
       onClick={() => inputRef.current?.click()}
       onDragOver={(event) => {
         event.preventDefault();
-        setIsDragging(true);
+        event.dataTransfer.dropEffect = loading ? "none" : "copy";
+        if (!loading) setIsDragging(true);
       }}
       onDragEnter={(event) => {
         event.preventDefault();
-        setIsDragging(true);
+        if (!loading) setIsDragging(true);
       }}
       onDragLeave={(event) => {
         event.preventDefault();
@@ -39,13 +41,14 @@ export default function DropZone({ onFilesSelected, loading }: DropZoneProps) {
         forwardFiles(event.dataTransfer.files);
       }}
       disabled={loading}
-      >
+    >
       <input
         ref={inputRef}
         type="file"
         accept={IMAGE_INPUT_ACCEPT}
         multiple
         hidden
+        disabled={loading}
         onChange={(event) => {
           forwardFiles(event.target.files);
           event.currentTarget.value = "";
