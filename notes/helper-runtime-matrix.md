@@ -90,3 +90,12 @@ an actual `windows-latest` runner. The release asset is published only after:
 - an 8-second WAV produces valid vocal and instrumental MP3 outputs,
 - a PPTX containing text and a small embedded PNG converts to a one-page PDF,
 - the converted PDF retains both extractable text and an image XObject.
+
+The full Windows x64 regression passed in GitHub Actions run
+[`29579476681`](https://github.com/yemreatasayar/miniapps/actions/runs/29579476681)
+on 2026-07-17. The published `stem-helper-windows.zip` is 35,617,861 bytes
+with SHA-256
+`3411335e30d0419ff5aa045c2dea071f22da4e17996e449b2a2cbb67b92edb1a`.
+The clean-run test covered installer startup, CPU Demucs warm-up, two valid
+MP3 stems, LibreOffice PPTX conversion, extractable PDF text, and retention of
+the embedded image.

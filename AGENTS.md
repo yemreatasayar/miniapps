@@ -56,7 +56,7 @@ tek kaynak kod:**
 ## Güncel durum
 
 - Local + web stabil.
-- **Son değişiklikler** (tarihli, son birkaçı tut): 2026-07-17 — Windows x64 için Vocal Remover + PDF/Office helper paketi ve gerçek Windows CI regresyonu eklendi. 2026-07-17 — Helper runtime patch matrisi ve paketleme güvenlik kontrolleri `notes/helper-runtime-matrix.md` altında sabitlendi. 2026-07-17 — İngilizce uygulamalar güncel TR build'leriyle eşitlendi; eski bundle overlay kaldırıldı, eksik EN çevirileri tamamlandı.
+- **Son değişiklikler** (tarihli, son birkaçı tut): 2026-07-17 — Windows x64 Vocal Remover + PDF/Office helper paketi gerçek Windows CI'da uçtan uca doğrulandı ve release olarak yayımlandı. 2026-07-17 — Helper runtime patch matrisi ve paketleme güvenlik kontrolleri `notes/helper-runtime-matrix.md` altında sabitlendi. 2026-07-17 — İngilizce uygulamalar güncel TR build'leriyle eşitlendi; eski bundle overlay kaldırıldı, eksik EN çevirileri tamamlandı.
 - **Bekleyen / sıradaki:** —
 
 ## Çalışma tarzı (kullanıcı tercihleri)
