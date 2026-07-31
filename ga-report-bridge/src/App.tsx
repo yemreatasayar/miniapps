@@ -157,6 +157,7 @@ type HelperAccountConfig = {
 };
 
 type ToolUsageSummary = {
+  profile: "miniapps" | "batchflow";
   available: boolean;
   topTools: Array<{ name: string; count: number }>;
   metrics: {
@@ -166,6 +167,18 @@ type ToolUsageSummary = {
     favorites: number;
     exports: number;
     newUsers: number;
+  };
+  funnel: {
+    demoStarts: number;
+    demoSuccesses: number;
+    signUps: number;
+    templateUploads: number;
+    renderStarts: number;
+    renderSuccesses: number;
+    exports: number;
+    leads: number;
+    planSelections: number;
+    purchases: number;
   };
 };
 
@@ -355,7 +368,13 @@ function emptyAccountData(account: AnalyticsAccount, reports: HelperReport[]): A
     topPages: [],
     reports: [],
     recentReports: [],
-    toolUsage: { available: false, topTools: [], metrics: { success: 0, errors: 0, repeats: 0, favorites: 0, exports: 0, newUsers: 0 } },
+    toolUsage: {
+      profile: account.id === "batchflow" ? "batchflow" : "miniapps",
+      available: false,
+      topTools: [],
+      metrics: { success: 0, errors: 0, repeats: 0, favorites: 0, exports: 0, newUsers: 0 },
+      funnel: { demoStarts: 0, demoSuccesses: 0, signUps: 0, templateUploads: 0, renderStarts: 0, renderSuccesses: 0, exports: 0, leads: 0, planSelections: 0, purchases: 0 },
+    },
     dataStatus: {
       timezone: "Bilinmiyor",
       freshness: "Bekleniyor",
@@ -393,6 +412,7 @@ function normalizeDashboardData(account: AnalyticsAccount, reports: HelperReport
   const rawRecentReports = Array.isArray(dashboard?.recentReports) ? dashboard.recentReports : [];
   const rawToolUsage = (dashboard?.toolUsage as Partial<ToolUsageSummary> | undefined) ?? {};
   const rawToolMetrics = (rawToolUsage.metrics as Partial<ToolUsageSummary["metrics"]> | undefined) ?? {};
+  const rawToolFunnel = (rawToolUsage.funnel as Partial<ToolUsageSummary["funnel"]> | undefined) ?? {};
   const rawDataStatus = (dashboard?.dataStatus as Partial<DataStatus> | undefined) ?? {};
   const rawTrafficDetails = (dashboard?.trafficDetails as Partial<TrafficDetails> | undefined) ?? {};
 
@@ -495,6 +515,7 @@ function normalizeDashboardData(account: AnalyticsAccount, reports: HelperReport
       requestMetrics: Array.isArray(report?.requestMetrics) ? report.requestMetrics.filter((item): item is string => typeof item === "string") : [],
     })),
     toolUsage: {
+      profile: rawToolUsage.profile === "batchflow" || (!rawToolUsage.profile && account.id === "batchflow") ? "batchflow" : "miniapps",
       available: Boolean(rawToolUsage.available),
       topTools: Array.isArray(rawToolUsage.topTools)
         ? rawToolUsage.topTools.map((tool) => ({
@@ -509,6 +530,18 @@ function normalizeDashboardData(account: AnalyticsAccount, reports: HelperReport
         favorites: sanitizeNumber(rawToolMetrics.favorites),
         exports: sanitizeNumber(rawToolMetrics.exports),
         newUsers: sanitizeNumber(rawToolMetrics.newUsers),
+      },
+      funnel: {
+        demoStarts: sanitizeNumber(rawToolFunnel.demoStarts),
+        demoSuccesses: sanitizeNumber(rawToolFunnel.demoSuccesses),
+        signUps: sanitizeNumber(rawToolFunnel.signUps),
+        templateUploads: sanitizeNumber(rawToolFunnel.templateUploads),
+        renderStarts: sanitizeNumber(rawToolFunnel.renderStarts),
+        renderSuccesses: sanitizeNumber(rawToolFunnel.renderSuccesses),
+        exports: sanitizeNumber(rawToolFunnel.exports),
+        leads: sanitizeNumber(rawToolFunnel.leads),
+        planSelections: sanitizeNumber(rawToolFunnel.planSelections),
+        purchases: sanitizeNumber(rawToolFunnel.purchases),
       },
     },
     dataStatus: {
@@ -2548,29 +2581,41 @@ function TrafficDetailsCard({ details }: { details: TrafficDetails }) {
 }
 
 function ToolUsageCard({ toolUsage, onOpenSettings }: { toolUsage: ToolUsageSummary; onOpenSettings: () => void }) {
+  const isBatchFlow = toolUsage.profile === "batchflow";
   return (
     <article className={`panel ${toolUsage.available ? "" : "panel--compact"}`}>
       <div className="panel__header">
         <div>
-          <h2>Araç kullanımı</h2>
+          <h2>{isBatchFlow ? "BatchFlow ürün hunisi" : "Araç kullanımı"}</h2>
         </div>
       </div>
 
       {toolUsage.available ? (
         <>
-          <div className="tool-grid">
-            <MetricMini label="Başarılı işlem" value={formatNumber(toolUsage.metrics.success)} />
-            <MetricMini label="Hata sayısı" value={formatNumber(toolUsage.metrics.errors)} />
-            <MetricMini label="Favori ekleme" value={formatNumber(toolUsage.metrics.favorites)} />
-            <MetricMini label="Kopyalama / indirme" value={formatNumber(toolUsage.metrics.exports)} />
-            <MetricMini label="Tekrar kullanım" value={formatNumber(toolUsage.metrics.repeats)} />
-          </div>
+          {isBatchFlow ? (
+            <div className="tool-grid">
+              <MetricMini label="Demo başlatma" value={formatNumber(toolUsage.funnel.demoStarts)} />
+              <MetricMini label="Demo başarısı" value={formatNumber(toolUsage.funnel.demoSuccesses)} />
+              <MetricMini label="Kayıt" value={formatNumber(toolUsage.funnel.signUps)} />
+              <MetricMini label="Üretim başarısı" value={formatNumber(toolUsage.funnel.renderSuccesses)} />
+              <MetricMini label="Çıktı indirme" value={formatNumber(toolUsage.funnel.exports)} />
+              <MetricMini label="Satın alma" value={formatNumber(toolUsage.funnel.purchases)} />
+            </div>
+          ) : (
+            <div className="tool-grid">
+              <MetricMini label="Başarılı işlem" value={formatNumber(toolUsage.metrics.success)} />
+              <MetricMini label="Hata sayısı" value={formatNumber(toolUsage.metrics.errors)} />
+              <MetricMini label="Favori ekleme" value={formatNumber(toolUsage.metrics.favorites)} />
+              <MetricMini label="Kopyalama / indirme" value={formatNumber(toolUsage.metrics.exports)} />
+              <MetricMini label="Tekrar kullanım" value={formatNumber(toolUsage.metrics.repeats)} />
+            </div>
+          )}
 
           <div className="tool-list">
             {toolUsage.topTools.map((tool) => (
               <div key={tool.name} className="tool-list__row">
                 <strong>{tool.name}</strong>
-                <span>{formatNumber(tool.count)} kullanım</span>
+                <span>{formatNumber(tool.count)} {isBatchFlow ? "etkinlik" : "kullanım"}</span>
               </div>
             ))}
           </div>

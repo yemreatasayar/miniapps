@@ -486,7 +486,15 @@ Analytica su an calisan bir local GA4 rapor koprusu durumunda. Temel islevleri:
 - Dashboard goster
 - Rapor indir
 
-Bir sonraki buyuk deger artisi, GA4 tarafindaki custom dimension ve key event kurulumunu tamamlayip `tool_usage.csv` verisini daha guvenilir hale getirmek olur. Boylece Analytica sadece site trafigini degil, araclarin gercek kullanimini de anlamli sekilde gosterebilir.
+MiniApps icin bir sonraki buyuk deger artisi, GA4 tarafindaki `app_id` custom dimension ve key event kurulumunu tamamlayip `tool_usage.csv` verisini daha guvenilir hale getirmek olur. BatchFlow ise kendi urun event'lerini genel `events.csv` raporundan okuyan ayri bir urun hunisine sahiptir.
+
+## BatchFlow urun hunisi (2026-07-26)
+
+- BatchFlow property hesabi `batchflow` kimligiyle secildiginde MiniApps'e ozel `customEvent:app_id` raporu zorunlu degildir.
+- Analytica genel event raporundan su urun adimlarini ozetler: `demo_start`, `demo_render_success`, `sign_up`, `template_upload_success`, `render_start`, `render_success`, `export_download`, `generate_lead`, `select_plan`, `purchase`.
+- Bu sayilar urun davranisidir; GA4 `keyEvents` metrigiyle otomatik olarak ayni kabul edilmez. Ustteki "Onemli etkinlikler" karti ancak ilgili event GA4 yonetiminde key event olarak isaretlendikten ve yeni veri geldikten sonra artar.
+- BatchFlow'da bulunmayan `app_id` nedeniyle olusan opsiyonel "Arac kullanimi" uyumsuzluk uyarisi dashboard veri durumu kartinda gosterilmez; diger metadata ve veri kalitesi uyarilari korunur.
+- Onerilen birincil key event'ler: `sign_up`, `generate_lead`, `purchase`. Urun aktivasyonu ayrica izlenecekse `render_success` ikincil key event yapilabilir. `page_view`, `login`, CTA tiklari ve `render_start` key event yapilmaz.
 
 ## Tuzaklar (Landmine) - Tarih Araligi ve Veri Dizini
 

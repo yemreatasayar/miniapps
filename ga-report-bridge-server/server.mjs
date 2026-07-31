@@ -33,6 +33,14 @@ const AUTO_SYNC_ENABLED = process.env.MINIAPPS_GA_BRIDGE_AUTO_SYNC !== "0";
 const AUTO_SYNC_HOUR = Number.parseInt(process.env.MINIAPPS_GA_BRIDGE_AUTO_SYNC_HOUR || "23", 10);
 const AUTO_SYNC_MINUTE = Number.parseInt(process.env.MINIAPPS_GA_BRIDGE_AUTO_SYNC_MINUTE || "55", 10);
 const REPORT_DEFINITION_BY_FILENAME = new Map(REPORT_DEFINITIONS.map((definition) => [definition.filename, definition]));
+// GA4 Data API gRPC çağrıları zaman zaman geçici hata döner (UNAVAILABLE/ECONNRESET,
+// DEADLINE_EXCEEDED, RESOURCE_EXHAUSTED). Bunlar Google'ın önerdiği gibi exponential
+// backoff ile yeniden denenmeli; ayrıca çağrı başına timeout koyarak 100+ saniye asılı
+// kalmayı engelliyoruz. Değerler ortam değişkeniyle ayarlanabilir.
+const GA_CALL_TIMEOUT_MS = Number.parseInt(process.env.MINIAPPS_GA_BRIDGE_CALL_TIMEOUT_MS || "60000", 10);
+const GA_MAX_RETRIES = Number.parseInt(process.env.MINIAPPS_GA_BRIDGE_MAX_RETRIES || "3", 10);
+// gRPC status kodları: 2 UNKNOWN, 4 DEADLINE_EXCEEDED, 8 RESOURCE_EXHAUSTED, 13 INTERNAL, 14 UNAVAILABLE
+const RETRYABLE_GRPC_CODES = new Set([2, 4, 8, 13, 14]);
 const pendingOAuthStates = new Map();
 let autoSyncInProgress = false;
 
@@ -292,6 +300,37 @@ async function getClient(config) {
     scopes: OAUTH_SCOPES,
   });
   return new BetaAnalyticsDataClient({ auth, scopes: OAUTH_SCOPES });
+}
+
+function isRetryableGaError(error) {
+  if (!error) return false;
+  if (typeof error.code === "number" && RETRYABLE_GRPC_CODES.has(error.code)) return true;
+  const message = error instanceof Error ? error.message : String(error);
+  return /ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up|DEADLINE_EXCEEDED|UNAVAILABLE|RESOURCE_EXHAUSTED/i.test(message);
+}
+
+const sleep = (ms) => new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
+
+// GA4 Data API çağrılarını geçici hatalara karşı exponential backoff ile yeniden dener.
+// `run` çağrısına per-attempt gax CallOptions (timeout) geçilir; ilgili SDK metotları
+// bu options'ı ikinci argüman olarak kabul eder.
+async function callGaWithRetry(label, run) {
+  let lastError;
+  for (let attempt = 0; attempt <= GA_MAX_RETRIES; attempt += 1) {
+    try {
+      return await run({ timeout: GA_CALL_TIMEOUT_MS });
+    } catch (error) {
+      lastError = error;
+      if (attempt >= GA_MAX_RETRIES || !isRetryableGaError(error)) throw error;
+      const backoff = Math.min(8000, 500 * 2 ** attempt) + Math.floor(Math.random() * 250);
+      const detail = error instanceof Error ? error.message : String(error);
+      console.warn(
+        `[ga-bridge] ${label} geçici hata (deneme ${attempt + 1}/${GA_MAX_RETRIES + 1}), ${backoff}ms sonra yeniden denenecek: ${detail}`,
+      );
+      await sleep(backoff);
+    }
+  }
+  throw lastError;
 }
 
 function cleanupPendingOAuthStates() {
@@ -648,7 +687,10 @@ async function getPropertyMetadataSnapshot(client, account) {
   }
 
   try {
-    const [metadata] = await client.getMetadata({ name: `${property}/metadata` });
+    const [metadata] = await callGaWithRetry(
+      `getMetadata(${property})`,
+      (options) => client.getMetadata({ name: `${property}/metadata` }, options),
+    );
     const snapshot = {
       property,
       fetchedAt: new Date().toISOString(),
@@ -708,12 +750,18 @@ async function checkDefinitionCompatibility(client, property, definition, availa
     };
   }
 
-  const [response] = await client.checkCompatibility({
-    property,
-    dimensions: requestDimensions.map((name) => ({ name })),
-    metrics: requestMetrics.map((name) => ({ name })),
-    compatibilityFilter: "COMPATIBLE",
-  });
+  const [response] = await callGaWithRetry(
+    `checkCompatibility(${definition.id})`,
+    (options) => client.checkCompatibility(
+      {
+        property,
+        dimensions: requestDimensions.map((name) => ({ name })),
+        metrics: requestMetrics.map((name) => ({ name })),
+        compatibilityFilter: "COMPATIBLE",
+      },
+      options,
+    ),
+  );
 
   const compatibleDimensions = new Set(
     (response.dimensionCompatibilities || [])
@@ -880,10 +928,16 @@ function processRunReportResponse(definition, response) {
 }
 
 async function runReportDefinition(client, account, dateRange, definition) {
-  const [response] = await client.runReport({
-    property: normalizePropertyName(account.propertyId),
-    ...buildRunReportRequest(account, dateRange, definition),
-  });
+  const [response] = await callGaWithRetry(
+    `runReport(${definition.id})`,
+    (options) => client.runReport(
+      {
+        property: normalizePropertyName(account.propertyId),
+        ...buildRunReportRequest(account, dateRange, definition),
+      },
+      options,
+    ),
+  );
   return processRunReportResponse(definition, response);
 }
 
@@ -902,10 +956,16 @@ async function runDefinitionsInBatches(client, account, dateRange, definitions) 
 
   for (const chunk of chunkArray(definitions, 5)) {
     try {
-      const [response] = await client.batchRunReports({
-        property,
-        requests: chunk.map((definition) => buildRunReportRequest(account, dateRange, definition)),
-      });
+      const [response] = await callGaWithRetry(
+        `batchRunReports(${chunk.map((definition) => definition.id).join(",")})`,
+        (options) => client.batchRunReports(
+          {
+            property,
+            requests: chunk.map((definition) => buildRunReportRequest(account, dateRange, definition)),
+          },
+          options,
+        ),
+      );
 
       chunk.forEach((definition, index) => {
         const reportResponse = response.reports?.[index];
@@ -1200,7 +1260,13 @@ function emptyDashboardSummary(accountId) {
     landingPages: [],
     topPages: [],
     recentReports: [],
-    toolUsage: { available: false, topTools: [], metrics: { success: 0, errors: 0, repeats: 0, favorites: 0, exports: 0 } },
+    toolUsage: {
+      profile: accountId === "batchflow" ? "batchflow" : "miniapps",
+      available: false,
+      topTools: [],
+      metrics: { success: 0, errors: 0, repeats: 0, favorites: 0, exports: 0 },
+      funnel: { demoStarts: 0, demoSuccesses: 0, signUps: 0, templateUploads: 0, renderStarts: 0, renderSuccesses: 0, exports: 0, leads: 0, planSelections: 0, purchases: 0 },
+    },
     dataStatus: {
       timezone: "Bilinmiyor",
       freshness: "Bilinmiyor",
@@ -1237,10 +1303,51 @@ const MINIAPPS_PRODUCT_EVENTS = new Set([
   "export_download",
 ]);
 
-function summarizeToolUsage(toolUsageRows, eventRows) {
+const BATCHFLOW_PRODUCT_EVENT_LABELS = {
+  demo_start: "Demo başlatma",
+  demo_render_success: "Demo üretim başarısı",
+  sign_up: "Kayıt",
+  template_upload_success: "Şablon yükleme",
+  render_start: "Üretim başlatma",
+  render_success: "Üretim başarısı",
+  export_download: "Çıktı indirme",
+  generate_lead: "İletişim talebi",
+  select_plan: "Plan seçimi",
+  purchase: "Satın alma",
+};
+
+function summarizeToolUsage(toolUsageRows, eventRows, accountId) {
   const eventMetricsByName = Object.fromEntries(
     eventRows.map((row) => [String(row.eventName || ""), Math.round(numberFromRow(row, "eventCount"))]),
   );
+
+  if (accountId === "batchflow") {
+    const funnel = {
+      demoStarts: eventMetricsByName.demo_start || 0,
+      demoSuccesses: eventMetricsByName.demo_render_success || 0,
+      signUps: eventMetricsByName.sign_up || 0,
+      templateUploads: eventMetricsByName.template_upload_success || 0,
+      renderStarts: eventMetricsByName.render_start || 0,
+      renderSuccesses: eventMetricsByName.render_success || 0,
+      exports: eventMetricsByName.export_download || 0,
+      leads: eventMetricsByName.generate_lead || 0,
+      planSelections: eventMetricsByName.select_plan || 0,
+      purchases: eventMetricsByName.purchase || 0,
+    };
+    const topTools = Object.entries(BATCHFLOW_PRODUCT_EVENT_LABELS)
+      .map(([eventName, label]) => ({ name: label, count: eventMetricsByName[eventName] || 0 }))
+      .filter((event) => event.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return {
+      profile: "batchflow",
+      available: topTools.length > 0,
+      topTools,
+      metrics: { success: 0, errors: 0, repeats: 0, favorites: 0, exports: funnel.exports, newUsers: eventMetricsByName.first_visit || 0 },
+      funnel,
+    };
+  }
 
   if (toolUsageRows.length > 0) {
     const metrics = { success: 0, errors: 0, repeats: 0, favorites: 0, exports: 0, newUsers: 0 };
@@ -1264,9 +1371,11 @@ function summarizeToolUsage(toolUsageRows, eventRows) {
     }
 
     return {
+      profile: "miniapps",
       available: toolsById.size > 0,
       topTools: [...toolsById.values()].sort((a, b) => b.count - a.count).slice(0, 5),
       metrics,
+      funnel: { demoStarts: 0, demoSuccesses: 0, signUps: 0, templateUploads: 0, renderStarts: 0, renderSuccesses: 0, exports: 0, leads: 0, planSelections: 0, purchases: 0 },
     };
   }
 
@@ -1278,6 +1387,7 @@ function summarizeToolUsage(toolUsageRows, eventRows) {
     .slice(0, 5);
 
   return {
+    profile: "miniapps",
     available: customToolEvents.length > 0,
     topTools: customToolEvents,
     metrics: {
@@ -1288,6 +1398,7 @@ function summarizeToolUsage(toolUsageRows, eventRows) {
       exports: eventMetricsByName.export_download || 0,
       newUsers: eventMetricsByName.first_visit || 0,
     },
+    funnel: { demoStarts: 0, demoSuccesses: 0, signUps: 0, templateUploads: 0, renderStarts: 0, renderSuccesses: 0, exports: 0, leads: 0, planSelections: 0, purchases: 0 },
   };
 }
 
@@ -1520,9 +1631,9 @@ async function buildDashboardSummary(accountId) {
     .sort((a, b) => b.views - a.views)
     .slice(0, 8);
 
-  const toolUsage = summarizeToolUsage(toolUsageRows, eventRows);
+  const toolUsage = summarizeToolUsage(toolUsageRows, eventRows, accountId);
   toolUsage.metrics.newUsers = toolUsage.metrics.newUsers || kpi.newUsers || 0;
-  if (kpi.conversions === 0 && toolUsage.metrics.success > 0) {
+  if (toolUsage.profile === "miniapps" && kpi.conversions === 0 && toolUsage.metrics.success > 0) {
     kpi.conversions = toolUsage.metrics.success;
     if (trend.length > 0 && trend.every((point) => point.conversions === 0)) {
       trend[trend.length - 1] = {
@@ -1563,7 +1674,11 @@ async function buildDashboardSummary(accountId) {
     thresholding: manifest?.dataQuality?.thresholding ? "Tespit edildi" : "Görünmüyor",
     sampling: manifest?.dataQuality?.sampling ? "Tespit edildi" : "Görünmüyor",
     quota: manifest?.dataQuality?.quota ? "Takip ediliyor" : "Bilinmiyor",
-    warning: (manifest?.propertyMetadata?.stale ? "Metadata cache kullanılıyor. " : "") + (emptyLatestAttemptWarning || manifest?.warnings?.[0] || lowVolumeWarning),
+    warning: (manifest?.propertyMetadata?.stale ? "Metadata cache kullanılıyor. " : "") + (
+      emptyLatestAttemptWarning
+      || manifest?.warnings?.find((warning) => accountId !== "batchflow" || !warning.startsWith("Araç kullanımı:"))
+      || lowVolumeWarning
+    ),
     error: manifest?.errors?.[0] || latestAttemptManifest?.errors?.[0] || "",
   };
 
