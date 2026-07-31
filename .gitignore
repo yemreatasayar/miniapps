@@ -16,6 +16,9 @@ distribution/miniapps-en-mac/
 # Large local runtime binaries
 local-runtime/bin/
 
+# Local runtime state (logs, pid) — machine-specific, not for version control
+local-runtime/.state/
+
 # Python virtual environments
 **/.venv/
 
