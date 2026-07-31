@@ -1353,3 +1353,18 @@ button { cursor: pointer; }
   justify-content: center;
   margin-top: 4px;
 }
+
+/* Miniapps footer standardization: pin footer to viewport bottom (sticky footer) */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.video-compressor-shell {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+.miniapps-footer {
+  margin-top: auto;
+}

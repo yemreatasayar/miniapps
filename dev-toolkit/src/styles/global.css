@@ -96,7 +96,7 @@ select {
 }
 
 .app-header {
-  min-height: 96px;
+  min-height: 76px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,7 +110,7 @@ select {
 .brand-logo {
   width: auto;
   max-width: min(100%, 360px);
-  height: 96px;
+  height: 76px;
   display: block;
 }
 
@@ -322,4 +322,29 @@ select {
   height: 36px;
   width: auto;
   display: block;
+}
+
+/* Miniapps footer standardization: pin footer to viewport bottom (sticky footer) */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.dev-shell {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+.miniapps-footer {
+  margin-top: auto;
+}
+
+/* Logo standardization: mobile size to match other apps */
+@media (max-width: 760px) {
+  .app-header {
+    min-height: 64px;
+  }
+  .brand-logo {
+    height: 64px;
+  }
 }

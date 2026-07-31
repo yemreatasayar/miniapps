@@ -1382,3 +1382,18 @@ button {
     justify-content: flex-start;
   }
 }
+
+/* Miniapps footer standardization: pin footer to viewport bottom (sticky footer) */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.audio-editor-shell {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+.miniapps-footer {
+  margin-top: auto;
+}

@@ -569,3 +569,16 @@ button {
   width: auto;
   display: block;
 }
+
+/* Miniapps footer standardization: pin footer to viewport bottom (sticky footer) */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.qr-shell {
+  flex: 1 0 auto;
+}
+.miniapps-footer {
+  margin-top: auto;
+}

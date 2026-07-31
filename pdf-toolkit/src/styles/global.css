@@ -54,7 +54,7 @@ button {
 }
 
 .pdf-toolkit-shell {
-  max-width: 1500px;
+  max-width: 1480px;
   margin: 0 auto;
   padding: 34px 30px 0;
   display: grid;
@@ -100,8 +100,8 @@ button {
 
 .brand-block img {
   width: auto;
-  max-width: clamp(136px, 14vw, 190px);
-  height: 92px;
+  max-width: min(100%, 280px);
+  height: 76px;
   display: block;
   flex: none;
 }
@@ -1223,7 +1223,7 @@ input[type="range"] {
   }
 
   .brand-block img {
-    height: 82px;
+    height: 64px;
   }
 
   .loaded-pdf-topbar {
@@ -1430,4 +1430,19 @@ input[type="range"] {
   width: 240px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.3);
   border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Miniapps footer standardization: pin footer to viewport bottom (sticky footer) */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.pdf-toolkit-shell {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+.miniapps-footer {
+  margin-top: auto;
 }
