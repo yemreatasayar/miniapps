@@ -21,8 +21,7 @@ function isLegacyStarterDraft(draft: SavedQrDesign): boolean {
     draft.type === "url" &&
     draft.name === "Link QR" &&
     draft.fields.url.url === "https://www.mmo.org.tr" &&
-    draft.fields.wifi.ssid === "MMO-Guest" &&
-    draft.fields.vcard.firstName === "Yusuf Emre"
+    draft.fields.wifi.ssid === "MMO-Guest"
   );
 }
 
