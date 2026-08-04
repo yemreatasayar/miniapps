@@ -1,4 +1,4 @@
-const CACHE_VERSION = "20260803t090043082z";
+const CACHE_VERSION = "20260804t103729654z";
 const CACHE_PREFIX = "miniapps-github-pages";
 const SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;
 const APP_CACHE = `${CACHE_PREFIX}-apps-${CACHE_VERSION}`;
@@ -21,8 +21,8 @@ const SHELL_PRECACHE_URLS = [
   "./assets/image-format-converter-card.svg",
   "./assets/image-toolkit-card.svg",
   "./assets/image-upscaler-card.svg",
-  "./assets/index-BIaYt3Tz.js",
-  "./assets/index-DykA8l-D.css",
+  "./assets/index-CbMRt-PH.css",
+  "./assets/index-Cbha0N8U.js",
   "./assets/miniapps-icon-maskable.svg",
   "./assets/miniapps-icon.svg",
   "./assets/miniapps-logo.svg",

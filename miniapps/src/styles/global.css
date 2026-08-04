@@ -729,6 +729,15 @@ button {
   margin: 0 auto;
 }
 
+/* Büyük monitörlerde 6 kolonlu app grid'ini akıcı biçimde büyüt (ikonlar ortada
+   küçük kalmasın). Yalnızca >1600px ekranları etkiler; ≤1600 davranışı değişmez. */
+@media (min-width: 1601px) {
+  .miniapps-shell.is-distribution .distribution-workspace .app-grid {
+    width: min(100%, clamp(1320px, calc(100vw - 360px), 1900px));
+    max-width: clamp(1320px, calc(100vw - 360px), 1900px);
+  }
+}
+
 .miniapps-shell.is-distribution .app-card {
   width: 100%;
   min-width: 0;
