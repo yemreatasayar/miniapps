@@ -53,7 +53,8 @@ sabit; >1600px'te `min-width` kuralı yoktu → 1920/2560'ta grid ortada küçü
   yalnız helper gerektiren PDF Toolkit ve Stem Splitter giriş ekranlarında, başlık açıklamasının
   sonuna aynı sade `Windows bilgisi` açılırı eklendi. Her uygulama yalnız kendi helper'ını açıklar
   ve ZIP'i tamamen çıkartma şartını belirtir; native `details` yapısı hover/focus ve dokunmatik
-  tıklamayı destekler.
+  tıklamayı destekler. Stem Splitter'ın `/apps-en/` çıktısı etiketi ve açıklamayı İngilizce gösterir;
+  kullanıcıya anlam taşımayan platform/helper sürüm satırı kaldırılmıştır.
 
 - **QR seeded örnek veri sızıntısı (ÇÖZÜLDÜ).** `qr-generator/src/lib/defaults.ts` içindeki
   `exampleHistory` (3 örnek: İletişim Kartı/MMO Link/Misafir Wi-Fi) + `exampleFields` public site'ta

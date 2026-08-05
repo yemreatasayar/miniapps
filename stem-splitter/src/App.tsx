@@ -124,25 +124,17 @@ function getBackendBadgeLabel(helperViewState: HelperViewState): string {
   }
 }
 
-function getInstallLabel(backendHealth: BackendHealth | null): string {
-  if (!backendHealth) {
-    return "Kurulum tanısı bekleniyor";
-  }
-
-  const segments = [backendHealth.install.platform];
-  if (backendHealth.install.helperVersion) {
-    segments.push(`v${backendHealth.install.helperVersion}`);
-  }
-
-  return segments.join(" • ");
-}
-
 const isDistribution = window.location.hostname === "miniapps.tr";
+const isEnglish = window.location.pathname.includes("/apps-en/") || document.documentElement.lang === "en";
 
 export default function App() {
   const logoUrl = `${import.meta.env.BASE_URL}assets/stem-splitter-logo.svg`;
   const helperMacDownloadUrl = import.meta.env.VITE_STEM_SPLITTER_HELPER_MAC_URL || "";
   const helperWindowsDownloadUrl = import.meta.env.VITE_STEM_SPLITTER_HELPER_WINDOWS_URL || "";
+  const windowsInfoLabel = isEnglish ? "Windows info" : "Windows bilgisi";
+  const windowsInfoDescription = isEnglish
+    ? "On Windows, MiniApps Stem Helper is required to separate stems. Extract the ZIP before running the installer."
+    : "Windows'ta stem ayırmak için MiniApps Stem Helper kurulmalıdır. Kurucuyu ZIP'ten çıkardıktan sonra çalıştır.";
   const inputRef = useRef<HTMLInputElement | null>(null);
   const workspaceRef = useRef<HTMLElement | null>(null);
   const [track, setTrack] = useState<LoadedTrack | null>(null);
@@ -344,17 +336,14 @@ export default function App() {
               Local helper ile stem çıktıları üret.
             </p>
             <details className="windows-info-inline">
-              <summary>Windows bilgisi</summary>
-              <span>Windows'ta stem ayırmak için MiniApps Stem Helper kurulmalıdır. Kurucuyu ZIP'ten çıkardıktan sonra çalıştır.</span>
+              <summary>{windowsInfoLabel}</summary>
+              <span>{windowsInfoDescription}</span>
             </details>
 
             <div className="helper-summary-card">
               <span className={`helper-badge is-${helperViewState.kind}`}>{getBackendBadgeLabel(helperViewState)}</span>
               <strong>{helperViewState.title}</strong>
               <p>{helperViewState.description}</p>
-              <div className="helper-meta">
-                <span>{getInstallLabel(backendHealth)}</span>
-              </div>
             </div>
           </div>
 
@@ -546,10 +535,6 @@ export default function App() {
                 <div>
                   <span>Engine</span>
                   <strong>{backendHealth?.model ?? "Demucs"}</strong>
-                </div>
-                <div>
-                  <span>Helper</span>
-                  <strong>{getInstallLabel(backendHealth)}</strong>
                 </div>
                 <div>
                   <span>Warm-up</span>

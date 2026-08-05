@@ -252,16 +252,10 @@ button {
   text-decoration: none;
 }
 
-.helper-meta,
 .helper-origin-list {
   display: grid;
   gap: 6px;
   color: var(--muted);
-}
-
-.helper-meta {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
 }
 
 .helper-origin-list strong {
@@ -549,9 +543,6 @@ button {
     flex-direction: column;
   }
 
-  .helper-meta {
-    grid-template-columns: 1fr;
-  }
 }
 
 .hero-panel > .drop-zone .drop-zone-inner {
