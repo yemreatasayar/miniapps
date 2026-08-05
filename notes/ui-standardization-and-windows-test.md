@@ -49,6 +49,12 @@ sabit; >1600px'te `min-width` kuralı yoktu → 1920/2560'ta grid ortada küçü
 
 ## C) Windows test turu — diğer sorunlar
 
+- **Windows bilgisi (ÇÖZÜLDÜ).** Ana footer'ı kalabalıklaştırmamak için genel uyarı kaldırıldı;
+  yalnız helper gerektiren PDF Toolkit ve Stem Splitter giriş ekranlarında, başlık açıklamasının
+  sonuna aynı sade `Windows bilgisi` açılırı eklendi. Her uygulama yalnız kendi helper'ını açıklar
+  ve ZIP'i tamamen çıkartma şartını belirtir; native `details` yapısı hover/focus ve dokunmatik
+  tıklamayı destekler.
+
 - **QR seeded örnek veri sızıntısı (ÇÖZÜLDÜ).** `qr-generator/src/lib/defaults.ts` içindeki
   `exampleHistory` (3 örnek: İletişim Kartı/MMO Link/Misafir Wi-Fi) + `exampleFields` public site'ta
   ilk-ziyaretçiye gösteriliyordu; vCard'da **gerçek isim** (kullanıcının adı) vardı. `exampleHistory`
@@ -59,25 +65,32 @@ sabit; >1600px'te `min-width` kuralı yoktu → 1920/2560'ta grid ortada küçü
 - **PDF compress "drop ekranında kalıyor" → geçici.** İkinci denemede çalıştı (cache/transient).
   pdf.js module worker deploy'da mevcut; kalıcı bir kod hatası bulunamadı.
 
-- **Vocal Remover (stem-splitter) Windows installer sessiz başarısızlık (GUARD EKLENDİ).**
+- **Vocal Remover (stem-splitter) Windows installer sessiz başarısızlık ve yarıda kalma
+  (ÇÖZÜLDÜ, WINDOWS DOĞRULAMASI BEKLİYOR).**
   `Install MiniApps Helpers.cmd`, kardeş `Install MiniApps Helpers.ps1`'i `%~dp0` ile çağırıyor.
   Kullanıcı `.cmd`'yi **ZIP'in içinden** (çıkartmadan) çalıştırınca Windows sadece `.cmd`'yi bir temp
   klasöre çıkarıp çalıştırıyor, `.ps1` orada olmuyor → PowerShell "file does not exist" hatası veriyor
   ama batch yine "Installation completed" yazıyordu → helper kurulmuyor, app "hazır değil" diyor
   (`backendHealth` null = helper'a erişilemiyor). **Çözüm:** `.cmd`'ye `.ps1` var mı guard'ı eklendi
-  ("önce ZIP'i çıkart" mesajı + abort). Değişiklik `distribution/stem-helper/templates-windows/` →
-  `windows-helpers.yml` Actions ile yeni helper build'i üretilir; kullanıcı yeniden indirmeli.
-  **Kullanıcıya hemen çözüm:** ZIP'i tamamen çıkart, `.cmd`'yi çıkartılan klasörden çalıştır.
+  ("önce ZIP'i çıkart" mesajı + abort). Helper `0.2.1` installer'ı ayrıca numaralı adımlar,
+  `%LOCALAPPDATA%\MiniApps\Helpers\logs\installer.log`, makinece okunabilir `installer-state.json`
+  ve kalıcı pip cache ekler. Yeniden kurulum `runtime\stem\.venv`'i korur; requirements fingerprint'i
+  ve gerçek Python import kontrolü geçerse ağır Torch/Demucs indirmesini atlar. Eski süreçler yalnızca
+  kurulu MiniApps `node.exe` yolu doğrulanırsa kapatılır; PID dosyası kaybolmuşsa 4184/4195 dinleyicileri
+  de güvenli biçimde aranır. `scripts/windows/test-windows-helpers.ps1` ikinci kurulumu çalıştırıp venv,
+  dependency stamp ve health durumunun korunduğunu doğrular. Değişiklik
+  `distribution/stem-helper/templates-windows/` → `windows-helpers.yml` Actions ile yeni helper build'i
+  üretir; gerçek PowerShell/Windows regresyonu push sonrası bu akışta çalışacak.
 
-- **video-to-audio & audio-editor (ffmpeg.wasm) — COEP/SharedArrayBuffer — BEKLEMEDE.**
+- **video-to-audio & audio-editor (ffmpeg.wasm) — COEP/SharedArrayBuffer (ÇÖZÜLDÜ,
+  WINDOWS TARAYICI DOĞRULAMASI BEKLİYOR).**
   Console: `ffmpeg-core.worker.js` 404 + `worker-BAOIWoxA.js` "COEP ile bloklandı" (COEP NOT-SET).
-  Kök neden: `build-github-pages.mjs`'in ürettiği `service-worker.js` COOP/COEP header'ını **yalnızca
-  navigation (HTML) yanıtına** ekliyor (`addCrossOriginIsolationHeaders` → `navigationNetworkFirst`),
-  ffmpeg'in **worker script'ine** eklemiyor → worker cross-origin-isolated olamıyor → SharedArrayBuffer
-  bloklu. Mac'te çalışıyor çünkü orada Vite dev-server header'ları veriyor (`vite.config.ts`
-  COOP/COEP). App'ler `@ffmpeg/core ^0.12.6` (ST) bağımlısı ama build `crossOriginIsolatedEntryUrls`'te
-  (MT/SAB gerektiren) sayıyor — olası tutarsızlık. İki aday çözüm (ikisi de failing tarayıcıda test
-  gerektirir): (1) SW'yi worker yanıtlarına da COOP/COEP ekleyecek şekilde düzelt; (2) app'leri
-  tek-thread core'a hizalayıp COEP'i kaldır (video-compressor WebCodecs kullandığı için COEP'siz
-  çalışıyor — farklı teknoloji, birebir örnek değil). **Kör düzeltme yapılmadı** (Mac'te çalışan
-  kurulumu bozma riski). Windows'ta F12 açık iteratif test gerekli.
+  Kök neden uygulamaların gerçekten `@ffmpeg/core ^0.12.6` **single-thread** paketi kullanmasına rağmen
+  multi-thread core gibi yapılandırılmış olmasıydı. Bu paket `ffmpeg-core.worker.js` içermez ve
+  SharedArrayBuffer/COOP/COEP istemez; buna rağmen kopyalama script'i olmayan core worker'ı arıyor,
+  ana girişler cross-origin isolation bekliyor ve service worker yalnız navigation yanıtına sentetik
+  COOP/COEP ekliyordu. Çözüm: iki app yalnız `ffmpeg-core.js` + `.wasm` yükler; core worker probe'u,
+  isolation/reload kodu, Vite COOP/COEP header'ları ve dağıtım service worker'ındaki özel header
+  enjeksiyonu kaldırıldı. İki app ve tam GitHub Pages paketi başarıyla build edildi; çıktıda eksik core
+  worker/isolation referansı kalmadığı statik olarak doğrulandı. Canlı Windows Chrome davranışı deploy
+  sonrasında ayrıca doğrulanmalı.

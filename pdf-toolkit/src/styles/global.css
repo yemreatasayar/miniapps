@@ -540,6 +540,30 @@ button {
   letter-spacing: -0.03em;
 }
 
+.windows-info-inline {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.windows-info-inline summary {
+  width: fit-content;
+  cursor: help;
+  color: color-mix(in srgb, var(--muted) 78%, var(--accent));
+}
+
+.windows-info-inline summary:hover,
+.windows-info-inline summary:focus-visible {
+  color: var(--accent);
+}
+
+.windows-info-inline span {
+  display: block;
+  max-width: 38rem;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
 .page-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));

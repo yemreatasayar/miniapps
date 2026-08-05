@@ -9,6 +9,9 @@ Set-StrictMode -Version Latest
 $InstallRoot = Join-Path $env:LOCALAPPDATA "MiniApps\Helpers"
 $StemConfigPath = Join-Path $InstallRoot "stem-helper-config.json"
 $VenvPython = Join-Path $InstallRoot "runtime\stem\.venv\Scripts\python.exe"
+$DependencyStampPath = Join-Path $InstallRoot "runtime\stem\.venv\miniapps-dependencies.json"
+$InstallerStatePath = Join-Path $InstallRoot "installer-state.json"
+$InstallerLogPath = Join-Path $InstallRoot "logs\installer.log"
 $TestRoot = Join-Path $env:RUNNER_TEMP "miniapps-windows-helper-test"
 
 function Invoke-LocalJson {
@@ -49,6 +52,16 @@ Write-Host "Running the packaged installer..."
   -File (Join-Path $PackageRoot "Install MiniApps Helpers.ps1")
 if ($LASTEXITCODE -ne 0) {
   throw "Packaged helper installation failed."
+}
+if (-not (Test-Path $DependencyStampPath)) {
+  throw "Vocal Remover dependency stamp was not created."
+}
+if (-not (Test-Path $InstallerLogPath)) {
+  throw "Installer log was not created."
+}
+$installerState = Get-Content -Raw $InstallerStatePath | ConvertFrom-Json
+if ($installerState.status -ne "completed") {
+  throw "Installer did not record a completed state."
 }
 
 $stemConfig = Get-Content -Raw $StemConfigPath | ConvertFrom-Json
@@ -230,7 +243,36 @@ if ($LASTEXITCODE -ne 0) {
   throw "Converted PDF validation failed."
 }
 
-Write-Host "Windows Stem Helper and Office conversion smoke tests passed."
+Write-Host "Running the installer again to verify a safe, cached update..."
+$venvSentinel = Join-Path (Split-Path -Parent $VenvPython) "miniapps-reinstall-sentinel.txt"
+Set-Content -Encoding ASCII -Path $venvSentinel -Value "preserve-me"
+$dependencyStampBefore = Get-Content -Raw $DependencyStampPath
+
+& powershell.exe `
+  -NoProfile `
+  -ExecutionPolicy Bypass `
+  -File (Join-Path $PackageRoot "Install MiniApps Helpers.ps1")
+if ($LASTEXITCODE -ne 0) {
+  throw "Second packaged helper installation failed."
+}
+if (-not (Test-Path $venvSentinel)) {
+  throw "Reinstall removed the existing Vocal Remover environment."
+}
+$dependencyStampAfter = Get-Content -Raw $DependencyStampPath
+if ($dependencyStampAfter -ne $dependencyStampBefore) {
+  throw "Reinstall unexpectedly replaced the dependency stamp."
+}
+$installerState = Get-Content -Raw $InstallerStatePath | ConvertFrom-Json
+if ($installerState.status -ne "completed") {
+  throw "Second install did not record a completed state."
+}
+$stemHealth = Invoke-LocalJson -Url "http://127.0.0.1:4195/api/health" -TimeoutMilliseconds 10000
+$pdfHealth = Invoke-LocalJson -Url "http://127.0.0.1:4184/health" -TimeoutMilliseconds 10000
+if (-not $stemHealth.pythonInstalled -or -not $stemHealth.ffmpegInstalled -or -not $pdfHealth.libreOffice) {
+  throw "Helpers were not healthy after reinstall."
+}
+
+Write-Host "Windows Stem Helper, Office conversion and cached reinstall smoke tests passed."
 } catch {
   $line = $_.InvocationInfo.ScriptLineNumber
   $message = $_.Exception.Message.Replace("`r", "").Replace("`n", "%0A")

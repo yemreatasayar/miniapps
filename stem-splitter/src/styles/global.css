@@ -123,6 +123,30 @@ button {
   line-height: 1.7;
 }
 
+.windows-info-inline {
+  margin-top: -8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.windows-info-inline summary {
+  width: fit-content;
+  cursor: help;
+  color: color-mix(in srgb, var(--muted) 78%, var(--accent));
+}
+
+.windows-info-inline summary:hover,
+.windows-info-inline summary:focus-visible {
+  color: var(--accent);
+}
+
+.windows-info-inline span {
+  display: block;
+  max-width: 40rem;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
 .drop-zone {
   min-height: 340px;
   padding: 28px;

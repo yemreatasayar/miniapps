@@ -44,21 +44,13 @@ export async function loadFFmpeg(onProgress: (progress: number) => void): Promis
     const coreURL = await toBlobURL(ffmpegAssetUrl("ffmpeg-core.js"), "text/javascript");
     onProgress(0.15);
 
-    let workerURL: string | undefined;
-    try {
-      const response = await fetch(ffmpegAssetUrl("ffmpeg-core.worker.js"), { method: "HEAD" });
-      if (response.ok) {
-        workerURL = await toBlobURL(ffmpegAssetUrl("ffmpeg-core.worker.js"), "text/javascript");
-      }
-    } catch {
-      // worker dosyasi bu paket surumunde olmayabilir
-    }
-
     onProgress(0.2);
     const wasmURL = await toBlobURL(ffmpegAssetUrl("ffmpeg-core.wasm"), "application/wasm");
     onProgress(0.9);
 
-    await ffmpeg.load({ coreURL, wasmURL, workerURL });
+    // @ffmpeg/core is the single-thread build: it has no core worker and does
+    // not require SharedArrayBuffer or cross-origin isolation.
+    await ffmpeg.load({ coreURL, wasmURL });
     ffmpegInstance = ffmpeg;
   })();
 

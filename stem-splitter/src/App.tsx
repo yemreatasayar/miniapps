@@ -343,6 +343,10 @@ export default function App() {
             <p>
               Local helper ile stem çıktıları üret.
             </p>
+            <details className="windows-info-inline">
+              <summary>Windows bilgisi</summary>
+              <span>Windows'ta stem ayırmak için MiniApps Stem Helper kurulmalıdır. Kurucuyu ZIP'ten çıkardıktan sonra çalıştır.</span>
+            </details>
 
             <div className="helper-summary-card">
               <span className={`helper-badge is-${helperViewState.kind}`}>{getBackendBadgeLabel(helperViewState)}</span>

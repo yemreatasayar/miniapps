@@ -10,6 +10,8 @@ function ffmpegAssetUrl(fileName: string): string {
 }
 
 async function loadWithTimeout(ffmpeg: FFmpeg, coreURL: string, wasmURL: string): Promise<void> {
+  // @ffmpeg/core is the single-thread build: it has no core worker and does
+  // not require SharedArrayBuffer or cross-origin isolation.
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => {

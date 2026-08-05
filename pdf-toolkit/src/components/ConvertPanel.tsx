@@ -65,6 +65,10 @@ export default function ConvertPanel({
         <div>
           <h2>{copy.title}</h2>
           <p>{copy.description}</p>
+          <details className="windows-info-inline">
+            <summary>{copy.windowsInfoLabel}</summary>
+            <span>{copy.windowsInfoDescription}</span>
+          </details>
         </div>
         <span className={`convert-status-pill ${officeAvailable ? "is-ready" : ""}`}>
           {officeLabel}

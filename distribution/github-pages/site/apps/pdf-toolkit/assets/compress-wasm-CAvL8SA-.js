@@ -1,4 +1,4 @@
-import{p as l,g}from"./index-D0FanMXP.js";const f="./ghostscript/",m={web:["-dPDFSETTINGS=/screen"],balanced:["-dPDFSETTINGS=/ebook"],strong:["-dPDFSETTINGS=/screen","-dColorImageResolution=45","-dGrayImageResolution=45","-dMonoImageResolution=72"]},b=["-dBATCH","-dNOPAUSE","-dQUIET","-sDEVICE=pdfwrite"];function c(){return l[g()].runtimeErrors}const h=`
+import{p as l,g}from"./index-roKWI4IN.js";const f="./ghostscript/",m={web:["-dPDFSETTINGS=/screen"],balanced:["-dPDFSETTINGS=/ebook"],strong:["-dPDFSETTINGS=/screen","-dColorImageResolution=45","-dGrayImageResolution=45","-dMonoImageResolution=72"]},b=["-dBATCH","-dNOPAUSE","-dQUIET","-sDEVICE=pdfwrite"];function c(){return l[g()].runtimeErrors}const h=`
 var gs = null;
 var jobCounter = 0;
 

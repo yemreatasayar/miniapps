@@ -8,6 +8,46 @@ $RuntimeRoot = Join-Path $InstallRoot "runtime"
 $StartupRoot = [Environment]::GetFolderPath("Startup")
 $StartupVbs = Join-Path $StartupRoot "MiniApps Helpers.vbs"
 $StartScript = Join-Path $InstallRoot "Start MiniApps Helpers.ps1"
+$LogRoot = Join-Path $InstallRoot "logs"
+$InstallerLogPath = Join-Path $LogRoot "installer.log"
+$InstallerStatePath = Join-Path $InstallRoot "installer-state.json"
+$PidPath = Join-Path $InstallRoot "helper-processes.json"
+$PipCacheRoot = Join-Path $InstallRoot "cache\pip"
+$script:InstallStep = 0
+$script:InstallStepTotal = 9
+$script:TranscriptStarted = $false
+
+function Write-InstallStep {
+  param([string]$Message)
+
+  $script:InstallStep += 1
+  Write-Host ""
+  Write-Host "[$script:InstallStep/$script:InstallStepTotal] $Message" -ForegroundColor Cyan
+}
+
+function Write-InstallerState {
+  param(
+    [string]$Status,
+    [string]$Message
+  )
+
+  if (-not (Test-Path $InstallRoot)) {
+    return
+  }
+  try {
+    $state = @{
+      status = $Status
+      step = $script:InstallStep
+      totalSteps = $script:InstallStepTotal
+      message = $Message
+      updatedAt = (Get-Date).ToUniversalTime().ToString("o")
+      logPath = $InstallerLogPath
+    }
+    Write-Utf8NoBom -Path $InstallerStatePath -Content ($state | ConvertTo-Json)
+  } catch {
+    Write-Warning "Installer state could not be written: $($_.Exception.Message)"
+  }
+}
 
 function Refresh-ProcessPath {
   $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
@@ -31,6 +71,10 @@ function Install-WinGetPackage {
     [switch]$UserScope
   )
 
+  if (-not (Get-Command "winget.exe" -ErrorAction SilentlyContinue)) {
+    throw "Windows Package Manager (winget) is required to install $Id. Install App Installer from Microsoft Store, then run this installer again."
+  }
+
   $arguments = @(
     "install",
     "--id", $Id,
@@ -44,12 +88,121 @@ function Install-WinGetPackage {
     $arguments += @("--scope", "user")
   }
 
-  Write-Host "Installing $Id..."
+  $startedAt = Get-Date
+  Write-Host "Installing $Id... This can take several minutes."
   & winget @arguments
   if ($LASTEXITCODE -ne 0) {
     throw "WinGet could not install $Id (exit code $LASTEXITCODE)."
   }
+  $elapsed = [Math]::Round(((Get-Date) - $startedAt).TotalMinutes, 1)
+  Write-Host "$Id installed in $elapsed minute(s)."
   Refresh-ProcessPath
+}
+
+function Stop-InstalledHelpers {
+  $installedNodePath = Join-Path $RuntimeRoot "node\node.exe"
+  $candidateProcessIds = [System.Collections.Generic.HashSet[int]]::new()
+
+  if (Test-Path $PidPath) {
+    try {
+      $processes = Get-Content -Raw $PidPath | ConvertFrom-Json
+      foreach ($property in $processes.PSObject.Properties) {
+        $processId = [int]$property.Value
+        if ($processId -gt 0) {
+          $null = $candidateProcessIds.Add($processId)
+        }
+      }
+    } catch {
+      Write-Warning "The previous helper process list could not be read. Listening ports will be checked instead."
+    }
+  }
+
+  try {
+    foreach ($port in @(4184, 4195)) {
+      Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue |
+        ForEach-Object { $null = $candidateProcessIds.Add([int]$_.OwningProcess) }
+    }
+  } catch {
+    Write-Warning "Listening helper ports could not be inspected."
+  }
+
+  foreach ($processId in $candidateProcessIds) {
+    $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
+    if (-not $process) {
+      continue
+    }
+
+    try {
+      $processPath = [System.IO.Path]::GetFullPath($process.Path)
+      $expectedPath = [System.IO.Path]::GetFullPath($installedNodePath)
+      if ($processPath -ieq $expectedPath) {
+        Write-Host "Stopping installed MiniApps Helper process $processId..."
+        Stop-Process -Id $processId -Force -ErrorAction Stop
+      } else {
+        Write-Warning "Process $processId was not stopped because it is not the installed MiniApps node.exe."
+      }
+    } catch {
+      Write-Warning "Process $processId could not be safely identified or stopped: $($_.Exception.Message)"
+    }
+  }
+
+  Remove-Item $PidPath -Force -ErrorAction SilentlyContinue
+}
+
+function Sync-RuntimeDirectory {
+  param([string]$RelativePath)
+
+  $source = Join-Path $SourceRuntime $RelativePath
+  $target = Join-Path $RuntimeRoot $RelativePath
+  if (-not (Test-Path $source)) {
+    throw "Package component is missing: $source"
+  }
+
+  if (Test-Path $target) {
+    Remove-Item $target -Recurse -Force
+  }
+  New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
+  Copy-Item $source $target -Recurse -Force
+}
+
+function Test-StemDependencies {
+  param(
+    [string]$PythonPath,
+    [string]$StampPath,
+    [string]$Fingerprint
+  )
+
+  if (-not (Test-Path $PythonPath) -or -not (Test-Path $StampPath)) {
+    return $false
+  }
+
+  try {
+    $stamp = Get-Content -Raw $StampPath | ConvertFrom-Json
+    if ([string]$stamp.fingerprint -ne $Fingerprint) {
+      return $false
+    }
+    & $PythonPath -c "import demucs, torch, torchaudio" 2>$null
+    return $LASTEXITCODE -eq 0
+  } catch {
+    return $false
+  }
+}
+
+function Show-SystemWarnings {
+  if (-not [Environment]::Is64BitOperatingSystem) {
+    throw "MiniApps Helpers requires 64-bit Windows."
+  }
+
+  try {
+    $driveName = (Split-Path -Qualifier $InstallRoot).Substring(0, 1)
+    $freeGb = [Math]::Round((Get-PSDrive -Name $driveName).Free / 1GB, 1)
+    Write-Host "Free disk space: $freeGb GB"
+    if ($freeGb -lt 8) {
+      Write-Warning "Less than 8 GB is free. Vocal Remover dependencies may fail to install."
+    }
+  } catch {
+    Write-Warning "Free disk space could not be checked."
+  }
 }
 
 function Find-Python311 {
@@ -191,22 +344,42 @@ function Wait-HelperHealth {
   throw "$Name did not become ready within 60 seconds.`n$processDetails`nstdout:`n$outputDetails`nstderr:`n$errorDetails"
 }
 
+New-Item -ItemType Directory -Path $LogRoot -Force | Out-Null
+New-Item -ItemType Directory -Path $PipCacheRoot -Force | Out-Null
 try {
+  Start-Transcript -Path $InstallerLogPath -Append | Out-Null
+  $script:TranscriptStarted = $true
+} catch {
+  Write-Warning "Installer transcript could not be started: $($_.Exception.Message)"
+}
+
+try {
+Write-InstallStep "Checking the package and this computer"
 if (-not (Test-Path $SourceRuntime)) {
   throw "Package runtime is missing: $SourceRuntime"
 }
-if (-not (Get-Command "winget.exe" -ErrorAction SilentlyContinue)) {
-  throw "Windows Package Manager (winget) is required. Install App Installer from Microsoft Store."
-}
+Show-SystemWarnings
+Write-InstallerState -Status "running" -Message "Preflight checks completed."
 
+Write-InstallStep "Stopping an older MiniApps Helper instance"
+Stop-InstalledHelpers
+Write-InstallerState -Status "running" -Message "Older helper processes stopped."
+
+Write-InstallStep "Updating MiniApps Helper application files"
 Write-Host "Installing MiniApps Helpers into $InstallRoot"
 New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
-if (Test-Path $RuntimeRoot) {
-  Remove-Item $RuntimeRoot -Recurse -Force
-}
-Copy-Item $SourceRuntime $RuntimeRoot -Recurse -Force
+New-Item -ItemType Directory -Path $RuntimeRoot -Force | Out-Null
+Sync-RuntimeDirectory -RelativePath "node"
+Sync-RuntimeDirectory -RelativePath "pdf"
+Sync-RuntimeDirectory -RelativePath "stem\app"
 Copy-Item (Join-Path $PackageRoot "Start MiniApps Helpers.ps1") $StartScript -Force
+if (Test-Path (Join-Path $PackageRoot "runtime-sources.json")) {
+  Copy-Item (Join-Path $PackageRoot "runtime-sources.json") (Join-Path $InstallRoot "runtime-sources.json") -Force
+}
+Write-Host "Existing Vocal Remover environment and download cache were preserved."
+Write-InstallerState -Status "running" -Message "Application files updated."
 
+Write-InstallStep "Checking Python 3.11"
 $pythonPath = Find-Python311
 if (-not $pythonPath) {
   Install-WinGetPackage -Id "Python.Python.3.11" -UserScope
@@ -215,7 +388,9 @@ if (-not $pythonPath) {
 if (-not $pythonPath) {
   throw "Python 3.11 could not be located after installation."
 }
+Write-Host "Python: $pythonPath"
 
+Write-InstallStep "Checking FFmpeg"
 $ffmpegPath = Find-WinGetExecutable -CommandName "ffmpeg.exe" -FileName "ffmpeg.exe"
 $ffprobePath = Find-WinGetExecutable -CommandName "ffprobe.exe" -FileName "ffprobe.exe"
 if (-not $ffmpegPath -or -not $ffprobePath) {
@@ -226,7 +401,9 @@ if (-not $ffmpegPath -or -not $ffprobePath) {
 if (-not $ffmpegPath -or -not $ffprobePath) {
   throw "FFmpeg or FFprobe could not be located after installation."
 }
+Write-Host "FFmpeg: $ffmpegPath"
 
+Write-InstallStep "Checking LibreOffice"
 $libreOfficePath = Find-LibreOffice
 if (-not $libreOfficePath) {
   Install-WinGetPackage -Id "TheDocumentFoundation.LibreOffice"
@@ -235,7 +412,9 @@ if (-not $libreOfficePath) {
 if (-not $libreOfficePath) {
   throw "LibreOffice could not be located after installation."
 }
+Write-Host "LibreOffice: $libreOfficePath"
 
+Write-InstallStep "Preparing Vocal Remover dependencies"
 $venvRoot = Join-Path $RuntimeRoot "stem\.venv"
 $venvPython = Join-Path $venvRoot "Scripts\python.exe"
 if (-not (Test-Path $venvPython)) {
@@ -247,23 +426,51 @@ if (-not (Test-Path $venvPython)) {
 }
 
 $requirementsPath = Join-Path $RuntimeRoot "stem\app\requirements-windows.txt"
-& $venvPython -m pip install --disable-pip-version-check --upgrade pip
-if ($LASTEXITCODE -ne 0) {
-  throw "pip upgrade failed."
-}
-& $venvPython -m pip install `
-  --disable-pip-version-check `
-  --index-url "https://download.pytorch.org/whl/cpu" `
-  "torch==2.8.0" `
-  "torchaudio==2.8.0"
-if ($LASTEXITCODE -ne 0) {
-  throw "CPU-only Torch dependencies could not be installed."
-}
-& $venvPython -m pip install --disable-pip-version-check -r $requirementsPath
-if ($LASTEXITCODE -ne 0) {
-  throw "Vocal Remover dependencies could not be installed."
-}
+$requirementsHash = (Get-FileHash -Algorithm SHA256 $requirementsPath).Hash.ToLowerInvariant()
+$dependencyFingerprint = "torch=2.8.0;torchaudio=2.8.0;requirements=$requirementsHash"
+$dependencyStampPath = Join-Path $venvRoot "miniapps-dependencies.json"
+$dependenciesReady = Test-StemDependencies `
+  -PythonPath $venvPython `
+  -StampPath $dependencyStampPath `
+  -Fingerprint $dependencyFingerprint
 
+if ($dependenciesReady) {
+  Write-Host "Vocal Remover dependencies are already ready; download skipped." -ForegroundColor Green
+} else {
+  Write-Host "Downloading/installing Vocal Remover dependencies. On older computers this can take 10-30 minutes."
+  & $venvPython -m pip install `
+    --disable-pip-version-check `
+    --cache-dir $PipCacheRoot `
+    --upgrade pip
+  if ($LASTEXITCODE -ne 0) {
+    throw "pip upgrade failed."
+  }
+  & $venvPython -m pip install `
+    --disable-pip-version-check `
+    --cache-dir $PipCacheRoot `
+    --index-url "https://download.pytorch.org/whl/cpu" `
+    "torch==2.8.0" `
+    "torchaudio==2.8.0"
+  if ($LASTEXITCODE -ne 0) {
+    throw "CPU-only Torch dependencies could not be installed. Run the installer again; downloaded files are cached."
+  }
+  & $venvPython -m pip install `
+    --disable-pip-version-check `
+    --cache-dir $PipCacheRoot `
+    -r $requirementsPath
+  if ($LASTEXITCODE -ne 0) {
+    throw "Vocal Remover dependencies could not be installed. Run the installer again; downloaded files are cached."
+  }
+
+  $dependencyStamp = @{
+    fingerprint = $dependencyFingerprint
+    installedAt = (Get-Date).ToUniversalTime().ToString("o")
+  }
+  Write-Utf8NoBom -Path $dependencyStampPath -Content ($dependencyStamp | ConvertTo-Json)
+}
+Write-InstallerState -Status "running" -Message "Vocal Remover dependencies are ready."
+
+Write-InstallStep "Writing configuration and automatic startup"
 $stemConfig = @{
   baseDir = (Join-Path $RuntimeRoot "stem")
   host = "127.0.0.1"
@@ -273,7 +480,7 @@ $stemConfig = @{
   ffmpegBin = $ffmpegPath
   ffprobeBin = $ffprobePath
   modelName = "htdemucs"
-  helperVersion = "0.2.0"
+  helperVersion = "0.2.1"
   platform = "windows-x64"
   allowedOrigins = @(
     "https://miniapps.tr",
@@ -305,6 +512,7 @@ shell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ""$escapedSta
 "@
 $vbsContent | Set-Content -Encoding ASCII $StartupVbs
 
+Write-InstallStep "Starting and validating MiniApps Helpers"
 & $StartScript
 
 $pdfHealth = Wait-HelperHealth `
@@ -329,12 +537,27 @@ if (-not $stemHealth.pythonInstalled -or -not $stemHealth.ffmpegInstalled) {
 Write-Host ""
 Write-Host "MiniApps Helpers are running."
 Write-Host "Vocal Remover model warm-up continues in the background on first use."
+Write-Host "Installer log: $InstallerLogPath"
 if (-not $pdfHealth.ghostscript) {
   Write-Host "Ghostscript is not installed; Office conversion works, PDF compression remains browser-only."
 }
+Write-InstallerState -Status "completed" -Message "MiniApps Helpers are running."
 } catch {
   $line = $_.InvocationInfo.ScriptLineNumber
   $message = $_.Exception.Message.Replace("`r", "").Replace("`n", "%0A")
+  Write-InstallerState -Status "failed" -Message $_.Exception.Message
+  Write-Host ""
+  Write-Host "Installation failed at step $script:InstallStep/$script:InstallStepTotal." -ForegroundColor Red
+  Write-Host "Run the installer again to continue. Existing downloads are kept."
+  Write-Host "Installer log: $InstallerLogPath"
   Write-Host "::error file=distribution/stem-helper/templates-windows/Install MiniApps Helpers.ps1,line=${line}::$message"
   throw
+} finally {
+  if ($script:TranscriptStarted) {
+    try {
+      Stop-Transcript | Out-Null
+    } catch {
+      # Transcript may already be stopped by the host.
+    }
+  }
 }

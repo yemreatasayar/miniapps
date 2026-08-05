@@ -11,7 +11,7 @@ const outDir = resolve(__dirname, "public/ffmpeg");
 
 mkdirSync(outDir, { recursive: true });
 
-for (const file of ["ffmpeg-core.js", "ffmpeg-core.wasm", "ffmpeg-core.worker.js"]) {
+for (const file of ["ffmpeg-core.js", "ffmpeg-core.wasm"]) {
   const sourcePath = resolve(coreDir, file);
 
   if (!existsSync(sourcePath)) {

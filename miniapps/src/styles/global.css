@@ -1069,7 +1069,7 @@ button {
     justify-content: center;
     width: auto;
     max-width: 100%;
-    gap: 10px;
+    gap: 6px;
   }
 
   .language-switch-button {
@@ -1077,7 +1077,7 @@ button {
   }
 
   .distribution-link-button {
-    min-width: 120px;
+    min-width: 104px;
   }
 
   .distribution-language-group {

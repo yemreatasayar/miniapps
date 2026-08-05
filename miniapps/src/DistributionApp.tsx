@@ -62,7 +62,14 @@ const shellCopy = {
     languageLabel: "Language",
     manifestoLabel: "Manifesto",
   },
-} satisfies Record<ShellLanguage, { appOpenSuffix: string; languageLabel: string; manifestoLabel: string }>;
+} satisfies Record<
+  ShellLanguage,
+  {
+    appOpenSuffix: string;
+    languageLabel: string;
+    manifestoLabel: string;
+  }
+>;
 
 const appDescriptions = {
   tr: {

@@ -23,6 +23,9 @@ export const pdfCopy = {
     convert: {
       title: "PDF'e Dönüştür",
       description: "Görsel veya Office dosyasını PDF'e çevir.",
+      windowsInfoLabel: "Windows bilgisi",
+      windowsInfoDescription:
+        "Windows'ta Office dosyalarını PDF'e çevirmek için MiniApps PDF Helper kurulmalıdır. Kurucuyu ZIP'ten çıkardıktan sonra çalıştır.",
       helperLocalOnly: "Helper kapalı",
       helperReady: "Office hazır",
       helperWaiting: "Office bekleniyor",
@@ -164,6 +167,9 @@ export const pdfCopy = {
     convert: {
       title: "Convert to PDF",
       description: "Convert an image or Office file to PDF.",
+      windowsInfoLabel: "Windows info",
+      windowsInfoDescription:
+        "On Windows, MiniApps PDF Helper is required to convert Office files to PDF. Extract the ZIP before running the installer.",
       helperLocalOnly: "Helper off",
       helperReady: "Office ready",
       helperWaiting: "Waiting for Office",

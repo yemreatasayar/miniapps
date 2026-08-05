@@ -99,7 +99,7 @@ function installStemNodeDependencies() {
 
 function writeManifest(nodePath, nodeVersion) {
   const manifest = {
-    helperVersion: "0.2.0",
+    helperVersion: "0.2.1",
     platform: "windows-x64",
     builtAt: new Date().toISOString(),
     node: {
