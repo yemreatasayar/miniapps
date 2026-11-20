@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CompressPanel from "./components/CompressPanel";
 import CutPanel from "./components/CutPanel";
 import DropZone from "./components/DropZone";
@@ -91,6 +91,14 @@ export default function App() {
     segments: [],
   }));
   const [status, setStatus] = useState<ProcessStatus>({ kind: "idle" });
+  const resultRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (status.kind !== "success") return;
+    resultRef.current?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+      block: "start",
+    });
+  }, [status.kind]);
   const [toast, setToast] = useState<string | null>(null);
 
   const isBusy = status.kind === "loading-ffmpeg" || status.kind === "processing";
@@ -270,6 +278,7 @@ export default function App() {
               ) : null}
 
               {status.kind === "success" ? (
+                <div ref={resultRef} className="result-anchor" role="status">
                 <ResultPanel
                   outputUrl={status.outputUrl}
                   outputFileName={status.outputFileName}
@@ -278,6 +287,7 @@ export default function App() {
                   onDownload={() => trackAppEvent("export_download", { export_format: settings.outputFormat, file_count: 1 })}
                   onReset={handleReset}
                 />
+                </div>
               ) : null}
 
               {status.kind === "error" ? (

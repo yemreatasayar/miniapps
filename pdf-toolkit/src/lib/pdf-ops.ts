@@ -69,7 +69,7 @@ async function renderPageThumbnail(
   canvas.width = Math.ceil(viewport.width);
   canvas.height = Math.ceil(viewport.height);
 
-  await page.render({ canvasContext: context, viewport }).promise;
+  await page.render({ canvas, canvasContext: context, viewport }).promise;
   return canvas.toDataURL("image/png");
 }
 
@@ -97,7 +97,7 @@ async function renderPageToBlob(
     context.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  await page.render({ canvasContext: context, viewport }).promise;
+  await page.render({ canvas, canvasContext: context, viewport }).promise;
 
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
@@ -124,7 +124,7 @@ export async function renderThumbnail(
   try {
     return await renderPageThumbnail(doc, pageIndex, rotation);
   } finally {
-    await doc.destroy();
+    await doc.loadingTask.destroy();
   }
 }
 
@@ -140,7 +140,7 @@ export async function renderPageImageBlob(
     const page = await doc.getPage(pageIndex + 1);
     return await renderPageToBlob(page, rotation, format, EXPORT_MAX_DIMENSION);
   } finally {
-    await doc.destroy();
+    await doc.loadingTask.destroy();
   }
 }
 
@@ -157,7 +157,7 @@ export async function loadPdfFromBytes(fileName: string, fileBytes: Uint8Array):
 
     return { fileName, fileBytes, pages };
   } finally {
-    await doc.destroy();
+    await doc.loadingTask.destroy();
   }
 }
 
@@ -691,7 +691,7 @@ export async function extractStructuredText(
       ),
     };
   } finally {
-    await doc.destroy();
+    await doc.loadingTask.destroy();
   }
 }
 
@@ -741,7 +741,7 @@ export async function extractStructuredTextWithOcr(
   } finally {
     onProgress?.(progressCopy?.done ?? "OCR tamamlandı.");
     await worker.terminate();
-    await doc.destroy();
+    await doc.loadingTask.destroy();
   }
 }
 
@@ -784,7 +784,7 @@ export async function extractTablesFromPdf(
     };
   } finally {
     onProgress?.(progressCopy?.done ?? "Tablo analizi tamamlandı.");
-    await doc.destroy();
+    await doc.loadingTask.destroy();
   }
 }
 
@@ -898,7 +898,7 @@ export async function renderWatermarkPreviewPages(
 
     return thumbnails;
   } finally {
-    await doc.destroy();
+    await doc.loadingTask.destroy();
   }
 }
 

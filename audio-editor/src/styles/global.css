@@ -210,7 +210,7 @@ button {
 .download-link,
 .drop-zone-button {
   border: 0;
-  border-radius: 999px;
+  border-radius: 16px;
   padding: 16px 26px;
   background: var(--surface-accent);
   color: white;
@@ -224,7 +224,7 @@ button {
 .action-row button,
 .preset-group button {
   border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 14px 18px;
   background: white;
   color: var(--text);
@@ -503,6 +503,10 @@ button {
   line-height: 1.6;
 }
 
+.result-anchor {
+  scroll-margin-top: 20px;
+}
+
 .result-panel {
   gap: 16px;
 }
@@ -558,6 +562,10 @@ button {
 .tool-panel {
   display: grid;
   gap: 24px;
+}
+
+.integrated-audio-workspace {
+  padding-bottom: 32px;
 }
 
 .waveform-section {
@@ -1073,13 +1081,19 @@ button {
   flex-wrap: wrap;
 }
 
+.waveform-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: auto;
+}
+
 .waveform-playback-toggle {
   min-width: 112px;
   min-height: 44px;
-  margin-left: auto;
   padding: 10px 20px;
   border: 0;
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--surface-accent);
   color: white;
   font-weight: 700;

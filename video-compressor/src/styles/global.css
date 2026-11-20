@@ -742,8 +742,9 @@ button { cursor: pointer; }
 .reset-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .cut-actions {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
   flex-wrap: wrap;
 }
@@ -984,6 +985,7 @@ button { cursor: pointer; }
 }
 
 /* Result */
+.result-anchor { scroll-margin-top: 20px; }
 .result-metrics {
   display: flex;
   gap: 24px;

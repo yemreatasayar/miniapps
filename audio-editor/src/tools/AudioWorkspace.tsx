@@ -73,8 +73,17 @@ export default function AudioWorkspace({ onToast }: AudioWorkspaceProps) {
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const previewUrlRef = useRef<string | null>(null);
   const selectionRef = useRef(selection);
+  const resultRef = useRef<HTMLDivElement | null>(null);
 
   const isBusy = status.kind === "loading-ffmpeg" || status.kind === "processing";
+
+  useEffect(() => {
+    if (status.kind !== "success") return;
+    resultRef.current?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+      block: "start",
+    });
+  }, [status.kind]);
 
   useEffect(() => {
     try {
@@ -408,14 +417,6 @@ export default function AudioWorkspace({ onToast }: AudioWorkspaceProps) {
                 <button type="button" className="hero-secondary" onClick={handleReset}>
                   Başka Dosya
                 </button>
-                <button
-                  type="button"
-                  className="hero-primary"
-                  onClick={() => void handleProcess()}
-                  disabled={isBusy}
-                >
-                  Dışa Aktar
-                </button>
               </div>
             </div>
 
@@ -438,6 +439,24 @@ export default function AudioWorkspace({ onToast }: AudioWorkspaceProps) {
           ) : null}
 
           {status.kind === "error" ? <div className="status-banner is-error">{status.message}</div> : null}
+
+          {status.kind === "success" ? (
+            <div ref={resultRef} className="result-anchor" role="status">
+              <ResultPanel
+                outputUrl={status.outputUrl}
+                outputFileName={status.outputFileName}
+                outputSize={status.outputSize}
+                originalSize={audio.fileSize}
+                onDownload={() =>
+                  trackAppEvent("export_download", {
+                    export_format: settings.converter.outputFormat,
+                    file_count: 1,
+                  })
+                }
+                onReset={handleReset}
+              />
+            </div>
+          ) : null}
 
           <section className="workspace-section waveform-section">
             <div className="section-header">
@@ -526,6 +545,7 @@ export default function AudioWorkspace({ onToast }: AudioWorkspaceProps) {
                 <span>Seçim süresi</span>
                 <strong>{formatTime(selectionDuration)}</strong>
               </div>
+              <div className="waveform-actions">
               <button
                 type="button"
                 className="waveform-playback-toggle"
@@ -535,6 +555,10 @@ export default function AudioWorkspace({ onToast }: AudioWorkspaceProps) {
               >
                 {isPlaying ? "Duraklat" : "Oynat"}
               </button>
+              <button type="button" className="hero-primary" onClick={() => void handleProcess()} disabled={isBusy}>
+                Dışa Aktar
+              </button>
+              </div>
             </div>
           </section>
 
@@ -734,21 +758,6 @@ export default function AudioWorkspace({ onToast }: AudioWorkspaceProps) {
             </section>
           </div>
 
-          {status.kind === "success" ? (
-            <ResultPanel
-              outputUrl={status.outputUrl}
-              outputFileName={status.outputFileName}
-              outputSize={status.outputSize}
-              originalSize={audio.fileSize}
-              onDownload={() =>
-                trackAppEvent("export_download", {
-                  export_format: settings.converter.outputFormat,
-                  file_count: 1,
-                })
-              }
-              onReset={handleReset}
-            />
-          ) : null}
         </>
       )}
     </div>

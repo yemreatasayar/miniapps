@@ -512,25 +512,7 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
           <h2>{t.cutTitle}</h2>
           {isEdited ? <p>{t.cutDescEdited(segments.length, fmt(keptDuration))}</p> : null}
         </div>
-        <div className="cut-actions">
-          <button type="button" className="cut-action-btn" onClick={undoSegments} disabled={disabled || !canUndo}>
-            {t.cutUndo}
-          </button>
-          <button type="button" className="cut-action-btn" onClick={redoSegments} disabled={disabled || !canRedo}>
-            {t.cutRedo}
-          </button>
-          <button type="button" className="cut-action-btn" onClick={splitAtPlayhead} disabled={disabled || !canSplit}>
-            {t.cutSplit}
-          </button>
-          <button type="button" className="cut-action-btn danger" onClick={deleteSelectedSegment} disabled={disabled || !canDeleteSelected}>
-            {t.cutDelete}
-          </button>
-          {isEdited && (
-            <button type="button" className="reset-btn" onClick={reset} disabled={disabled}>
-              {t.cutReset}
-            </button>
-          )}
-        </div>
+
       </div>
 
       <video
@@ -635,6 +617,25 @@ export default function CutPanel({ video, settings, onSettingsChange, disabled }
           ))}
         </div>
       )}
+        <div className="cut-actions">
+          <button type="button" className="cut-action-btn" onClick={undoSegments} disabled={disabled || !canUndo}>
+            {t.cutUndo}
+          </button>
+          <button type="button" className="cut-action-btn" onClick={redoSegments} disabled={disabled || !canRedo}>
+            {t.cutRedo}
+          </button>
+          <button type="button" className="cut-action-btn" onClick={splitAtPlayhead} disabled={disabled || !canSplit}>
+            {t.cutSplit}
+          </button>
+          <button type="button" className="cut-action-btn danger" onClick={deleteSelectedSegment} disabled={disabled || !canDeleteSelected}>
+            {t.cutDelete}
+          </button>
+          {isEdited && (
+            <button type="button" className="reset-btn" onClick={reset} disabled={disabled}>
+              {t.cutReset}
+            </button>
+          )}
+        </div>
     </div>
   );
 }
