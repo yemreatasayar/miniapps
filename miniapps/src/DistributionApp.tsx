@@ -32,7 +32,7 @@ function assetUrl(fileName: string): string {
 const OFFLINE_READY_APPS_STORAGE_KEY = "miniapps.distribution.offlineReadyApps";
 const SHELL_LANGUAGE_STORAGE_KEY = "miniapps.distribution.language";
 const DEFAULT_PACK_LABEL = "miniapps pack";
-const DEFAULT_PACK_VERSION = "2026.2.1";
+const DEFAULT_PACK_VERSION = "2026.2.2";
 const DEFAULT_AUTHOR_LABEL = "by y.e.a.";
 
 const defaultApps: MiniApp[] = [

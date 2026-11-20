@@ -27,7 +27,7 @@ const apps = [
 
 const distributionConfig = {
   packLabel: "miniapps pack",
-  packVersion: "2026.2.1",
+  packVersion: "2026.2.2",
   authorLabel: "by y.e.a.",
   visibleAppIds: [
     "pdf-toolkit",
